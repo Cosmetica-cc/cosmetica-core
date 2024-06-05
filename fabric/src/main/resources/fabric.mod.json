@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "cosmetica-core",
+  "version": "${version}",
+  "name": "Cosmetica Core",
+  "description": "Authenticates users with the Cosmetica servers and shows cool cosmetics on players.",
+  "authors": [
+    "Valoeghese"
+  ],
+  "contact": {
+    "sources": "https://github.com/Cosmetica-cc/cosmetica-core",
+    "issues": "https://github.com/Cosmetica-cc/cosmetica-core/issues"
+  },
+  "license": "Apache 2.0",
+  "icon": "assets/cosmetica-core/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "cc.cosmetica.core.fabric.CosmeticaCoreFabric"
+    ]
+  },
+  "mixins": [
+    "cosmetica-core-common.mixins.json",
+    "cosmetica-core-fabric.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.16.5"
+  }
+}
