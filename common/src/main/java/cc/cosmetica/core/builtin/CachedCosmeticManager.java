@@ -14,24 +14,7 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.api;
+package cc.cosmetica.core.builtin;
 
-import cc.cosmetica.core.impl.CosmeticaCoreImpl;
-
-/**
- * The place to register cosmetic managers.
- */
-public final class CosmeticManagers {
-	private CosmeticManagers() {
-		// NO-OP
-	}
-
-	/**
-	 * Register a Cosmetic manager to be used by Cosmetica Core.
-	 * @param priority the priority of the CosmeticManager. Lower numbers are prioritised over higher ones.
-	 * @param manager the manager to register.
-	 */
-	public static void registerCosmeticManager(int priority, CosmeticManager manager) {
-		CosmeticaCoreImpl.registerCosmeticManager(priority, manager);
-	}
+public class CachedCosmeticManager {
 }

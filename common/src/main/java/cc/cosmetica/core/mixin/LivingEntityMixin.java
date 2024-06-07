@@ -16,26 +16,43 @@
 
 package cc.cosmetica.core.mixin;
 
+import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.CosmeticEquipper;
+import cc.cosmetica.core.impl.CosmeticaCoreImpl;
+import cc.cosmetica.core.impl.IdentityCache;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
 
+/**
+ * Implements the {@link CosmeticEquipper} and connects the entity tick to polling cosmetics.
+ */
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin implements CosmeticEquipper {
 	@Unique
-	private Cosmetics cosmetica$container;
+	private Cosmetics cosmeticacore$cosmetics;
+
+	@Unique
+	private final IdentityCache<CosmeticManager> cosmeticacore$manager = new IdentityCache<>();
 
 	@Override
-	public Optional<Cosmetics> cosmetica$getCosmetics() {
-		return Optional.ofNullable(this.cosmetica$container);
+	public Optional<Cosmetics> cosmeticacore$getCosmetics() {
+		return Optional.ofNullable(this.cosmeticacore$cosmetics);
 	}
 
 	@Override
-	public void cosmetica$setCosmetics(Cosmetics cosmetics) {
-		this.cosmetica$container = cosmetics;
+	public void cosmeticacore$setCosmetics(Cosmetics cosmetics) {
+		this.cosmeticacore$cosmetics = cosmetics;
+	}
+
+	@Inject(method = "tick", at = @At("RETURN"))
+	private void onTick(CallbackInfo ci) {
+		CosmeticaCoreImpl.pollCosmetics((LivingEntity)(Object)this, this.cosmeticacore$manager);
 	}
 }

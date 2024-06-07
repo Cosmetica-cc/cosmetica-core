@@ -24,22 +24,22 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public interface CosmeticManager {
 	/**
-	 * Get whether this cosmetic manager can and should manage this entity. This is called every tick that the entity
-	 * is rendered on the client.
+	 * Get whether this cosmetic manager can and should manage this entity.
 	 * @param entity the entity to query whether it should be managed.
 	 * @return whether this entity should be managed by this cosmetic manager.
+	 * @apiNote This is potentially called every tick for every LivingEntity on the client, so make it fast and concise!
 	 */
 	boolean canManage(LivingEntity entity);
 
 	/**
-	 * Get the cosmetics to apply to the given entity being managed .
-	 * @param entity
-	 * @return
+	 * Get the cosmetics to apply to the given entity being managed.
+	 * @param entity the entity being managed by this.
+	 * @return the cosmetics that should be rendered on this living entity.
 	 */
-	Cosmetics getCosmetics(LivingEntity entity)
+	Cosmetics getCosmetics(LivingEntity entity);
 
 	/**
-	 * Called when a living entity is assigned to this cosmetic manager.
+	 * Called when a living entity is assigned to this cosmetic manager. This is called before {@link CosmeticManager#getCosmetics(LivingEntity)}.
 	 * @param entity the entity that has been assigned to this cosmetic manager.
 	 */
 	default void onAssign(LivingEntity entity) {
@@ -48,6 +48,7 @@ public interface CosmeticManager {
 
 	/**
 	 * Called when an entity is assigned to a different cosmetic manager.
+	 * This is NOT called when an entity is removed from the world.
 	 * @param entity the entity that was being managed by this cosmetic manager.
 	 */
 	default void onRevoke(LivingEntity entity) {

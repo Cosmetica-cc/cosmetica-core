@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.api;
-
-import cc.cosmetica.core.impl.CosmeticaCoreImpl;
+package cc.cosmetica.core.mixin;
 
 /**
- * The place to register cosmetic managers.
+ * Caches cosmetica data fetched from the Cosmetica API.
+ *
+ * Used for implementing the main CosmeticManager.
  */
-public final class CosmeticManagers {
-	private CosmeticManagers() {
-		// NO-OP
-	}
-
-	/**
-	 * Register a Cosmetic manager to be used by Cosmetica Core.
-	 * @param priority the priority of the CosmeticManager. Lower numbers are prioritised over higher ones.
-	 * @param manager the manager to register.
-	 */
-	public static void registerCosmeticManager(int priority, CosmeticManager manager) {
-		CosmeticaCoreImpl.registerCosmeticManager(priority, manager);
-	}
+public class AbstractClientPlayerMixin {
 }
