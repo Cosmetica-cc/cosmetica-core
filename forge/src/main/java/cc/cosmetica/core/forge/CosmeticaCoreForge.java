@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.fabric;
+package cc.cosmetica.core.forge;
 
 import cc.cosmetica.core.api.CosmeticManagers;
 import cc.cosmetica.core.builtin.ApiCosmeticManager;
 import cc.cosmetica.core.builtin.CachedCosmeticManager;
-import net.fabricmc.api.ModInitializer;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-public class CosmeticaCoreFabric implements ModInitializer {
-    @Override
-    public void onInitialize() {
-        CosmeticManagers.registerCosmeticManager(0, new ApiCosmeticManager());
-        CosmeticManagers.registerCosmeticManager(50, new CachedCosmeticManager());
-    }
+@Mod("cosmetica-core")
+public class CosmeticaCoreForge {
+	public CosmeticaCoreForge() {
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
+	}
+
+	private void onClientSetup(FMLClientSetupEvent event) {
+		CosmeticManagers.registerCosmeticManager(0, new ApiCosmeticManager());
+		CosmeticManagers.registerCosmeticManager(50, new CachedCosmeticManager());
+	}
 }

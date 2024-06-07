@@ -16,5 +16,26 @@
 
 package cc.cosmetica.core.builtin;
 
-public class CachedCosmeticManager {
+import cc.cosmetica.core.api.CosmeticManager;
+import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.impl.UUIDs;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.world.entity.LivingEntity;
+
+/**
+ * Cosmetic manager for cached cosmetics for yourself.
+ */
+public class CachedCosmeticManager implements CosmeticManager {
+	@Override
+	public boolean canManage(LivingEntity entity) {
+		return entity instanceof AbstractClientPlayer // && isCached
+				// todo don't call fromString every tick, but be able to detect acount switching (explicitly?)
+				&& entity.getUUID().equals(UUIDs.fromString(Minecraft.getInstance().getUser().getUuid()));
+	}
+
+	@Override
+	public Cosmetics getCosmetics(LivingEntity entity) {
+		return null;
+	}
 }

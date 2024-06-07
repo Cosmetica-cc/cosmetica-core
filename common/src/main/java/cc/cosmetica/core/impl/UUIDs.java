@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.builtin;
+package cc.cosmetica.core.impl;
 
-import cc.cosmetica.core.api.CosmeticManager;
-import cc.cosmetica.core.api.Cosmetics;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.world.entity.LivingEntity;
+import java.util.UUID;
 
-public class ApiCosmeticManager implements CosmeticManager {
-	@Override
-	public boolean canManage(LivingEntity entity) {
-		return entity instanceof AbstractClientPlayer; // && has data
-	}
+/**
+ * Util class to handle UUIDs.
+ */
+public class UUIDs {
+	/**
+	 * Convert string to uuid, whether dashed or dashless.
+	 */
+	public static UUID fromString(String uuid) {
+		if (uuid.length() == 32) {
+			// dashless to dashed
+			uuid = uuid.substring(0, 8) + "-" + uuid.substring(8, 8+4) + "-" + uuid.substring(12, 12+4)
+					+ "-" + uuid.substring(16, 16+4) + "-" + uuid.substring(20);
+		}
 
-	@Override
-	public Cosmetics getCosmetics(LivingEntity entity) {
-		return null;
+		return UUID.fromString(uuid);
 	}
 }
