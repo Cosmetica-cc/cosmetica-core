@@ -14,28 +14,20 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.mixin;
+package cc.cosmetica.core.api;
 
-import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.CosmeticEquipper;
-import net.minecraft.world.entity.LivingEntity;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
+import cc.cosmetica.core.impl.CosmeticaCoreImpl;
 
-import java.util.Optional;
-
-@Mixin(LivingEntity.class)
-public class LivingEntityMixin implements CosmeticEquipper {
-	@Unique
-	private Cosmetics cosmetica$container;
-
-	@Override
-	public Optional<Cosmetics> cosmetica$getCosmetics() {
-		return Optional.ofNullable(this.cosmetica$container);
+/**
+ * The place to register cosmetic managers.
+ */
+public final class CosmeticManagers {
+	private CosmeticManagers() {
+		// NO-OP
 	}
 
-	@Override
-	public void cosmetica$setCosmetics(Cosmetics cosmetics) {
-		this.cosmetica$container = cosmetics;
+	public static void registerCosmeticManager(int priority, CosmeticManager manager) {
+		CosmeticaCoreImpl.registerCosmeticManager(priority, manager);
 	}
 }

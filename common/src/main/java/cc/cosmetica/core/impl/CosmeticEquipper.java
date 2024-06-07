@@ -26,8 +26,14 @@ import java.util.Optional;
  */
 public interface CosmeticEquipper {
 	/**
-	 * Get the Cosmetics container on this living entity.
+	 * Get the Cosmetics worn by this living entity.
 	 * @return the cosmetics container on this living entity.
 	 */
 	Optional<Cosmetics> cosmetica$getCosmetics();
+
+	/**
+	 * Set the Cosmetics worn by this living entity.
+	 * @param cosmetics the cosmetics container on this living entity.
+	 */
+	void cosmetica$setCosmetics(Cosmetics cosmetics);
 }

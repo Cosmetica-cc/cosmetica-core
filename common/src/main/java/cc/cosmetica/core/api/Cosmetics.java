@@ -19,6 +19,7 @@ package cc.cosmetica.core.api;
 import cc.cosmetica.core.impl.CosmeticEquipper;
 import net.minecraft.world.entity.LivingEntity;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -36,9 +37,8 @@ public interface Cosmetics {
 	 * Get the container for cosmetics being worn by the given entity.
 	 * @param entity the entity for which to get the container.
 	 * @return the container.
-	 * @param <LE> the type of entity to get the cosmetics for.
 	 */
-	static <LE extends LivingEntity> Optional<Cosmetics> getCosmetics(LE entity) {
+	static Optional<Cosmetics> getCosmetics(LivingEntity entity) {
 		CosmeticEquipper equipper = (CosmeticEquipper) entity;
 		return equipper.cosmetica$getCosmetics();
 	}
