@@ -1,19 +1,32 @@
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.impl.BlockModelRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.resources.ResourceLocation;
 
 /**
- * Renders cosmetics.
+ * Contains model data for a cosmetica model.
  */
-public class Renderer {
+public interface CosmeticaModel {
 	/**
-	 * Render a model cosmetic on the given part, with the given transform.
-	 * @param bakableModel the model to render.
+	 * Get the location for the texture for this model.
+	 * @return the texture for this model.
+	 */
+	ResourceLocation getTexture();
+
+	/**
+	 * Get the baked model of this cosmetic. If it has not been baked yet, bake the model.
+	 * @return the baked model for this cosmetic model.
+	 */
+	BakedModel getBakedModel();
+
+	/**
+	 * Render this model cosmetic on the given part, with the given transform.
 	 * @param modelPart the model part to render.
 	 * @param stack the Matrix Stack.
 	 * @param multiBufferSource the buffer source.
@@ -21,10 +34,10 @@ public class Renderer {
 	 * @param x the x offset.
 	 * @param y the y offset.
 	 * @param z the z offset.
-	 * @param mirror
+	 * @param mirror whether to mirror the model.
 	 */
-	public static void renderModelOnPart(BakableModel bakableModel, ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
-		BakedModel model = Models.getBakedModel(bakableModel);
+	default void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
+		BakedModel model = this.getBakedModel();
 		if (model == null) return; // if it has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.001f; // prevent z fighting
@@ -33,11 +46,11 @@ public class Renderer {
 		stack.mulPose(new Quaternion(Vector3f.YP, (float)Math.PI, false)); // pi radians on y axis
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		if (mirror) stack.scale(-1, 1, 1);
-		Models.renderModel(
+		BlockModelRenderer.renderModel(
 				model,
 				stack,
 				multiBufferSource,
-				bakableModel.image(),
+				this.getTexture(),
 				packedLight);
 
 		stack.popPose();
