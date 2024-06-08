@@ -16,9 +16,7 @@
 
 package cc.cosmetica.core.forge;
 
-import cc.cosmetica.core.api.CosmeticManagers;
-import cc.cosmetica.core.builtin.ApiCosmeticManager;
-import cc.cosmetica.core.builtin.CachedCosmeticManager;
+import cc.cosmetica.core.builtin.BuiltinManagers;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -30,7 +28,6 @@ public class CosmeticaCoreForge {
 	}
 
 	private void onClientSetup(FMLClientSetupEvent event) {
-		CosmeticManagers.registerCosmeticManager(0, new ApiCosmeticManager());
-		CosmeticManagers.registerCosmeticManager(50, new CachedCosmeticManager());
+		new BuiltinManagers().init();
 	}
 }

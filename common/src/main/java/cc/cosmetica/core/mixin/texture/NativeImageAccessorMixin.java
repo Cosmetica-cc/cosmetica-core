@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Cosmetica
+ * Copyright 2022, 2023 EyezahMC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.fabric;
+package cc.cosmetica.core.mixin.texture;
 
-import cc.cosmetica.core.builtin.BuiltinManagers;
-import net.fabricmc.api.ModInitializer;
+import com.mojang.blaze3d.platform.NativeImage;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-public class CosmeticaCoreFabric implements ModInitializer {
-    @Override
-    public void onInitialize() {
-        new BuiltinManagers().init();
-    }
+@Mixin(NativeImage.class)
+public interface NativeImageAccessorMixin {
+	@Accessor
+	long getPixels();
 }

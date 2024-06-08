@@ -19,7 +19,7 @@ package cc.cosmetica.core.mixin;
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.CosmeticEquipper;
-import cc.cosmetica.core.impl.CosmeticaCoreImpl;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.IdentityCache;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -53,6 +53,6 @@ public class LivingEntityMixin implements CosmeticEquipper {
 
 	@Inject(method = "tick", at = @At("RETURN"))
 	private void onTick(CallbackInfo ci) {
-		CosmeticaCoreImpl.pollCosmetics((LivingEntity)(Object)this, this.cosmeticacore$manager);
+		MasterCosmeticManager.pollCosmetics((LivingEntity)(Object)this, this.cosmeticacore$manager);
 	}
 }

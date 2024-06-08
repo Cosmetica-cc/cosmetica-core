@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.api;
 
-import cc.cosmetica.core.impl.CosmeticaCoreImpl;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
 
 /**
  * The place to register cosmetic managers.
@@ -30,8 +30,9 @@ public final class CosmeticManagers {
 	 * Register a Cosmetic manager to be used by Cosmetica Core.
 	 * @param priority the priority of the CosmeticManager. Lower numbers are prioritised over higher ones.
 	 * @param manager the manager to register.
+	 * @apiNote the "API" cosmetic manager has a priority of 0.
 	 */
 	public static void registerCosmeticManager(int priority, CosmeticManager manager) {
-		CosmeticaCoreImpl.registerCosmeticManager(priority, manager);
+		MasterCosmeticManager.registerCosmeticManager(priority, manager);
 	}
 }

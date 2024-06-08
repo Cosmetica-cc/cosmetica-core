@@ -25,7 +25,7 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Renderer for Cosmetic models.
+ * Renderer for Cosmetic models on humanoid entities.
  */
 public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends HumanoidModel<E>> extends RenderLayer<E, M> {
 	public HumanoidAccessoriesLayer(RenderLayerParent<E, M> renderLayerParent) {

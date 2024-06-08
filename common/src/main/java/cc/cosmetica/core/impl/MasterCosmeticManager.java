@@ -24,10 +24,10 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 /**
- * Implementation functionality.
+ * Implementation functionality for managing cosmetics.
  */
-public final class CosmeticaCoreImpl {
-	private CosmeticaCoreImpl() {
+public final class MasterCosmeticManager {
+	private MasterCosmeticManager() {
 	}
 
 	// sorted collection of cosmetic managers
@@ -80,7 +80,7 @@ public final class CosmeticaCoreImpl {
 		private final CosmeticManager manager;
 
 		@Override
-		public int compareTo(@NotNull CosmeticaCoreImpl.PrioritisedManager pm) {
+		public int compareTo(@NotNull MasterCosmeticManager.PrioritisedManager pm) {
 			return this.priority - pm.priority;
 		}
 	}
