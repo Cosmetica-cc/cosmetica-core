@@ -9,6 +9,7 @@ public class BuiltinManagers {
 	public void init() {
 		CosmeticManagers.registerCosmeticManager(-100, new TestCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(0, new ApiCosmeticManager());
+		CosmeticManagers.registerCosmeticManager(0, new ArmourStandCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(50, new CachedCosmeticManager());
 	}
 }

@@ -27,7 +27,7 @@ public interface CosmeticaModel {
 
 	/**
 	 * Render this model cosmetic on the given part, with the given transform.
-	 * @param modelPart the model part to render.
+	 * @param modelPart the model part on which to render.
 	 * @param stack the Matrix Stack.
 	 * @param multiBufferSource the buffer source.
 	 * @param packedLight the packed light.
