@@ -16,5 +16,37 @@
 
 package cc.cosmetica.core.api;
 
+import net.minecraft.world.phys.Vec3;
+
+import java.util.Collection;
+import java.util.HashSet;
+
+/**
+ * Represents an Accessory equipped on a user.
+ */
 public class Accessory {
+	public Accessory(String id, Vec3 offset) {
+		this.id = id;
+		this.offset = offset;
+		this.flags = new HashSet<>();
+	}
+
+	private final String id;
+	private final Vec3 offset;
+	private final Collection<Flag> flags;
+
+	public String getId() {
+		return this.id;
+	}
+
+	public Vec3 getOffset() {
+		return this.offset;
+	}
+
+	public Collection<Flag> getFlags() {
+		return this.flags;
+	}
+
+	public enum Flag {
+	}
 }
