@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.render;
 
+import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.Cosmetics;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.HumanoidModel;
@@ -23,6 +24,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Renderer for Cosmetic models on humanoid entities.
@@ -35,7 +37,9 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 	@Override
 	public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int i, E entity, float f, float g, float h, float j, float k, float l) {
 		Cosmetics.getCosmetics(entity).ifPresent(cosmetics -> {
-			// TODO do something
+			for (Accessory accessory : cosmetics.getAccessories()) {
+				Vec3 offset = accessory.getOffset();
+			}
 		});
 	}
 }
