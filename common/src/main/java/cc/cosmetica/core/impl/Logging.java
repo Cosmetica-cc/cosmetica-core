@@ -16,23 +16,40 @@
 
 package cc.cosmetica.core.impl;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Handles logging for the mod.
  */
-public abstract class Logging {
-	protected Logging() {
-		instance = this;
+public final class Logging {
+	private Logging() {
 	}
 
 	private final Set<String> warnings = new HashSet<>();
+	private final Logger logger = LogManager.getLogger("Cosmetica");
+	private final boolean debug = Boolean.getBoolean("debug");
 
-	public abstract void debug(String message, Object... args);
-	public abstract void info(String message, Object... args);
-	public abstract void warn(String message, Object... args);
-	public abstract void error(String message, Exception exception);
+	public void debug(String message, Object... args) {
+		if (debug) {
+			info(message, args);
+		}
+	}
+
+	public void info(String message, Object... args) {
+		this.logger.info(message, args);
+	}
+
+	public void warn(String message, Object... args) {
+		this.logger.warn(message, args);
+	}
+
+	public void error(String message, Throwable t) {
+		this.logger.error(message, t);
+	}
 
 	public void warnOnce(String warning, String message, Object... args) {
 		if (warnings.add(warning)) {
@@ -41,8 +58,8 @@ public abstract class Logging {
 	}
 
 	public static Logging getInstance() {
-		return instance;
+		return INSTANCE;
 	}
 
-	private static Logging instance;
+	private static final Logging INSTANCE = new Logging();
 }

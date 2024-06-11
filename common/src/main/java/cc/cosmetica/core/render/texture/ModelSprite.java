@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.render.texture;
 
+import cc.cosmetica.core.impl.Logging;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.fabricmc.loader.api.FabricLoader;
@@ -77,7 +78,7 @@ public class ModelSprite extends TextureAtlasSprite {
 		else {
 			// fix compat with ModelGapFix (modelfix)
 			// pretend to be the block atlas
-			DebugMode.warnOnce("UnsafeAtlasAccess", "A mod called atlas() on a cosmetica ModelSprite. Behaviour could be unpredictable.");
+			Logging.getInstance().warnOnce("UnsafeAtlasAccess", "A mod called atlas() on a cosmetica ModelSprite. Behaviour could be unpredictable.");
 			return Minecraft.getInstance().getModelManager().getAtlas(BLOCK_ATLAS);
 		}
 	}

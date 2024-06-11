@@ -34,7 +34,12 @@ import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -76,24 +81,72 @@ public class BlockModelRenderer {
 
 	/**
 	 * Bake a model if not already baked, and return it.
-	 * @param id the id of the model.
+	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param textureBase64 the base64 texture to use, if the model has not been baked yet.
+	 * @param modelJson the Java Block/Item model json to use if the model hasn't been baked yet.
 	 * @implNote a weak reference to the BakedModel is stored in cache.
 	 */
-	public static BakedModel getOrBakeModel(String id) {
+	public static BakedModel getOrBakeModel(String id, String textureBase64, String modelJson) {
 		WeakReference<BakedModel> modelRef = CACHE.get(id);
 		BakedModel model = modelRef == null ? null : modelRef.get();
 
 		if (model == null) {
-			model = bakeModel();
-			CACHE.put(id, new WeakReference<>(model));
+			// model id. Primarily used for texture location.
+			ResourceLocation modelId = new ResourceLocation("cosmetica-core", "models/" + pathify(id));
+			// TODO texture register
+
+			try (InputStream is = new ByteArrayInputStream(modelJson.getBytes(StandardCharsets.UTF_8))) {
+				BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
+				blockModel.name = id;
+				model = bakeModel(modelId, blockModel);
+				CACHE.put(id, new WeakReference<>(model));
+			} catch (IOException e) {
+				Logging.getInstance().error("Failed to parse model " + id, e);
+			}
 		}
 
 		return model;
 	}
 
+	/**
+	 * Take an id that can contain base64 characters and spit out text that is allowed in ResourceLocation pathnames.
+	 * @param id the id to pathify.
+	 * @return the resulting string.
+	 */
+	public static String pathify(String id) {
+		StringBuilder result = new StringBuilder();
+
+		for (char c : id.toCharArray()) {
+			if (c == '+') {
+				result.append(".");
+			}
+			else if (c == '=') {
+				result.append("__");
+			}
+			else if (Character.isUpperCase(c)) {
+				result.append("_").append(Character.toLowerCase(c));
+			}
+			else {
+				result.append(c);
+			}
+		}
+
+		return result.toString();
+	}
+
 	// bake
+
+	/**
+	 * Bake the given block model with the texture at the given location.
+	 * @param location the location to get the texture for. Also used in debug messages.
+	 *                 Must refer to an {@link AnimatedTexture}.
+	 * @param model the model to bake.
+	 * @return the newly created baked model.
+	 */
 	private static BakedModel bakeModel(ResourceLocation location, BlockModel model) {
-		//DebugMode.log("Computing Baked Model: " + unbaked.id());
+		Logging.getInstance().debug("Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
 		if (modelTexture instanceof AnimatedTexture) {
