@@ -23,48 +23,44 @@ public class BlockModelRenderer {
 	private static int gcIndex = 0;
 	// Cache
 	private static final List<String> CACHED_MODEL_IDS = new ArrayList<>();
-	private static final Map<String, ModelCacheEntry> CACHE = new HashMap<>();
+	private static final Map<String, WeakReference<BakedModel>> CACHE = new HashMap<>();
 
 	/**
-	 * Garbage collect the next item.
+	 * Garbage Collector. Checks the next item and removes it if it's unnecessary.
 	 */
 	public static void gc() {
+		String gcModelId = CACHED_MODEL_IDS.get(gcIndex);
 
+		// if object is no longer held in memory
+		if (CACHE.get(gcModelId).get() == null) {
+			// remove from cache
+			CACHED_MODEL_IDS.remove(gcIndex);
+			CACHE.remove(gcModelId);
+		} else {
+			gcIndex++; // check the next one.
+			// not necessary if removed as the next item shifts back
+		}
+
+		if (gcIndex > CACHED_MODEL_IDS.size()) {
+			gcIndex = 0;
+		}
 	}
 
 	/**
-	 * Bake a model if not already baked, and link the cosmetics object to it. If no cosmetics objects exist in memory
-	 * that refer to this baked model, it can get garbage collected.
-	 * @param cosmetics the cosmetics object requesting the model be baked.
+	 * Bake a model if not already baked, and return it.
 	 * @param id the id of the model.
-	 * @implNote a weak reference to the Cosmetics object is stored.
+	 * @implNote a weak reference to the BakedModel is stored in cache.
 	 */
-	public static void bakeModel(Cosmetics cosmetics, String id) {
-		BakedModel model = bakeModel();
-		ModelCacheEntry entry = CACHE.computeIfAbsent(id, k -> {
-			ModelCacheEntry entry_ = new ModelCacheEntry(model);
-			CACHED_MODEL_IDS.add(id);
-			return entry_;
-		});
+	public static BakedModel getOrBakeModel(String id) {
+		WeakReference<BakedModel> modelRef = CACHE.get(id);
+		BakedModel model = modelRef == null ? null : modelRef.get();
 
-		entry.holders.add(new WeakReference<>(cosmetics));
-	}
-
-	public static Optional<BakedModel> getBakedModel(String id) {
-		ModelCacheEntry entry = CACHE.get(id);
-		if (entry == null) return Optional.empty();
-		// return the cached baked model
-		return Optional.of(entry.bakedModel);
-	}
-
-	private static class ModelCacheEntry {
-		ModelCacheEntry(BakedModel model) {
-			this.bakedModel = model;
-			this.holders = new ArrayList<>();
+		if (model == null) {
+			model = bakeModel();
+			CACHE.put(id, new WeakReference<>(model));
 		}
 
-		final BakedModel bakedModel;
-		final List<WeakReference<Cosmetics>> holders;
+		return model;
 	}
 
 	// bake
