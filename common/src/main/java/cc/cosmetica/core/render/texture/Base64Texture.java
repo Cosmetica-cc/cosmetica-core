@@ -23,8 +23,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.texture.Tickable;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
+import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
  * An animated texture loaded from a base64 image string.
@@ -76,7 +80,14 @@ public class Base64Texture extends AnimatedTexture {
 		if(base64.length() < 1000) { //TODO: Tweak this number
 			return NativeImage.fromBase64(base64);
 		} else {
-
+			//For large images, NativeImage.fromBase64 does not work because it tries to allocate it on the stack and fails
+			byte[] bs = Base64.getDecoder().decode(base64.replace("\n", "").getBytes(StandardCharsets.UTF_8));
+			ByteBuffer buffer = MemoryUtil.memAlloc(bs.length);
+			buffer.put(bs);
+			buffer.rewind();
+			NativeImage image = NativeImage.read(buffer);
+			MemoryUtil.memFree(buffer);
+			return image;
 		}
 	}
 
