@@ -1,5 +1,6 @@
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.api.Cosmetics;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.RenderType;
@@ -11,14 +12,69 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.lang.ref.WeakReference;
+import java.util.*;
 
 /**
  * Renderer for baked block/item models.
  */
 public class BlockModelRenderer {
+	// The index within cachedModelIds to garbage-collect for next.
+	private static int gcIndex = 0;
+	// Cache
+	private static final List<String> CACHED_MODEL_IDS = new ArrayList<>();
+	private static final Map<String, ModelCacheEntry> CACHE = new HashMap<>();
+
+	/**
+	 * Garbage collect the next item.
+	 */
+	public static void gc() {
+
+	}
+
+	/**
+	 * Bake a model if not already baked, and link the cosmetics object to it. If no cosmetics objects exist in memory
+	 * that refer to this baked model, it can get garbage collected.
+	 * @param cosmetics the cosmetics object requesting the model be baked.
+	 * @param id the id of the model.
+	 * @implNote a weak reference to the Cosmetics object is stored.
+	 */
+	public static void bakeModel(Cosmetics cosmetics, String id) {
+		BakedModel model = bakeModel();
+		ModelCacheEntry entry = CACHE.computeIfAbsent(id, k -> {
+			ModelCacheEntry entry_ = new ModelCacheEntry(model);
+			CACHED_MODEL_IDS.add(id);
+			return entry_;
+		});
+
+		entry.holders.add(new WeakReference<>(cosmetics));
+	}
+
+	public static Optional<BakedModel> getBakedModel(String id) {
+		ModelCacheEntry entry = CACHE.get(id);
+		if (entry == null) return Optional.empty();
+		// return the cached baked model
+		return Optional.of(entry.bakedModel);
+	}
+
+	private static class ModelCacheEntry {
+		ModelCacheEntry(BakedModel model) {
+			this.bakedModel = model;
+			this.holders = new ArrayList<>();
+		}
+
+		final BakedModel bakedModel;
+		final List<WeakReference<Cosmetics>> holders;
+	}
+
+	// bake
+	private static BakedModel bakeModel() {
+		// TODO
+		throw new UnsupportedOperationException("Not implemented yet.");
+	}
+
+	// render
+
 	public static void renderModel(BakedModel model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
 		stack.pushPose();
 		boolean isGUI3D = model.isGui3d();
