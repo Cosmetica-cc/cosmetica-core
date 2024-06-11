@@ -1,14 +1,36 @@
+/*
+ * Copyright 2024 Cosmetica
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package cc.cosmetica.core.impl;
 
-import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.render.texture.AnimatedTexture;
+import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.resources.model.BlockModelRotation;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
@@ -24,6 +46,12 @@ public class BlockModelRenderer {
 	// Cache
 	private static final List<String> CACHED_MODEL_IDS = new ArrayList<>();
 	private static final Map<String, WeakReference<BakedModel>> CACHE = new HashMap<>();
+
+	/**
+	 * The model bakery.
+	 * Set by ModelManagerMixin.
+	 */
+	public static ModelBakery bakery;
 
 	/**
 	 * Garbage Collector. Checks the next item and removes it if it's unnecessary.
@@ -64,9 +92,21 @@ public class BlockModelRenderer {
 	}
 
 	// bake
-	private static BakedModel bakeModel() {
-		// TODO
-		throw new UnsupportedOperationException("Not implemented yet.");
+	private static BakedModel bakeModel(ResourceLocation location, BlockModel model) {
+		//DebugMode.log("Computing Baked Model: " + unbaked.id());
+		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
+
+		if (modelTexture instanceof AnimatedTexture) {
+			ModelSprite sprite = new ModelSprite(location, (AnimatedTexture) modelTexture);
+
+			return model.bake(
+					bakery,
+					l -> sprite,
+					BlockModelRotation.X0_Y0,
+					location /*this resource location in bake is just used for debugging in the case of errors*/);
+		}
+
+		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be an AnimatedTexture.");
 	}
 
 	// render
