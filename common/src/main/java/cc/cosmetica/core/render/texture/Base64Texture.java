@@ -91,11 +91,11 @@ public class Base64Texture extends AnimatedTexture {
 		}
 	}
 
-	public static Base64Texture create(ResourceLocation path, String base64, int ticksPerFrame) throws IOException {
+	public static Base64Texture create(ResourceLocation path, String base64, int ticksPerFrame, int frames) throws IOException {
 		NativeImage image = loadBase64(base64);
 
-		if (image.getHeight() > image.getWidth()) {
-			return new TickingTexture(path, base64, image, ticksPerFrame, 1);
+		if (frames > 0) {
+			return new TickingTexture(path, base64, image, ticksPerFrame, frames);
 		}
 		else {
 			return new Base64Texture(path, base64, image, 0);

@@ -17,9 +17,12 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.render.texture.AnimatedTexture;
+import cc.cosmetica.core.render.texture.Base64Texture;
 import cc.cosmetica.core.render.texture.ModelSprite;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import jdk.internal.loader.Resource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -69,6 +72,10 @@ public class BlockModelManager {
 			// remove from cache
 			CACHED_MODEL_IDS.remove(gcIndex);
 			CACHE.remove(gcModelId);
+			// free the texture
+			ResourceLocation textureLocation = getModelLocation(gcModelId);
+			AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getModelLocation(gcModelId));
+			if (texture != null) Minecraft.getInstance().getTextureManager().safeClose(textureLocation, texture);
 		} else {
 			gcIndex++; // check the next one.
 			// not necessary if removed as the next item shifts back
@@ -84,24 +91,42 @@ public class BlockModelManager {
 	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
-	 * @param textureBase64 the base64 texture to use, if the model has not been baked yet.
 	 * @param modelJson the Java Block/Item model json to use if the model hasn't been baked yet.
+	 * @param textureBase64 the base64 texture to use, if the model has not been baked yet.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Image frames are to be stored as a tilesheet, top to bottom.
 	 * @implNote a weak reference to the BakedModel is stored in cache.
 	 */
-	public static BakedModel getOrBakeModel(String id, String textureBase64, String modelJson) {
+	public static BakedModel getOrBakeModel(String id, String modelJson,
+											String textureBase64, int ticksPerFrame, int frames) {
 		WeakReference<BakedModel> modelRef = CACHE.get(id);
 		BakedModel model = modelRef == null ? null : modelRef.get();
 
 		if (model == null) {
 			// model id. Primarily used for texture location.
-			ResourceLocation modelId = new ResourceLocation("cosmetica-core", "models/" + pathify(id));
-			// TODO texture register
-			// TODO remember to close image when gc()
+			ResourceLocation modelId = getModelLocation(id);
 
 			try (InputStream is = new ByteArrayInputStream(modelJson.getBytes(StandardCharsets.UTF_8))) {
+				// create texture
+				AnimatedTexture texture = Base64Texture.create(modelId, textureBase64.substring(22), ticksPerFrame, frames);
+
+				// upload texture
+				if (RenderSystem.isOnRenderThreadOrInit()) {
+					Minecraft.getInstance().getTextureManager().register(modelId, texture);
+				}
+				else {
+					RenderSystem.recordRenderCall(() -> {
+						Minecraft.getInstance().getTextureManager().register(modelId, texture);
+					});
+				}
+
+				// create model
 				BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
 				blockModel.name = id;
 				model = bakeModel(modelId, blockModel);
+
+				// store in cache
 				CACHE.put(id, new WeakReference<>(model));
 			} catch (IOException e) {
 				Logging.getInstance().error("Failed to parse model " + id, e);
@@ -112,11 +137,20 @@ public class BlockModelManager {
 	}
 
 	/**
+	 * Get the location the model's texture is registered at.
+	 * @param id the model id, including any prefix used.
+	 * @return the location of the model's texture.
+	 */
+	public static ResourceLocation getModelLocation(String id) {
+		return new ResourceLocation("cosmetica-core", "models/" + pathify(id));
+	}
+
+	/**
 	 * Take an id that can contain base64 characters and spit out text that is allowed in ResourceLocation pathnames.
 	 * @param id the id to pathify.
 	 * @return the resulting string.
 	 */
-	public static String pathify(String id) {
+	private static String pathify(String id) {
 		StringBuilder result = new StringBuilder();
 
 		for (char c : id.toCharArray()) {
