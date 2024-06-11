@@ -17,11 +17,15 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.CosmeticManager;
+import cc.cosmetica.core.api.Cosmetics;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 
 /**
  * Implementation functionality for managing cosmetics.
@@ -32,9 +36,15 @@ public final class MasterCosmeticManager {
 
 	// sorted collection of cosmetic managers
 	private static final Collection<PrioritisedManager> COSMETIC_MANAGERS = new TreeSet<>();
+	// callbacks
+	private static final Collection<BiConsumer<LivingEntity, Cosmetics>> CALLBACKS = new ArrayList<>();
 
 	public static void registerCosmeticManager(int priority, CosmeticManager manager) {
 		COSMETIC_MANAGERS.add(new PrioritisedManager(priority, manager));
+	}
+
+	public static void addCallback(BiConsumer<LivingEntity, Cosmetics> callback) {
+		CALLBACKS.add(callback);
 	}
 
 	/**
@@ -63,7 +73,14 @@ public final class MasterCosmeticManager {
 
 			if (selectedManager != null) {
 				selectedManager.onAssign(entity);
-				equipper.cosmeticacore$setCosmetics(selectedManager.getCosmetics(entity));
+				Cosmetics cosmetics = selectedManager.getCosmetics(entity);
+
+				// equip
+				equipper.cosmeticacore$setCosmetics(cosmetics);
+				// forward to listeners
+				for (BiConsumer<LivingEntity, Cosmetics> consumer : CALLBACKS) {
+					consumer.accept(entity, cosmetics);
+				}
 			} else {
 				equipper.cosmeticacore$setCosmetics(null); // clear cosmetics
 			}

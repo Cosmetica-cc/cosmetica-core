@@ -17,10 +17,13 @@
 package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.impl.CosmeticEquipper;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
 import net.minecraft.world.entity.LivingEntity;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 /**
  * Interface for the cosmetics equipped on an entity.
@@ -40,5 +43,14 @@ public interface Cosmetics {
 	static Optional<Cosmetics> getCosmetics(LivingEntity entity) {
 		CosmeticEquipper equipper = (CosmeticEquipper) entity;
 		return equipper.cosmeticacore$getCosmetics();
+	}
+
+	/**
+	 * Register the cosmetics change callback.
+	 * @param onChange a consumer that takes the entity, and new cosmetics whenever the cosmetics on an entity changes.
+	 *                 The cosmetics parameter may be null.
+	 */
+	static void registerCosmeticsChangeCallback(BiConsumer<LivingEntity, Cosmetics> onChange) {
+		MasterCosmeticManager.addCallback(onChange);
 	}
 }
