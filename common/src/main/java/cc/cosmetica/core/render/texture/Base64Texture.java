@@ -1,0 +1,106 @@
+/*
+ * Copyright 2024 Cosmetica
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package cc.cosmetica.core.render.texture;
+
+import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.texture.Tickable;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+
+import java.io.IOException;
+
+/**
+ * An animated texture loaded from a base64 image string.
+ */
+public class Base64Texture extends AnimatedTexture {
+	private Base64Texture(ResourceLocation path, String base64, NativeImage initialImage, int frames) throws IOException {
+		super(frames);
+		this.base64 = base64;
+		this.path = path;
+
+		this.loadImage(initialImage);
+	}
+
+	private final ResourceLocation path;
+	private final String base64;
+
+	@Override
+	public void load(ResourceManager resourceManager) {
+		if (((NativeImageAccessorMixin) (Object) this.image).getPixels() == 0) {
+			if (RenderSystem.isOnRenderThreadOrInit()) {
+				this.reload();
+			} else {
+				RenderSystem.recordRenderCall(this::reload);
+			}
+
+			return;
+		} else {
+			this.upload();
+		}
+	}
+
+	private void reload() {
+		Logging.getInstance().debug("Re-uploading texture {}", this.path);
+
+		try {
+			this.loadImage(loadBase64(this.base64)); // load the image
+			this.upload();
+		} catch (IOException e) {
+			Logging.getInstance().error("Error re-uploading Base64 Texture", e);
+		}
+	}
+
+	private void loadImage(NativeImage image) {
+		this.image = image;
+		this.setupAnimations();
+	}
+
+	private static NativeImage loadBase64(String base64) throws IOException {
+		if(base64.length() < 1000) { //TODO: Tweak this number
+			return NativeImage.fromBase64(base64);
+		} else {
+
+		}
+	}
+
+	public static Base64Texture create(ResourceLocation path, String base64, int ticksPerFrame) throws IOException {
+		NativeImage image = loadBase64(base64);
+
+		if (image.getHeight() > image.getWidth()) {
+			return new TickingTexture(path, base64, image, ticksPerFrame, 1);
+		}
+		else {
+			return new Base64Texture(path, base64, image, 0);
+		}
+	}
+
+	private static class TickingTexture extends Base64Texture implements Tickable {
+		private TickingTexture(ResourceLocation path, String base64, NativeImage initialImage,
+							   int ticksPerFrame, int frames) throws IOException {
+			super(path, base64, initialImage, frames);
+			this.ticksPerFrame = ticksPerFrame;
+		}
+
+		@Override
+		public void tick() {
+			this.doTick();
+		}
+	}
+}

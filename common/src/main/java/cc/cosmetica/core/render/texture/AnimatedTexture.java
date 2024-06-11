@@ -22,7 +22,8 @@ import com.mojang.blaze3d.platform.TextureUtil;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 
 /**
- * Texture that supports multiple frames.
+ * Base for a texture that supports multiple frames. Does not tick on its own.
+ * Implement {@link net.minecraft.client.renderer.texture.Tickable} to animate.
  */
 public abstract class AnimatedTexture extends AbstractTexture {
 	public AnimatedTexture(int frames) {
@@ -30,7 +31,7 @@ public abstract class AnimatedTexture extends AbstractTexture {
 	}
 
 	protected NativeImage image;
-	protected int frameCounterTicks = 1;
+	protected int ticksPerFrame = 1;
 
 	private final int frames;
 	private int frameHeight;
@@ -43,7 +44,7 @@ public abstract class AnimatedTexture extends AbstractTexture {
 			this.frameHeight = this.image.getHeight() / this.frames;
 
 			if (this.frames <= 0) {
-				throw new IllegalStateException("Frames cannot be less than one! If you're not using a cape loaded locally, please contact the Cosmetica devs asap. Debug data: frames=" + this.frames + ",frameHeight=" + this.frameHeight + ",frameDelayTicks=" + this.frameCounterTicks + ",width=" + this.image.getWidth() + ",height=" + this.image.getHeight());
+				throw new IllegalStateException("Frames cannot be less than one! If you're not using a cape loaded locally, please contact the Cosmetica devs asap. Debug data: frames=" + this.frames + ",frameHeight=" + this.frameHeight + ",frameDelayTicks=" + this.ticksPerFrame + ",width=" + this.image.getWidth() + ",height=" + this.image.getHeight());
 			}
 		} else {
 			this.frameHeight = this.image.getHeight();
@@ -57,7 +58,7 @@ public abstract class AnimatedTexture extends AbstractTexture {
 
 	protected void doTick() {
 		if (((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
-			this.tick = (this.tick + 1) % this.frameCounterTicks;
+			this.tick = (this.tick + 1) % this.ticksPerFrame;
 
 			if (this.tick == 0) {
 				this.frame = (this.frame + 1) % this.frames;
@@ -90,7 +91,7 @@ public abstract class AnimatedTexture extends AbstractTexture {
 	public String toString() {
 		return "AnimatedTexture{" +
 				"image=" + image +
-				", frameCounterTicks=" + frameCounterTicks +
+				", frameCounterTicks=" + ticksPerFrame +
 				", frames=" + frames +
 				", frameHeight=" + frameHeight +
 				", frame=" + frame +
