@@ -43,9 +43,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * Renderer for baked block/item models.
+ * Renderer and manager for baked block/item models.
  */
-public class BlockModelRenderer {
+public class BlockModelManager {
 	// The index within cachedModelIds to garbage-collect for next.
 	private static int gcIndex = 0;
 	// Cache
@@ -96,6 +96,7 @@ public class BlockModelRenderer {
 			// model id. Primarily used for texture location.
 			ResourceLocation modelId = new ResourceLocation("cosmetica-core", "models/" + pathify(id));
 			// TODO texture register
+			// TODO remember to close image when gc()
 
 			try (InputStream is = new ByteArrayInputStream(modelJson.getBytes(StandardCharsets.UTF_8))) {
 				BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));

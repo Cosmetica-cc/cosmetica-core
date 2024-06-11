@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.api;
 
-import cc.cosmetica.core.impl.BlockModelRenderer;
+import cc.cosmetica.core.impl.BlockModelManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
@@ -62,7 +62,7 @@ public interface CosmeticaModel {
 		stack.mulPose(new Quaternion(Vector3f.YP, (float)Math.PI, false)); // pi radians on y axis
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		if (mirror) stack.scale(-1, 1, 1);
-		BlockModelRenderer.renderModel(
+		BlockModelManager.renderModel(
 				model,
 				stack,
 				multiBufferSource,
