@@ -5,6 +5,8 @@
   "minVersion": "0.8",
   "client": [
     "LivingEntityRendererMixin",
+    "network.AbstractClientPlayerMixin",
+    "network.SkinManagerMixin",
     "texture.ModelManagerMixin",
     "texture.NativeImageAccessorMixin"
   ],

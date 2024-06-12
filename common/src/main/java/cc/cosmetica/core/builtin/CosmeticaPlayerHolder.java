@@ -16,21 +16,14 @@
 
 package cc.cosmetica.core.builtin;
 
-import cc.cosmetica.core.api.CosmeticManager;
-import cc.cosmetica.core.api.Cosmetics;
-import net.minecraft.world.entity.LivingEntity;
+import gg.cloaks.javaclient.model.PlayerResponse;
 
 /**
- * Cosmetic manager for test cosmetics.
+ * Duck interface to access and modify the {@link PlayerResponse} on a {@linkplain net.minecraft.client.player.AbstractClientPlayer player}.
+ * @implNote I would rather not have to store this additional data alongside Cosmetis on every player, but my design
+ * has forced my hand.
  */
-public class TestCosmeticManager implements CosmeticManager {
-	@Override
-	public boolean canManage(LivingEntity entity) {
-		return false;
-	}
-
-	@Override
-	public Cosmetics getCosmetics(LivingEntity entity) {
-		return null;
-	}
+public interface CosmeticaPlayerHolder {
+	PlayerResponse cosmeticacore$getResponse();
+	void cosmeticacore$setResponse(PlayerResponse response);
 }

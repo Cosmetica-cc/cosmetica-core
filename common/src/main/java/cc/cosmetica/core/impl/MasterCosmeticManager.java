@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 /**
@@ -34,6 +36,7 @@ public final class MasterCosmeticManager {
 	private MasterCosmeticManager() {
 	}
 
+	public static final ExecutorService HTTP_THREAD_POOL = Executors.newFixedThreadPool(30);
 	// sorted collection of cosmetic managers
 	private static final Collection<PrioritisedManager> COSMETIC_MANAGERS = new TreeSet<>();
 	// callbacks

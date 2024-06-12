@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.builtin;
+package cc.cosmetica.core.builtin.manager;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.decoration.ArmorStand;
 
 /**
- * Manages cosmetics for armour stands that represent outfits.
+ * Cosmetic manager for test cosmetics.
  */
-public class ArmourStandCosmeticManager implements CosmeticManager {
+public class TestCosmeticManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof ArmorStand; // && has outfit
+		return false;
 	}
 
 	@Override

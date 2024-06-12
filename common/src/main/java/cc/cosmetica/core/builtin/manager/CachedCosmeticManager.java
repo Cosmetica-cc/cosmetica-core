@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.builtin;
+package cc.cosmetica.core.builtin.manager;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
