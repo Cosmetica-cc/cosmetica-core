@@ -30,8 +30,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,6 +52,11 @@ public class ApiCosmeticManager implements CosmeticManager {
 		return new ApiCosmetics(response);
 	}
 
+	@Override
+	public void onAssign(LivingEntity entity) {
+		System.out.println("i am now assigned this entity " + entity.getName());
+	}
+
 	/**
 	 * Look up and store Cosmetica data for the given game profile.
 	 * @param profile the profile to look up and store data for.
@@ -65,23 +72,28 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 		if (textureProperty == null || !textureProperty.hasSignature()) {
 			// use request via uuid or name if we cannot use the packet
-
 			String lookupBy;
 
 			if (uuid.version() == 4) {
 				lookupBy = uuid.toString();
 			} else {
 				lookupBy = profile.getName();
+				// TODO check valid name
 			}
+			Logging.getInstance().debug("Looking up user by {}", lookupBy);
 
 			CosmeticaAPI.performAsync(api -> {
 				try {
 					return api.playersControllerGetPlayer(lookupBy);
 				} catch (ApiException e) {
-					Logging.getInstance().error("Error fetching player data for texture packet.", e);
+					Logging.getInstance().error("Error fetching player data by name/id.", e);
 					return null;
 				}
-			}).thenAccept(r -> ((CosmeticaPlayerHolder)Minecraft.getInstance().level.getPlayerByUUID(profile.getId())).cosmeticacore$setResponse(r)); // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
+			}).exceptionally(e -> {
+				System.out.println(e);
+				return null;
+			}).thenAccept(r -> {if (r != null)Minecraft.getInstance().tell(() -> updatePlayer(profile, r));}); // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
+			System.out.println("will it work who knows");
 		} else {
 			// In order to take the load off the servers (and avoid rate limits), we forward the mojang api response used in
 			// game instead of using a network of workers. This is a more long-term sustainable approach to fetching username
@@ -99,7 +111,18 @@ public class ApiCosmeticManager implements CosmeticManager {
 					Logging.getInstance().error("Error fetching player data for texture packet.", e);
 					return null;
 				}
-			}).thenAccept(r -> ((CosmeticaPlayerHolder)Minecraft.getInstance().level.getPlayerByUUID(profile.getId())).cosmeticacore$setResponse(r));
+			}).thenAccept(r -> Minecraft.getInstance().tell(() -> updatePlayer(profile, r)));
+		}
+	}
+
+	private static void updatePlayer(GameProfile profile, @Nullable PlayerResponse response) {
+		Logging.getInstance().debug("Updating cosmetics for {}", profile);
+		Player player = Minecraft.getInstance().level.getPlayerByUUID(profile.getId());
+
+		if (player == null) {
+			Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.getName(), profile.getId());
+		} else {
+			((CosmeticaPlayerHolder) player).cosmeticacore$setResponse(response);
 		}
 	}
 

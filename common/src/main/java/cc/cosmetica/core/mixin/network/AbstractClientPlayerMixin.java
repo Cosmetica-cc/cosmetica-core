@@ -38,6 +38,7 @@ public class AbstractClientPlayerMixin implements CosmeticaPlayerHolder {
 
 	@Override
 	public void cosmeticacore$setResponse(PlayerResponse response) {
+		System.out.println("setting repson");
 		this.cosmeticacore$player = response;
 	}
 }

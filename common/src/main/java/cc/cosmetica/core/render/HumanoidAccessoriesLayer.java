@@ -41,6 +41,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 					   float f, float g, float pitch, float j, float k, float l) {
 		Cosmetics.getCosmetics(entity).ifPresent(cosmetics -> {
 			for (Accessory accessory : cosmetics.getAccessories()) {
+				//System.out.println("rendering accessory " + accessory.getName() + " on " + accessory.getAttachment().getValue()	);
 				ModelPart part = null;
 
 				switch (accessory.getAttachment()) {

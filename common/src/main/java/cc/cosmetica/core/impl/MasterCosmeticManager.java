@@ -67,11 +67,12 @@ public final class MasterCosmeticManager {
 			}
 		}
 
-		CosmeticManager old = currentManager.getValue();
-		CosmeticEquipper equipper = (CosmeticEquipper) entity;
-
 		// if the manager was updated, perform the update procedure
 		if (currentManager.checkAndSet(selectedManager)) {
+			CosmeticManager old = currentManager.getValue();
+			CosmeticEquipper equipper = (CosmeticEquipper) entity;
+
+			// inform old cosmetic manager the player has been revoked
 			if (old != null) old.onRevoke(entity);
 
 			if (selectedManager != null) {
@@ -94,14 +95,21 @@ public final class MasterCosmeticManager {
 		PrioritisedManager(int priority, CosmeticManager manager) {
 			this.priority = priority;
 			this.manager = manager;
+			this.order = globalOrder++; // to prevent same-priority managers replacing each other
 		}
 
 		private final int priority;
+		private final int order;
 		private final CosmeticManager manager;
 
 		@Override
 		public int compareTo(@NotNull MasterCosmeticManager.PrioritisedManager pm) {
+			if (this.priority == pm.priority) {
+				return this.order - pm.order;
+			}
 			return this.priority - pm.priority;
 		}
+
+		private static int globalOrder = 0;
 	}
 }

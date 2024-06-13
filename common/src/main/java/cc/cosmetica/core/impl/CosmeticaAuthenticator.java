@@ -32,7 +32,8 @@ public final class CosmeticaAuthenticator {
 
 	static {
 		ApiClient defaultClient = Configuration.getDefaultApiClient();
-		defaultClient.setBasePath(System.getProperty("cosmetica.api", "https://api.cloaks.gg/"));
+		Logging.getInstance().debug("Using API url: {}", System.getProperty("cosmetica.api", "https://api.cloaks.gg"));
+		defaultClient.setBasePath(System.getProperty("cosmetica.api", "https://api.cloaks.gg"));
 
 		apiInstance = new DefaultApi(defaultClient);
 	}

@@ -25,6 +25,9 @@ dependencies {
         exclude module: "fabric-loader"
     }
 
+    api "gg.cloaks:javaclient:${cosmetica_java_client_version}"
+    include "gg.cloaks:javaclient:${cosmetica_java_client_version}"
+
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 }

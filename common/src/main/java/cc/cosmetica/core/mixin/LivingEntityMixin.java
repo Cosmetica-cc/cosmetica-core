@@ -21,7 +21,11 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.CosmeticEquipper;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.IdentityCache;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,7 +38,11 @@ import java.util.Optional;
  * Implements the {@link CosmeticEquipper} and connects the entity tick to polling cosmetics.
  */
 @Mixin(LivingEntity.class)
-public class LivingEntityMixin implements CosmeticEquipper {
+public abstract class LivingEntityMixin extends Entity implements CosmeticEquipper {
+	public LivingEntityMixin(EntityType<?> entityType, Level level) {
+		super(entityType, level);
+	}
+
 	@Unique
 	private Cosmetics cosmeticacore$cosmetics;
 
@@ -53,6 +61,8 @@ public class LivingEntityMixin implements CosmeticEquipper {
 
 	@Inject(method = "tick", at = @At("RETURN"))
 	private void onTick(CallbackInfo ci) {
-		MasterCosmeticManager.pollCosmetics((LivingEntity)(Object)this, this.cosmeticacore$manager);
+		if (this.level.isClientSide()) {
+			MasterCosmeticManager.pollCosmetics((LivingEntity)(Object)this, this.cosmeticacore$manager);
+		}
 	}
 }

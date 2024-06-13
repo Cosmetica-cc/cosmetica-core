@@ -31,7 +31,7 @@ public final class Logging {
 
 	private final Set<String> warnings = new HashSet<>();
 	private final Logger logger = LogManager.getLogger("Cosmetica");
-	private final boolean debug = Boolean.getBoolean("debug");
+	private final boolean debug = Boolean.getBoolean("cosmetica.debug");
 
 	public void debug(String message, Object... args) {
 		if (debug) {
