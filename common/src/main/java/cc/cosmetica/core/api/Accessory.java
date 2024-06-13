@@ -26,17 +26,23 @@ import java.util.HashSet;
  * Represents an Accessory equipped on a user.
  */
 public final class Accessory {
-	public Accessory(AttachmentEnum attachment, CosmeticaModel model, Vec3 offset) {
+	public Accessory(String name, AttachmentEnum attachment, CosmeticaModel model, Vec3 offset) {
+		this.name = name;
 		this.attachment = attachment;
 		this.model = model;
 		this.offset = offset;
 		this.flags = new HashSet<>();
 	}
 
+	private final String name;
 	private final AttachmentEnum attachment;
 	private final CosmeticaModel model;
 	private final Vec3 offset;
 	private final Collection<Flag> flags;
+
+	public String getName() {
+		return this.name;
+	}
 
 	public AttachmentEnum getAttachment() {
 		return this.attachment;

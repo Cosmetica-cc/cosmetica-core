@@ -134,6 +134,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 						List<BigDecimal> offset = accessory.getOffset();
 
 						accessories.add(new Accessory(
+								accessory.getAccessory().getName(),
 								accessory.getAccessory().getAttachment(),
 								model,
 								new Vec3(

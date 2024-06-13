@@ -18,8 +18,10 @@ package cc.cosmetica.core.render;
 
 import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.impl.Logging;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
@@ -35,10 +37,46 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 	}
 
 	@Override
-	public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int i, E entity, float f, float g, float h, float j, float k, float l) {
+	public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int light, E entity,
+					   float f, float g, float pitch, float j, float k, float l) {
 		Cosmetics.getCosmetics(entity).ifPresent(cosmetics -> {
 			for (Accessory accessory : cosmetics.getAccessories()) {
+				ModelPart part = null;
+
+				switch (accessory.getAttachment()) {
+				case HEAD:
+					part = this.getParentModel().head;
+					break;
+				case BODY:
+					part = this.getParentModel().body;
+					break;
+				case LEFT_ARM:
+					part = this.getParentModel().leftArm;
+					break;
+				case RIGHT_ARM:
+					part = this.getParentModel().rightArm;
+					break;
+				case LEFT_LEG:
+					part = this.getParentModel().leftLeg;
+					break;
+				case RIGHT_LEG:
+					part = this.getParentModel().rightLeg;
+					break;
+				case UNKNOWN_DEFAULT_OPEN_API:
+					Logging.getInstance().warnOnce(
+							"attachment_unknown_accessory",
+							"Unknown attachment for accessory {}",
+							accessory.getName());
+					continue;
+				}
+
 				Vec3 offset = accessory.getOffset();
+
+				accessory.getModel().renderOnPart(
+						part, poseStack, multiBufferSource, light,
+						(float)offset.x, (float)offset.y, (float)offset.z,
+						false
+				);
 			}
 		});
 	}
