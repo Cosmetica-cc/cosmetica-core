@@ -73,11 +73,13 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 
 				Vec3 offset = accessory.getOffset();
 
-				accessory.getModel().renderOnPart(
-						part, poseStack, multiBufferSource, light,
-						(float)offset.x, (float)offset.y, (float)offset.z,
-						false
-				);
+				if (part.visible) {
+					accessory.getModel().renderOnPart(
+							part, poseStack, multiBufferSource, light,
+							(float) offset.x, (float) offset.y, (float) offset.z,
+							false
+					);
+				}
 			}
 		});
 	}
