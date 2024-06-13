@@ -25,9 +25,10 @@ import net.minecraft.world.entity.decoration.ArmorStand;
  * Manages cosmetics for armour stands that represent outfits.
  */
 public class ArmourStandCosmeticManager implements CosmeticManager {
+	boolean hasOutfit= false;
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof ArmorStand; // && has outfit
+		return entity instanceof ArmorStand && hasOutfit; // todo actual has outfit
 	}
 
 	@Override
