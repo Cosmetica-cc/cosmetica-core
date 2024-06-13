@@ -136,9 +136,9 @@ public class ApiCosmeticManager implements CosmeticManager {
 								accessory.getAccessory().getAttachment(),
 								model,
 								new Vec3(
-									offset.get(0).intValue(),
-									offset.get(1).intValue(),
-									offset.get(2).intValue()
+									offset.get(0).doubleValue(),
+									offset.get(1).doubleValue(),
+									offset.get(2).doubleValue()
 								))
 						);
 					}
