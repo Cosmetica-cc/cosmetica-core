@@ -59,6 +59,15 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 		this.cosmeticacore$cosmetics = cosmetics;
 	}
 
+	@Override
+	public void cosmeticacore$onEntityRemoved() {
+		CosmeticManager manager = this.cosmeticacore$manager.getValue();
+
+		if (manager != null) {
+			manager.onRevoke((LivingEntity) (Object) this);
+		}
+	}
+
 	@Inject(method = "tick", at = @At("RETURN"))
 	private void onTick(CallbackInfo ci) {
 		if (this.level.isClientSide()) {

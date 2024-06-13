@@ -36,4 +36,9 @@ public interface CosmeticEquipper {
 	 * @param cosmetics the cosmetics container on this living entity.
 	 */
 	void cosmeticacore$setCosmetics(Cosmetics cosmetics);
+
+	/**
+	 * Called when the entity is removed from the client level.
+	 */
+	void cosmeticacore$onEntityRemoved();
 }

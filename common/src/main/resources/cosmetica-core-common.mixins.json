@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_8",
   "minVersion": "0.8",
   "client": [
+    "ClientLevelMixin",
     "LivingEntityRendererMixin",
     "network.AbstractClientPlayerMixin",
     "network.SkinManagerMixin",
@@ -12,7 +13,8 @@
   ],
   "mixins": [
     "LivingEntityMixin",
-    "MinecraftMixin"
+    "MinecraftMixin",
+    "network.ArmourStandMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.builtin.manager;
+package cc.cosmetica.core.mixin.network;
 
-import cc.cosmetica.core.api.CosmeticManager;
-import cc.cosmetica.core.api.Cosmetics;
-import net.minecraft.world.entity.LivingEntity;
+import cc.cosmetica.core.builtin.CosmeticaOutfitHolder;
+import gg.cloaks.javaclient.model.Outfit;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 
-/**
- * Manages cosmetics for armour stands that represent outfits.
- */
-public class ArmourStandCosmeticManager implements CosmeticManager {
-	boolean hasOutfit = false;
+@Mixin(ArmorStand.class)
+public class ArmourStandMixin implements CosmeticaOutfitHolder {
+	@Unique
+	Outfit cosmetica$outfit;
 
 	@Override
-	public boolean canManage(LivingEntity entity) {
-		return entity instanceof ArmorStand && hasOutfit; // todo actual has outfit
+	public Outfit cosmeticacore$getOutfit() {
+		return cosmetica$outfit;
 	}
 
 	@Override
-	public Cosmetics getCosmetics(LivingEntity entity) {
-		return null;
+	public void cosmeticacore$setOutfit(Outfit response) {
+		this.cosmetica$outfit = response;
 	}
 }

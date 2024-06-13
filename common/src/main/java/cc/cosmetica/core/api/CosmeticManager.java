@@ -47,8 +47,7 @@ public interface CosmeticManager {
 	}
 
 	/**
-	 * Called when an entity is assigned to a different cosmetic manager.
-	 * This is NOT called when an entity is removed from the world.
+	 * Called when an entity is assigned to a different cosmetic manager, or is removed from the world.
 	 * @param entity the entity that was being managed by this cosmetic manager.
 	 */
 	default void onRevoke(LivingEntity entity) {
