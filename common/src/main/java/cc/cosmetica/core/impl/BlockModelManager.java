@@ -23,7 +23,6 @@ import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import jdk.internal.loader.Resource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -66,6 +65,8 @@ public class BlockModelManager {
 	 * Garbage Collector. Checks the next item and removes it if it's unnecessary.
 	 */
 	public static void gc() {
+		if (CACHED_MODEL_IDS.isEmpty()) return;
+
 		String gcModelId = CACHED_MODEL_IDS.get(gcIndex);
 
 		// if object is no longer held in memory
@@ -82,6 +83,7 @@ public class BlockModelManager {
 			// not necessary if removed as the next item shifts back
 		}
 
+		// This is safe because CACHED_MODEL_IDS is only shrunk in this method.
 		if (gcIndex > CACHED_MODEL_IDS.size()) {
 			gcIndex = 0;
 		}

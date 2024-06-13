@@ -11,7 +11,8 @@
     "texture.NativeImageAccessorMixin"
   ],
   "mixins": [
-    "LivingEntityMixin"
+    "LivingEntityMixin",
+    "MinecraftMixin"
   ],
   "injectors": {
     "defaultRequire": 1
