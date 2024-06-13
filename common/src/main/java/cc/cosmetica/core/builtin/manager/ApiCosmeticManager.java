@@ -118,9 +118,10 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 				// convert data
 				Outfit outfit = user.getOutfit();
-				List<Accessory> accessories = new ArrayList<>();
 
 				if (outfit != null) {
+					List<Accessory> accessories = new ArrayList<>();
+
 					for (OutfitAccessory accessory : outfit.getAccessories()) {
 						CosmeticaModel model = CosmeticaModel.getOrBakeModel(
 								accessory.getAccessory().getId(),
@@ -142,6 +143,8 @@ public class ApiCosmeticManager implements CosmeticManager {
 								))
 						);
 					}
+
+					this.accessories = accessories;
 				}
 			}
 		}
