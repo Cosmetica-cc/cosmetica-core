@@ -27,6 +27,8 @@ import java.util.function.BiConsumer;
 
 /**
  * Interface for the cosmetics equipped on an entity.
+ * Do not keep non-weak references to this (without proper management), as it will prevent this data being garbage
+ * collected when a player is removed.
  */
 public interface Cosmetics {
 	/**

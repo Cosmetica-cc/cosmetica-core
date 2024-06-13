@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.api;
 
+import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
@@ -24,19 +25,25 @@ import java.util.HashSet;
 /**
  * Represents an Accessory equipped on a user.
  */
-public class Accessory {
-	public Accessory(String id, Vec3 offset) {
-		this.id = id;
+public final class Accessory {
+	public Accessory(AttachmentEnum attachment, CosmeticaModel model, Vec3 offset) {
+		this.attachment = attachment;
+		this.model = model;
 		this.offset = offset;
 		this.flags = new HashSet<>();
 	}
 
-	private final String id;
+	private final AttachmentEnum attachment;
+	private final CosmeticaModel model;
 	private final Vec3 offset;
 	private final Collection<Flag> flags;
 
-	public String getId() {
-		return this.id;
+	public AttachmentEnum getAttachment() {
+		return this.attachment;
+	}
+
+	public CosmeticaModel getModel() {
+		return this.model;
 	}
 
 	public Vec3 getOffset() {

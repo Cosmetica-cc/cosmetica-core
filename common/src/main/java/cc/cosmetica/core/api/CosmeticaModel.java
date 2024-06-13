@@ -24,22 +24,35 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
 
 /**
  * Contains model data for a cosmetica model.
  */
-public interface CosmeticaModel {
+public final class CosmeticaModel {
+	public CosmeticaModel(ResourceLocation texture, BakedModel model) {
+		this.texture = texture;
+		this.model = model;
+	}
+
+	private final ResourceLocation texture;
+	private final BakedModel model;
+
 	/**
 	 * Get the location for the texture for this model.
 	 * @return the texture for this model.
 	 */
-	ResourceLocation getTexture();
+	public ResourceLocation getTexture() {
+		return this.texture;
+	}
 
 	/**
 	 * Get the baked model of this cosmetic. If it has not been baked yet, bake the model.
 	 * @return the baked model for this cosmetic model.
 	 */
-	BakedModel getBakedModel();
+	public BakedModel getBakedModel() {
+		return this.model;
+	}
 
 	/**
 	 * Render this model cosmetic on the given part, with the given transform.
@@ -52,7 +65,7 @@ public interface CosmeticaModel {
 	 * @param z the z offset.
 	 * @param mirror whether to mirror the model.
 	 */
-	default void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
+	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
 		BakedModel model = this.getBakedModel();
 		if (model == null) return; // if it has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
@@ -70,5 +83,23 @@ public interface CosmeticaModel {
 				packedLight);
 
 		stack.popPose();
+	}
+
+	/**
+	 * Get or bake a model for the given id.
+	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param modelJson the Java Block/Item model json to use if the model hasn't been baked yet.
+	 * @param textureBase64 the base64 texture to use, if the model has not been baked yet.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Image frames are to be stored as a tilesheet, top to bottom.
+	 * @implNote a weak reference to the BakedModel is stored in cache.
+	 * @return a {@link CosmeticaModel} with the model amnd texture location for this model.
+	 */
+	public static CosmeticaModel getOrBakeModel(String id, String modelJson,
+												String textureBase64, int ticksPerFrame, int frames) {
+		return BlockModelManager.getOrBakeModel(id, modelJson, textureBase64, ticksPerFrame, frames);
 	}
 }

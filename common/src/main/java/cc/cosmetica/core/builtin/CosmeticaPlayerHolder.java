@@ -22,6 +22,7 @@ import gg.cloaks.javaclient.model.PlayerResponse;
  * Duck interface to access and modify the {@link PlayerResponse} on a {@linkplain net.minecraft.client.player.AbstractClientPlayer player}.
  * @implNote I would rather not have to store this additional data alongside Cosmetis on every player, but my design
  * has forced my hand.
+ * TODO perhaps I can condense this to just outfit information
  */
 public interface CosmeticaPlayerHolder {
 	PlayerResponse cosmeticacore$getResponse();

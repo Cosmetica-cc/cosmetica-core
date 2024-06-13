@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.render.texture.AnimatedTexture;
 import cc.cosmetica.core.render.texture.Base64Texture;
 import cc.cosmetica.core.render.texture.ModelSprite;
@@ -53,7 +54,7 @@ public class BlockModelManager {
 	private static int gcIndex = 0;
 	// Cache
 	private static final List<String> CACHED_MODEL_IDS = new ArrayList<>();
-	private static final Map<String, WeakReference<BakedModel>> CACHE = new HashMap<>();
+	private static final Map<String, WeakReference<CosmeticaModel>> CACHE = new HashMap<>();
 
 	/**
 	 * The model bakery.
@@ -97,34 +98,35 @@ public class BlockModelManager {
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
 	 * @implNote a weak reference to the BakedModel is stored in cache.
+	 * @return a {@link CosmeticaModel} with the model amnd texture location for this model.
 	 */
-	public static BakedModel getOrBakeModel(String id, String modelJson,
-											String textureBase64, int ticksPerFrame, int frames) {
-		WeakReference<BakedModel> modelRef = CACHE.get(id);
-		BakedModel model = modelRef == null ? null : modelRef.get();
+	public static CosmeticaModel getOrBakeModel(String id, String modelJson,
+												String textureBase64, int ticksPerFrame, int frames) {
+		WeakReference<CosmeticaModel> modelRef = CACHE.get(id);
+		CosmeticaModel model = modelRef == null ? null : modelRef.get(); // if the model doesn't exist or has expired, generate a new one
 
 		if (model == null) {
 			// model id. Primarily used for texture location.
-			ResourceLocation modelId = getModelLocation(id);
+			ResourceLocation textureLocation = getModelLocation(id);
 
 			try (InputStream is = new ByteArrayInputStream(modelJson.getBytes(StandardCharsets.UTF_8))) {
 				// create texture
-				AnimatedTexture texture = Base64Texture.create(modelId, textureBase64.substring(22), ticksPerFrame, frames);
+				AnimatedTexture texture = Base64Texture.create(textureLocation, textureBase64.substring(22), ticksPerFrame, frames);
 
 				// upload texture
 				if (RenderSystem.isOnRenderThreadOrInit()) {
-					Minecraft.getInstance().getTextureManager().register(modelId, texture);
+					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 				}
 				else {
 					RenderSystem.recordRenderCall(() -> {
-						Minecraft.getInstance().getTextureManager().register(modelId, texture);
+						Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 					});
 				}
 
 				// create model
 				BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
 				blockModel.name = id;
-				model = bakeModel(modelId, blockModel);
+				model = new CosmeticaModel(textureLocation, bakeModel(textureLocation, blockModel));
 
 				// store in cache
 				CACHE.put(id, new WeakReference<>(model));

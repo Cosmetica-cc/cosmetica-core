@@ -16,20 +16,26 @@
 
 package cc.cosmetica.core.builtin.manager;
 
-import cc.cosmetica.core.api.CosmeticManager;
-import cc.cosmetica.core.api.CosmeticaAPI;
-import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.*;
+import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.builtin.CosmeticaPlayerHolder;
 import cc.cosmetica.core.impl.Logging;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import gg.cloaks.javaclient.ApiException;
-import gg.cloaks.javaclient.model.TexturePacketDto;
+import gg.cloaks.javaclient.model.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public class ApiCosmeticManager implements CosmeticManager {
@@ -40,7 +46,8 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 	@Override
 	public Cosmetics getCosmetics(LivingEntity entity) {
-		return null;
+		PlayerResponse response = ((CosmeticaPlayerHolder)entity).cosmeticacore$getResponse();
+		return new ApiCosmetics(response);
 	}
 
 	/**
@@ -93,6 +100,60 @@ public class ApiCosmeticManager implements CosmeticManager {
 					return null;
 				}
 			}).thenAccept(r -> ((CosmeticaPlayerHolder)Minecraft.getInstance().level.getPlayerByUUID(profile.getId())).cosmeticacore$setResponse(r));
+		}
+	}
+
+	/**
+	 * The Cosmetics stored on the player from the API.
+	 * NOTE: Do not keep non-weak references to this outside the player mixin itself for garbage collection reasons.
+	 */
+	private static final class ApiCosmetics implements Cosmetics {
+		ApiCosmetics(PlayerResponse response) {
+			// default values
+			this.accessories = ImmutableList.of();
+
+			// read accessories
+			if (response.isIsUser()) {
+				CosmeticaUser user = response.getUser();
+
+				// convert data
+				Outfit outfit = user.getOutfit();
+				List<Accessory> accessories = new ArrayList<>();
+
+				if (outfit != null) {
+					for (OutfitAccessory accessory : outfit.getAccessories()) {
+						CosmeticaModel model = CosmeticaModel.getOrBakeModel(
+								accessory.getAccessory().getId(),
+								accessory.getAccessory().getModel(),
+								accessory.getAccessory().getTexture(),
+								accessory.getAccessory().getTicksPerFrame().intValue(),
+								accessory.getAccessory().getFrames().intValue()
+								);
+
+						List<BigDecimal> offset = accessory.getOffset();
+
+						accessories.add(new Accessory(
+								accessory.getAccessory().getAttachment(),
+								model,
+								new Vec3(
+									offset.get(0).intValue(),
+									offset.get(1).intValue(),
+									offset.get(2).intValue()
+								))
+						);
+					}
+				}
+			}
+		}
+
+		// this will be changed if outfit change is received from server.
+		// 1. replace playerresponse data on player (probably not necessary with code structure but good practise)
+		// 2. tell apicosmeticamanager to replace cosmetics (if it's an ApiCosmetics)
+		private List<Accessory> accessories;
+
+		@Override
+		public Collection<Accessory> getAccessories() {
+			return this.accessories;
 		}
 	}
 }
