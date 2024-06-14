@@ -62,7 +62,8 @@ public class BlockModelManager {
 	public static ModelBakery bakery;
 
 	/**
-	 * Garbage Collector. Checks the next item and removes it if it's unnecessary.
+	 * Garbage Collector. Checks the next item and removes it if it's pointed to nothing.
+	 * Prevents memory leaks.
 	 */
 	public static void gc() {
 		if (CACHED_MODEL_IDS.isEmpty()) return;

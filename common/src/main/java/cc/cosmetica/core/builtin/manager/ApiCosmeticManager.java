@@ -90,7 +90,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 					return null;
 				}
 			}).exceptionally(e -> {
-				System.out.println(e);
+				Logging.getInstance().error("Error fetching player data by name/id.", e);
 				return null;
 			}).thenAccept(r -> {if (r != null)Minecraft.getInstance().tell(() -> updatePlayer(profile, r));}); // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
 			System.out.println("will it work who knows");
@@ -140,6 +140,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 				CosmeticaUser user = response.getUser();
 
 				// convert data
+				assert user != null; // response.isIsUser()
 				Outfit outfit = user.getOutfit();
 
 				if (outfit != null) {
