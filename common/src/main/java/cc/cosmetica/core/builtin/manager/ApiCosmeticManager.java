@@ -16,9 +16,9 @@
 
 package cc.cosmetica.core.builtin.manager;
 
-import cc.cosmetica.core.api.*;
 import cc.cosmetica.core.api.Accessory;
-import cc.cosmetica.core.builtin.CosmeticaPlayerHolder;
+import cc.cosmetica.core.api.*;
+import cc.cosmetica.core.builtin.CosmeticaCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -28,9 +28,9 @@ import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.model.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -43,18 +43,23 @@ import java.util.UUID;
 public class ApiCosmeticManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof AbstractClientPlayer && ((CosmeticaPlayerHolder)entity).cosmeticacore$getResponse() != null;
+		return entity instanceof AbstractClientPlayer && ((CosmeticaCosmeticsHolder)entity).cosmeticacore$getCosmetics() != null;
 	}
 
 	@Override
 	public Cosmetics getCosmetics(LivingEntity entity) {
-		PlayerResponse response = ((CosmeticaPlayerHolder)entity).cosmeticacore$getResponse();
-		return new ApiCosmetics(response);
+		return ((CosmeticaCosmeticsHolder)entity).cosmeticacore$getCosmetics();
 	}
 
 	@Override
 	public void onAssign(LivingEntity entity) {
 		System.out.println("i am now assigned this entity " + entity.getName());
+	}
+
+	@Override
+	public void onRevoke(LivingEntity entity) {
+		System.out.println("i am no longer assigned this entity " + entity.getName());
+		// TODO clear built models to store minimal data when not owning a player (in case switch to another manager)
 	}
 
 	/**
@@ -115,14 +120,35 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 	}
 
+	/**
+	 * Save cosmetics on the player given the given response.
+	 * @param profile the profile for which to update the player.
+	 * @param response the response received from the server.
+	 */
 	private static void updatePlayer(GameProfile profile, @Nullable PlayerResponse response) {
+		if (response == null) {
+			Logging.getInstance().debug("Skipping update for {} (no data)", profile);
+			return;
+		}
+
+		Level level = Minecraft.getInstance().level;
+		if (level == null) {
+			Logging.getInstance().debug("Skipping update for {} (no level)", profile);
+			return;
+		}
+
 		Logging.getInstance().debug("Updating cosmetics for {}", profile);
-		Player player = Minecraft.getInstance().level.getPlayerByUUID(profile.getId());
+		Player player = level.getPlayerByUUID(profile.getId());
 
 		if (player == null) {
 			Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.getName(), profile.getId());
 		} else {
-			((CosmeticaPlayerHolder) player).cosmeticacore$setResponse(response);
+			CosmeticaCosmeticsHolder holder = ((CosmeticaCosmeticsHolder) player);
+
+			// create a new ApiCosmetics
+			ApiCosmetics cosmetics = new ApiCosmetics(response);
+			// store on the player
+			holder.cosmeticacore$setCosmetics(cosmetics);
 		}
 	}
 
@@ -130,8 +156,8 @@ public class ApiCosmeticManager implements CosmeticManager {
 	 * The Cosmetics stored on the player from the API.
 	 * NOTE: Do not keep non-weak references to this outside the player mixin itself for garbage collection reasons.
 	 */
-	private static final class ApiCosmetics implements Cosmetics {
-		ApiCosmetics(PlayerResponse response) {
+	public static final class ApiCosmetics implements Cosmetics {
+		private ApiCosmetics(PlayerResponse response) {
 			// default values
 			this.accessories = ImmutableList.of();
 
@@ -153,7 +179,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 								accessory.getAccessory().getTexture(),
 								accessory.getAccessory().getTicksPerFrame().intValue(),
 								accessory.getAccessory().getFrames().intValue()
-								);
+								);// TODO model and texture are URLs now. dynamic url loading
 
 						List<BigDecimal> offset = accessory.getOffset();
 

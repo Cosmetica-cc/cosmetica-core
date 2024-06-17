@@ -16,8 +16,8 @@
 
 package cc.cosmetica.core.mixin.network;
 
-import cc.cosmetica.core.builtin.CosmeticaPlayerHolder;
-import gg.cloaks.javaclient.model.PlayerResponse;
+import cc.cosmetica.core.builtin.CosmeticaCosmeticsHolder;
+import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import net.minecraft.client.player.AbstractClientPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -27,18 +27,17 @@ import org.spongepowered.asm.mixin.Unique;
  * Used for implementing the main CosmeticManager.
  */
 @Mixin(AbstractClientPlayer.class)
-public class AbstractClientPlayerMixin implements CosmeticaPlayerHolder {
+public class AbstractClientPlayerMixin implements CosmeticaCosmeticsHolder {
 	@Unique
-	private PlayerResponse cosmeticacore$player;
+	private ApiCosmeticManager.ApiCosmetics cosmeticacore$apiCosmetics;
 
 	@Override
-	public PlayerResponse cosmeticacore$getResponse() {
-		return this.cosmeticacore$player;
+	public ApiCosmeticManager.ApiCosmetics cosmeticacore$getCosmetics() {
+		return this.cosmeticacore$apiCosmetics;
 	}
 
 	@Override
-	public void cosmeticacore$setResponse(PlayerResponse response) {
-		System.out.println("setting repson");
-		this.cosmeticacore$player = response;
+	public void cosmeticacore$setCosmetics(ApiCosmeticManager.ApiCosmetics cosmetics) {
+		this.cosmeticacore$apiCosmetics = cosmetics;
 	}
 }

@@ -16,15 +16,14 @@
 
 package cc.cosmetica.core.builtin;
 
-import gg.cloaks.javaclient.model.PlayerResponse;
+import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 
 /**
- * Duck interface to access and modify the {@link PlayerResponse} on a {@linkplain net.minecraft.client.player.AbstractClientPlayer player}.
- * @implNote I would rather not have to store this additional data alongside Cosmetis on every player, but my design
- * has forced my hand.
- * TODO perhaps I can condense this to just outfit information
+ * Duck interface to access and modify the api cosmetics on a player.
+ * This is ok as we will ensure only minimal data is stored if the Api Cosmetic Manager is not selected,
+ * and this will be correctly garbage collected when the player is removed from the world.
  */
-public interface CosmeticaPlayerHolder {
-	PlayerResponse cosmeticacore$getResponse();
-	void cosmeticacore$setResponse(PlayerResponse response);
+public interface CosmeticaCosmeticsHolder {
+	ApiCosmeticManager.ApiCosmetics cosmeticacore$getCosmetics();
+	void cosmeticacore$setCosmetics(ApiCosmeticManager.ApiCosmetics cosmetics);
 }
