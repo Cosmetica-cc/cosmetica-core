@@ -57,7 +57,7 @@ public abstract class AnimatedTexture extends AbstractTexture {
 	}
 
 	protected void doTick() {
-		if (((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
+		if (this.image != null && ((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
 			this.tick = (this.tick + 1) % this.ticksPerFrame;
 
 			if (this.tick == 0) {
@@ -80,7 +80,11 @@ public abstract class AnimatedTexture extends AbstractTexture {
 	}
 
 	public int getFrameHeight() {
-		return this.isAnimatable() ? this.frameHeight : this.image.getHeight();
+		return this.isAnimatable() ? this.frameHeight : this.getHeight();
+	}
+
+	private int getHeight() {
+		return this.image == null ? 0 : this.image.getHeight();
 	}
 
 	public int getFrameCount() {

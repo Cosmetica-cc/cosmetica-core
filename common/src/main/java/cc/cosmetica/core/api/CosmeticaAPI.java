@@ -49,4 +49,8 @@ public final class CosmeticaAPI {
 	public static <T> CompletableFuture<T> performAsync(Function<DefaultApi, T> request) {
 		return CompletableFuture.supplyAsync(() -> request.apply(CosmeticaAuthenticator.getCurrentApi()), MasterCosmeticManager.HTTP_THREAD_POOL);
 	}
+
+	public static CompletableFuture<String> downloadAsync(String url) {
+
+	}
 }
