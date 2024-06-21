@@ -8,6 +8,7 @@
     "LivingEntityRendererMixin",
     "network.AbstractClientPlayerMixin",
     "network.SkinManagerMixin",
+    "texture.HttpTextureMixin",
     "texture.ModelManagerMixin",
     "texture.NativeImageAccessorMixin"
   ],

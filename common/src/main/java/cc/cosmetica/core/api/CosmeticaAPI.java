@@ -51,6 +51,6 @@ public final class CosmeticaAPI {
 	}
 
 	public static CompletableFuture<String> downloadAsync(String url) {
-
+		// TODO
 	}
 }

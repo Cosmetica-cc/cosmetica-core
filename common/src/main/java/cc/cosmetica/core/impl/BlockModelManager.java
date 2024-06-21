@@ -16,9 +16,9 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CosmeticaModel;
-import cc.cosmetica.core.render.texture.AnimatedTexture;
-import cc.cosmetica.core.render.texture.Base64Texture;
+import cc.cosmetica.core.render.texture.AnimatedHttpTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -30,6 +30,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.HttpTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.BlockModelRotation;
@@ -37,12 +38,12 @@ import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -60,6 +61,57 @@ public class BlockModelManager {
 	 * Set by ModelManagerMixin.
 	 */
 	public static ModelBakery bakery;
+
+	private static final Path CACHE_DIRECTORY;
+	private static final ResourceLocation LOADING_TEXTURE;
+
+	static {
+		Path minecraftDir = findDefaultInstallDir("minecraft");
+
+		if (Files.isDirectory(minecraftDir)) {
+			CACHE_DIRECTORY = minecraftDir.resolve(".cosmetica");
+		} else {
+			CACHE_DIRECTORY = CosmeticaCoreExpectPlatform.getGameDirectory().resolve(".cosmetica");
+		}
+	}
+
+	/*
+	 * Adapted from code at https://github.com/FabricMC/fabric-installer
+	 * Original license has been preserved for this method.
+	 *
+	 * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+	 *
+	 * Licensed under the Apache License, Version 2.0 (the "License");
+	 * you may not use this file except in compliance with the License.
+	 * You may obtain a copy of the License at
+	 *
+	 *     http://www.apache.org/licenses/LICENSE-2.0
+	 *
+	 * Unless required by applicable law or agreed to in writing, software
+	 * distributed under the License is distributed on an "AS IS" BASIS,
+	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	 * See the License for the specific language governing permissions and
+	 * limitations under the License.
+	 */
+	private static Path findDefaultInstallDir(String application) {
+		String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+		Path dir;
+
+		if (os.contains("win") && System.getenv("APPDATA") != null) {
+			dir = Paths.get(System.getenv("APPDATA")).resolve("." + application);
+		} else {
+			String home = System.getProperty("user.home", ".");
+			Path homeDir = Paths.get(home);
+
+			if (os.contains("mac")) {
+				dir = homeDir.resolve("Library").resolve("Application Support").resolve(application);
+			} else {
+				dir = homeDir.resolve("." + application);
+			}
+		}
+
+		return dir.toAbsolutePath().normalize();
+	}
 
 	/**
 	 * Garbage Collector. Checks the next item and removes it if it's pointed to nothing.
@@ -95,26 +147,33 @@ public class BlockModelManager {
 	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
-	 * @param modelJson the Java Block/Item model json to use if the model hasn't been baked yet.
-	 * @param textureBase64 the base64 texture to use, if the model has not been baked yet.
+	 * @param jsonUrl the location of the Java Block/Item model json to download if the model hasn't been baked yet.
+	 * @param textureUrl the location of the texture for this model.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
 	 * @implNote a weak reference to the BakedModel is stored in cache.
 	 * @return a {@link CosmeticaModel} with the model amnd texture location for this model.
 	 */
-	public static CosmeticaModel getOrBakeModel(String id, String modelJson,
-												String textureBase64, int ticksPerFrame, int frames) {
+	public static CosmeticaModel getOrBakeModel(String id, String jsonUrl,
+												String textureUrl, int ticksPerFrame, int frames) {
 		WeakReference<CosmeticaModel> modelRef = CACHE.get(id);
 		CosmeticaModel model = modelRef == null ? null : modelRef.get(); // if the model doesn't exist or has expired, generate a new one
 
 		if (model == null) {
 			// model id. Primarily used for texture location.
 			ResourceLocation textureLocation = getModelLocation(id);
+			File cacheFile = getCacheFile(textureLocation).toFile();
 
-			try (InputStream is = new ByteArrayInputStream(modelJson.getBytes(StandardCharsets.UTF_8))) {
+			try (InputStream is = new ByteArrayInputStream(jsonUrl.getBytes(StandardCharsets.UTF_8))) {
 				// create texture
-				AnimatedTexture texture = Base64Texture.create(textureLocation, textureBase64.substring(22), ticksPerFrame, frames);
+				HttpTexture texture;
+
+				if (frames == 0) {
+					texture = new HttpTexture(cacheFile, textureUrl, LOADING_TEXTURE, false, null);
+				} else {
+					texture = new AnimatedHttpTexture(cacheFile, textureUrl, LOADING_TEXTURE, ticksPerFrame, frames);
+				}
 
 				// upload texture
 				if (RenderSystem.isOnRenderThreadOrInit()) {
@@ -139,6 +198,10 @@ public class BlockModelManager {
 		}
 
 		return model;
+	}
+
+	private static Path getCacheFile(ResourceLocation textureLocation) {
+		return CACHE_DIRECTORY.resolve(textureLocation.getNamespace()).resolve(textureLocation.getPath());
 	}
 
 	/**

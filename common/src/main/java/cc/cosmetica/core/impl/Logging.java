@@ -51,6 +51,12 @@ public final class Logging {
 		this.logger.error(message, t);
 	}
 
+	public void error(String message, Throwable t, Object... args) {
+		message = message.replaceAll("\\{}", "%s");
+		message = String.format(message, args);
+		this.logger.error(message, t);
+	}
+
 	public void warnOnce(String warning, String message, Object... args) {
 		if (warnings.add(warning)) {
 			this.warn(message, args);
