@@ -20,7 +20,6 @@ import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.*;
 import cc.cosmetica.core.builtin.CosmeticaCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -35,10 +34,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class ApiCosmeticManager implements CosmeticManager {
 	@Override
@@ -146,7 +142,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 			CosmeticaCosmeticsHolder holder = ((CosmeticaCosmeticsHolder) player);
 
 			// create a new ApiCosmetics
-			ApiCosmetics cosmetics = new ApiCosmetics(response);
+			ApiCosmetics cosmetics = new ApiCosmetics().updateCosmetics(response);
 			// store on the player
 			holder.cosmeticacore$setCosmetics(cosmetics);
 		}
@@ -157,10 +153,12 @@ public class ApiCosmeticManager implements CosmeticManager {
 	 * NOTE: Do not keep non-weak references to this outside the player mixin itself for garbage collection reasons.
 	 */
 	public static final class ApiCosmetics implements Cosmetics {
-		private ApiCosmetics(PlayerResponse response) {
+		private ApiCosmetics() {
 			// default values
-			this.accessories = ImmutableList.of();
+			this.accessories = new ArrayDeque<>();
+		}
 
+		public ApiCosmetics updateCosmetics(PlayerResponse response) {
 			// read accessories
 			if (response.isIsUser()) {
 				CosmeticaUser user = response.getUser();
@@ -179,7 +177,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 								accessory.getAccessory().getTexture(),
 								accessory.getAccessory().getTicksPerFrame().intValue(),
 								accessory.getAccessory().getFrames().intValue()
-								);// TODO model and texture are URLs now. dynamic url loading
+						);// TODO model and texture are URLs now. dynamic url loading
 
 						List<BigDecimal> offset = accessory.getOffset();
 
@@ -188,26 +186,31 @@ public class ApiCosmeticManager implements CosmeticManager {
 								accessory.getAccessory().getAttachment(),
 								model,
 								new Vec3(
-									offset.get(0).doubleValue(),
-									offset.get(1).doubleValue(),
-									offset.get(2).doubleValue()
+										offset.get(0).doubleValue(),
+										offset.get(1).doubleValue(),
+										offset.get(2).doubleValue()
 								))
 						);
 					}
+					// TODO once all accessories load, pop accessories
+					// This does mean if a newer accessory loads, the one in the middle which hasn't finished downloadig will show
+					// instead have a way of removing all items en
 
-					this.accessories = accessories;
+					this.accessories.add(accessories);
 				}
 			}
+
+			return this;
 		}
 
 		// this will be changed if outfit change is received from server.
 		// 1. replace playerresponse data on player (probably not necessary with code structure but good practise)
 		// 2. tell apicosmeticamanager to replace cosmetics (if it's an ApiCosmetics)
-		private List<Accessory> accessories;
+		private final Queue<List<Accessory>> accessories;
 
 		@Override
 		public Collection<Accessory> getAccessories() {
-			return this.accessories;
+			return this.accessories.peek();
 		}
 	}
 }
