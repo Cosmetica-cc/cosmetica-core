@@ -17,6 +17,7 @@
 package cc.cosmetica.core.mixin.texture;
 
 import cc.cosmetica.core.impl.BlockModelManager;
+import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -30,6 +31,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ModelManagerMixin {
 	@Inject(at = @At("RETURN"), method = "prepare(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)Lnet/minecraft/client/resources/model/ModelBakery;")
 	private void captureBakery(ResourceManager resourceManager, ProfilerFiller profilerFiller, CallbackInfoReturnable<ModelBakery> info) {
-		BlockModelManager.bakery = info.getReturnValue();
+		CosmeticaModelBakery.bakery = info.getReturnValue();
 	}
 }

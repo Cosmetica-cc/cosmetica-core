@@ -27,43 +27,53 @@ import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Sprite that references a Cosmetica texture instead of a section of the block atlas.
+ */
 public class ModelSprite extends TextureAtlasSprite {
-	public ModelSprite(ResourceLocation location, AnimatedTexture texture) {
-		this(location, texture, texture.image.getWidth(), texture.getFrameHeight());
-	}
-
-	private ModelSprite(ResourceLocation location, AnimatedTexture texture, int width, int height) {
+	/**
+	 * Create a new ModelSprite.
+	 * @param location the resource location of the texture this uses.
+	 * @param image the image to use.
+	 * @param height the height of one frame of the image.
+	 * @param frames the number of frames on the image.
+	 * @param onClose a callback to run when this sprite is closed.
+	 */
+	public ModelSprite(ResourceLocation location, NativeImage image, int height, int frames, Runnable onClose) {
 		// textureAtlas, info, mipLevels, uScale (atlasTextureWidth), vScale (atlasTextureHeight), width, height, image
 		super(null,
 				// dummy data for the animation metadata: we want to handle the animation ourselves.
-				new Info(location, width, height, new AnimationMetadataSection(ImmutableList.of(new AnimationFrame(0)), width, height, 69, false)),
-				Math.min(4, getMaximumMipmapLevels(texture.image)),
-				width,
+				new Info(location, image.getWidth(), height, new AnimationMetadataSection(ImmutableList.of(new AnimationFrame(0)), image.getWidth(), height, 69, false)),
+				Math.min(4, getMaximumMipmapLevels(image)),
+				image.getWidth(),
 				height,
-				width,
+				image.getWidth(),
 				height,
-				texture.image
+				image
 		);
 
-		this.animatedTexture = texture;
+		this.onClose = onClose;
+		this.frames = frames;
 	}
 
-	private final AnimatedTexture animatedTexture;
+	private final Runnable onClose;
+	private final int frames;
 
 	@Override
 	public int getFrameCount() {
-		return this.animatedTexture.getFrameCount();
+		return this.frames;
 	}
 
 	@Override
 	public void close() {
-		this.animatedTexture.close();
+		this.onClose.run();
 	}
 
 	@Override
 	public String toString() {
 		return "ModelSprite{" +
-				"animatedTexture=" + animatedTexture +
+				"imageCount=" + this.mainImage.length +
+				", image0=" + this.mainImage[0] +
 				", resourceLocation=" + this.getName() +
 				", u=[" + this.getU0() + "," + this.getU1() + "]" +
 				", v=[" + this.getV0() + ", " + this.getV1() + "]" +

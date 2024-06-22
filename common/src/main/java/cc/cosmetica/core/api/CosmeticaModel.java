@@ -17,26 +17,63 @@
 package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.impl.BlockModelManager;
+import cc.cosmetica.core.impl.CosmeticaModelBakery;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+
+import javax.annotation.Nullable;
 
 /**
  * Contains model data for a cosmetica model.
  */
 public final class CosmeticaModel {
-	public CosmeticaModel(ResourceLocation texture, BakedModel model) {
+	public CosmeticaModel(ResourceLocation texture) {
 		this.texture = texture;
-		this.model = model;
 	}
 
 	private final ResourceLocation texture;
-	private final BakedModel model;
+	private BakedModel model;
+	private BlockModel unbakedModel; // cleared when the model is baked!
+	private boolean textureLoaded;
+
+	/**
+	 * Mark the texture as loaded. If both texture and model are loaded, baking will start.
+	 */
+	public synchronized void setTextureLoaded() {
+		this.textureLoaded = true;
+
+		if (this.unbakedModel != null) {
+			this.startBaking();
+		}
+	}
+
+	/**
+	 * Set the model for this {@link CosmeticaModel} to use.
+	 * If both texture and model are loaded, baking will start.
+	 */
+	public synchronized void setModel(BlockModel model) {
+		this.unbakedModel = model;
+
+		if (this.textureLoaded) {
+			this.startBaking();
+		}
+	}
+
+	private void startBaking() {
+		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
+		RenderSystem.recordRenderCall(() -> {
+			this.model = CosmeticaModelBakery.bakeModel(this.texture, this.unbakedModel);
+			this.unbakedModel = null; // free memory
+		});
+	}
 
 	/**
 	 * Get the location for the texture for this model.
@@ -47,9 +84,10 @@ public final class CosmeticaModel {
 	}
 
 	/**
-	 * Get the baked model of this cosmetic. If it has not been baked yet, bake the model.
-	 * @return the baked model for this cosmetic model.
+	 * Get the baked model of this cosmetic. If it has not been baked yet, will return null.
+	 * @return the baked model for this cosmetic model, or null if it has not been baked yet.
 	 */
+	@Nullable
 	public BakedModel getBakedModel() {
 		return this.model;
 	}
@@ -67,7 +105,7 @@ public final class CosmeticaModel {
 	 */
 	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
 		BakedModel model = this.getBakedModel();
-		if (model == null) return; // if it has errors with the baked model or cannot render it for another reason will return null
+		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.001f; // prevent z fighting
 		modelPart.translateAndRotate(stack);
@@ -75,7 +113,7 @@ public final class CosmeticaModel {
 		stack.mulPose(new Quaternion(Vector3f.YP, (float)Math.PI, false)); // pi radians on y axis
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		if (mirror) stack.scale(-1, 1, 1);
-		BlockModelManager.renderModel(
+		CosmeticaModelBakery.renderModel(
 				model,
 				stack,
 				multiBufferSource,

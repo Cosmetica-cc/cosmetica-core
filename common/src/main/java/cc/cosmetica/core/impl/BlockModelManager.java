@@ -18,7 +18,7 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CosmeticaModel;
-import cc.cosmetica.core.render.texture.AnimatedHttpTexture;
+import cc.cosmetica.core.render.texture.CosmeticaHttpTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -56,14 +56,8 @@ public class BlockModelManager {
 	private static final List<String> CACHED_MODEL_IDS = new ArrayList<>();
 	private static final Map<String, WeakReference<CosmeticaModel>> CACHE = new HashMap<>();
 
-	/**
-	 * The model bakery.
-	 * Set by ModelManagerMixin.
-	 */
-	public static ModelBakery bakery;
-
 	private static final Path CACHE_DIRECTORY;
-	private static final ResourceLocation LOADING_TEXTURE;
+	private static final ResourceLocation LOADING_TEXTURE = new ResourceLocation("cosmetica-core", "icon.png");
 
 	static {
 		Path minecraftDir = findDefaultInstallDir("minecraft");
@@ -165,15 +159,15 @@ public class BlockModelManager {
 			ResourceLocation textureLocation = getModelLocation(id);
 			File cacheFile = getCacheFile(textureLocation).toFile();
 
-			try (InputStream is = new ByteArrayInputStream(jsonUrl.getBytes(StandardCharsets.UTF_8))) {
-				// create texture
-				HttpTexture texture;
+			model = new CosmeticaModel(textureLocation);
 
-				if (frames == 0) {
-					texture = new HttpTexture(cacheFile, textureUrl, LOADING_TEXTURE, false, null);
-				} else {
-					texture = new AnimatedHttpTexture(cacheFile, textureUrl, LOADING_TEXTURE, ticksPerFrame, frames);
-				}
+			//try (InputStream is = new ByteArrayInputStream(jsonUrl.getBytes(StandardCharsets.UTF_8))) {
+				// create texture
+				AbstractTexture texture = new CosmeticaHttpTexture.Builder(textureUrl, LOADING_TEXTURE)
+						.frames(frames, ticksPerFrame)
+						.cached(cacheFile)
+						.onLoad(model::setTextureLoaded)
+						.build();
 
 				// upload texture
 				if (RenderSystem.isOnRenderThreadOrInit()) {
@@ -186,15 +180,14 @@ public class BlockModelManager {
 				}
 
 				// create model
-				BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
-				blockModel.name = id;
-				model = new CosmeticaModel(textureLocation, bakeModel(textureLocation, blockModel));
+				//BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
+				//blockModel.name = id;
 
 				// store in cache
 				CACHE.put(id, new WeakReference<>(model));
-			} catch (IOException e) {
-				Logging.getInstance().error("Failed to parse model " + id, e);
-			}
+			//} catch (IOException e) {
+			//	Logging.getInstance().error("Failed to parse model " + id, e);
+			//}
 		}
 
 		return model;
@@ -241,98 +234,5 @@ public class BlockModelManager {
 
 	// bake
 
-	/**
-	 * Bake the given block model with the texture at the given location.
-	 * @param location the location to get the texture for. Also used in debug messages.
-	 *                 Must refer to an {@link AnimatedTexture}.
-	 * @param model the model to bake.
-	 * @return the newly created baked model.
-	 */
-	private static BakedModel bakeModel(ResourceLocation location, BlockModel model) {
-		Logging.getInstance().debug("Computing Baked Model: {}", location);
-		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
-		if (modelTexture instanceof AnimatedTexture) {
-			ModelSprite sprite = new ModelSprite(location, (AnimatedTexture) modelTexture);
-
-			return model.bake(
-					bakery,
-					l -> sprite,
-					BlockModelRotation.X0_Y0,
-					location /*this resource location in bake is just used for debugging in the case of errors*/);
-		}
-
-		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be an AnimatedTexture.");
-	}
-
-	// render
-
-	public static void renderModel(BakedModel model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
-		stack.pushPose();
-		boolean isGUI3D = model.isGui3d();
-		float transformStrength = 0.25F;
-		float rotation = 0.0f;
-		float transform = model.getTransforms().getTransform(ItemTransforms.TransformType.GROUND).scale.y();
-		stack.translate(0.0D, rotation + transformStrength * transform, 0.0D);
-		float xScale = model.getTransforms().ground.scale.x();
-		float yScale = model.getTransforms().ground.scale.y();
-		float zScale = model.getTransforms().ground.scale.z();
-
-		stack.pushPose();
-
-		final ItemTransforms.TransformType transformType = ItemTransforms.TransformType.FIXED;
-		int overlayTyp = OverlayTexture.NO_OVERLAY;
-		// ItemRenderer#render start
-		stack.pushPose();
-
-		model.getTransforms().getTransform(transformType).apply(false, stack);
-		stack.translate(-0.5D, -0.5D, -0.5D);
-
-		RenderType renderType = RenderType.entityTranslucent(texture); // hopefully this is the right one
-		VertexConsumer vertexConsumer4 = multiBufferSource.getBuffer(renderType);
-		renderModelLists(model, packedLight, overlayTyp, stack, vertexConsumer4);
-
-		stack.popPose();
-		// ItemRenderer#render end
-
-		stack.popPose();
-		if (!isGUI3D) {
-			stack.translate(0.0F * xScale, 0.0F * yScale, 0.09375F * zScale);
-		}
-
-		stack.popPose();
-	}
-
-	// vanilla code that I don't want to rewrite:
-
-	private static void renderModelLists(BakedModel bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer) {
-		Random random = new Random();
-		final long seed = 42L;
-		Direction[] var10 = Direction.values();
-		int var11 = var10.length;
-
-		for(int var12 = 0; var12 < var11; ++var12) {
-			Direction direction = var10[var12];
-			random.setSeed(seed);
-			renderQuadList(poseStack, vertexConsumer, bakedModel.getQuads(null, direction, random), packedLight, overlayType);
-		}
-
-		random.setSeed(seed);
-		renderQuadList(poseStack, vertexConsumer, bakedModel.getQuads(null, null, random), packedLight, overlayType);
-	}
-
-	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> list, int i, int j) {
-		PoseStack.Pose pose = poseStack.last();
-		Iterator var9 = list.iterator();
-
-		while(var9.hasNext()) {
-			BakedQuad bakedQuad = (BakedQuad)var9.next();
-			int k = -1;
-
-			float f = (float)(k >> 16 & 255) / 255.0F;
-			float g = (float)(k >> 8 & 255) / 255.0F;
-			float h = (float)(k & 255) / 255.0F;
-			vertexConsumer.putBulkData(pose, bakedQuad, f, g, h, i, j);
-		}
-	}
 }
