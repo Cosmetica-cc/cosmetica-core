@@ -32,30 +32,35 @@ import java.io.File;
  */
 public class CosmeticaHttpTexture extends HttpTexture {
 	private CosmeticaHttpTexture(File file, String url, ResourceLocation loadingTexture,
-								 int frames, int ticksPerFrame, Runnable onLoad)
+								 int frames, int ticksPerFrame, Runnable onFirstUpload)
 			throws IllegalArgumentException {
-		super(file, url, loadingTexture, false, onLoad);
+		super(file, url, loadingTexture, false, null);
 
 		if (frames > 1 && ticksPerFrame == 0) {
 			throw new IllegalArgumentException("Animated texture (" + frames + " frames) but ticks per frame is 0!");
 		}
 
 		// TODO frames on loading texture?
+		// for now we use SimpleTexture code to upload the loading texture
 		this.url = url;
 		this.frames = frames;
 		this.ticksPerFrame = ticksPerFrame;
+		// we can't use http texture's "on downloaded" as it is called before the image is uploaded
+		// and ModelSprite will crash.
+		this.onFirstUpload = onFirstUpload;
 	}
 
 	private final String url;
 	private final int frames;
 	private final int ticksPerFrame;
+	private final Runnable onFirstUpload;
 
 	private int frameHeight;
 	private int frame;
 	private int tick;
 	private NativeImage image;
 
-	public void firstUpload(NativeImage image, boolean loading) {
+	public void onDownload(NativeImage image) {
 		// memory management
 		if (this.image != null && ((NativeImageAccessorMixin)(Object)this.image).getPixels() != 0L) {
 			//Debug.info("Closing image on thread {} due to load. Are we allowed? {}", Thread.currentThread(), RenderSystem.isOnRenderThreadOrInit());
@@ -68,9 +73,10 @@ public class CosmeticaHttpTexture extends HttpTexture {
 		this.frame = 0;
 
 		try {
-			this.upload(image, !loading);
+			this.upload(image, false);
+			this.onFirstUpload.run();
 		} catch (IllegalStateException e) {
-			Logging.getInstance().error("Error while uploading icon texture (loading: {}, icon url: {})", e, loading, this.url);
+			Logging.getInstance().error("Error while uploading Cosmeitca texture (url: {})", e, this.url);
 		}
 	}
 
@@ -94,6 +100,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 	@Override
 	public void close() {
 		//Debug.info("Closing image on thread {} due to dispose. Are we allowed? {}", Thread.currentThread(), RenderSystem.isOnRenderThreadOrInit());
+		Logging.getInstance().debug("Closing image,,,");
 		if (this.image != null) this.image.close();
 		//Debug.info("Disposed of image.");
 	}

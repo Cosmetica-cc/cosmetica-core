@@ -32,7 +32,7 @@ public class HttpTextureMixin {
 	@Inject(at = @At("HEAD"), method = "upload", cancellable = true)
 	private void onUpload(NativeImage nativeImage, CallbackInfo ci) {
 		if ((Object) this instanceof CosmeticaHttpTexture) {
-			((CosmeticaHttpTexture) (Object) this).firstUpload(nativeImage, false);
+			((CosmeticaHttpTexture) (Object) this).onDownload(nativeImage);
 			ci.cancel();
 		}
 	}
