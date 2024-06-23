@@ -230,14 +230,14 @@ public class ApiCosmeticManager implements CosmeticManager {
 				break;
 			case RIGHT_ARM:
 				dy = 0.0;
-				dx = -7.5;
+				dx = 8.5;
 				break;
 			case LEFT_ARM:
 				dy = 0.0;
 				dx = 7.5;
 				break;
 			default:
-				dy = 0.0;
+				dy = -2.0;
 				dx = 8.0;
 				break;
 			}

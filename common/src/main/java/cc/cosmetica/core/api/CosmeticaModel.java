@@ -111,7 +111,7 @@ public final class CosmeticaModel {
 		BakedModel model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
-		float o = 1.001f; // prevent z fighting
+		float o = 1.0f;
 		modelPart.translateAndRotate(stack);
 		stack.scale(o, -o, -o);
 		if (mirror) stack.scale(-1, 1, 1);
