@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import gg.cloaks.javaclient.ApiException;
+import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import gg.cloaks.javaclient.model.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -183,8 +184,10 @@ public class ApiCosmeticManager implements CosmeticManager {
 						accessories.add(new Accessory(
 								accessory.getAccessory().getName(),
 								accessory.getAccessory().getAttachment(),
+								accessory.isMirrored(),
 								model,
-								new Vec3(
+								attachmentTransform(
+										accessory.getAccessory().getAttachment(),
 										offset.get(0).doubleValue(),
 										offset.get(1).doubleValue(),
 										offset.get(2).doubleValue()
@@ -210,6 +213,40 @@ public class ApiCosmeticManager implements CosmeticManager {
 		@Override
 		public Collection<Accessory> getAccessories() {
 			return this.accessories.peek();
+		}
+
+		/**
+		 * Transform x, y, and z offsets from the server renderer space to world space.
+		 * @return a Vec3 with the render offset.
+		 */
+		private static Vec3 attachmentTransform(AttachmentEnum attachment, double x, double y, double z) {
+			double dy;
+			double dx;
+			
+			switch (attachment) {
+			case HEAD:
+				dy = 8.0;
+				dx = 8.0;
+				break;
+			case RIGHT_ARM:
+				dy = 0.0;
+				dx = -7.5;
+				break;
+			case LEFT_ARM:
+				dy = 0.0;
+				dx = 7.5;
+				break;
+			default:
+				dy = 0.0;
+				dx = 8.0;
+				break;
+			}
+
+			return new Vec3(
+					(x + dx) / 16.0,
+					(y + dy) / 16.0,
+					(z + 8.0) / 16.0
+			);
 		}
 	}
 }

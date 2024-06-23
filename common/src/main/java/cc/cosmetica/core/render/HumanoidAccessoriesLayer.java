@@ -52,21 +52,29 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 					part = this.getParentModel().body;
 					break;
 				case LEFT_ARM:
-					part = this.getParentModel().leftArm;
+					part = accessory.isMirrored() ?
+							this.getParentModel().rightArm :
+							this.getParentModel().leftArm;
 					break;
 				case RIGHT_ARM:
-					part = this.getParentModel().rightArm;
+					part = accessory.isMirrored() ?
+							this.getParentModel().leftArm :
+							this.getParentModel().rightArm;
 					break;
 				case LEFT_LEG:
-					part = this.getParentModel().leftLeg;
+					part = accessory.isMirrored() ?
+							this.getParentModel().rightLeg :
+							this.getParentModel().leftLeg;
 					break;
 				case RIGHT_LEG:
-					part = this.getParentModel().rightLeg;
+					part = accessory.isMirrored() ?
+							this.getParentModel().leftLeg :
+							this.getParentModel().rightLeg;
 					break;
 				case UNKNOWN_DEFAULT_OPEN_API:
 					Logging.getInstance().warnOnce(
 							"attachment_unknown_accessory",
-							"Unknown attachment for accessory {}",
+							"Unknown attachment for accessory: {}",
 							accessory.getName());
 					continue;
 				}
@@ -77,7 +85,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 					accessory.getModel().renderOnPart(
 							part, poseStack, multiBufferSource, light,
 							(float) offset.x, (float) offset.y, (float) offset.z,
-							false
+							accessory.isMirrored()
 					);
 				}
 			}

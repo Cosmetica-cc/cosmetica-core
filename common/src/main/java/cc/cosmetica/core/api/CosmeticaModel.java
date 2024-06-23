@@ -114,9 +114,10 @@ public final class CosmeticaModel {
 		float o = 1.001f; // prevent z fighting
 		modelPart.translateAndRotate(stack);
 		stack.scale(o, -o, -o);
+		if (mirror) stack.scale(-1, 1, 1);
 		stack.mulPose(new Quaternion(Vector3f.YP, (float)Math.PI, false)); // pi radians on y axis
 		stack.translate(x, y, z); // vanilla: 0.0 second param
-		if (mirror) stack.scale(-1, 1, 1);
+
 		CosmeticaModelBakery.renderModel(
 				model,
 				stack,

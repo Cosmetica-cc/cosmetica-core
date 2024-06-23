@@ -26,9 +26,10 @@ import java.util.HashSet;
  * Represents an Accessory equipped on a user.
  */
 public final class Accessory {
-	public Accessory(String name, AttachmentEnum attachment, CosmeticaModel model, Vec3 offset) {
+	public Accessory(String name, AttachmentEnum attachment, boolean mirrored, CosmeticaModel model, Vec3 offset) {
 		this.name = name;
 		this.attachment = attachment;
+		this.mirrored = mirrored;
 		this.model = model;
 		this.offset = offset;
 		this.flags = new HashSet<>();
@@ -38,6 +39,7 @@ public final class Accessory {
 	private final AttachmentEnum attachment;
 	private final CosmeticaModel model;
 	private final Vec3 offset;
+	private boolean mirrored;
 	private final Collection<Flag> flags;
 
 	public String getName() {
@@ -50,6 +52,10 @@ public final class Accessory {
 
 	public CosmeticaModel getModel() {
 		return this.model;
+	}
+
+	public boolean isMirrored() {
+		return this.mirrored;
 	}
 
 	public Vec3 getOffset() {
