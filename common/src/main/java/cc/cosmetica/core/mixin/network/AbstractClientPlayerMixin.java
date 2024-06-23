@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.mixin.network;
 
-import cc.cosmetica.core.builtin.CosmeticaCosmeticsHolder;
+import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import net.minecraft.client.player.AbstractClientPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.Unique;
  * Used for implementing the main CosmeticManager.
  */
 @Mixin(AbstractClientPlayer.class)
-public class AbstractClientPlayerMixin implements CosmeticaCosmeticsHolder {
+public class AbstractClientPlayerMixin implements ApiCosmeticsHolder {
 	@Unique
 	private ApiCosmeticManager.ApiCosmetics cosmeticacore$apiCosmetics;
 

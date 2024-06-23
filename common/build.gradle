@@ -12,6 +12,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     api "gg.cloaks:javaclient:${cosmetica_java_client_version}"
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
 }
 
 publishing {

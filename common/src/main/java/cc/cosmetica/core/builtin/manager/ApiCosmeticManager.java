@@ -18,7 +18,7 @@ package cc.cosmetica.core.builtin.manager;
 
 import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.*;
-import cc.cosmetica.core.builtin.CosmeticaCosmeticsHolder;
+import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
@@ -39,12 +39,12 @@ import java.util.*;
 public class ApiCosmeticManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof AbstractClientPlayer && ((CosmeticaCosmeticsHolder)entity).cosmeticacore$getCosmetics() != null;
+		return entity instanceof AbstractClientPlayer && ((ApiCosmeticsHolder)entity).cosmeticacore$getCosmetics() != null;
 	}
 
 	@Override
 	public Cosmetics getCosmetics(LivingEntity entity) {
-		return ((CosmeticaCosmeticsHolder)entity).cosmeticacore$getCosmetics();
+		return ((ApiCosmeticsHolder)entity).cosmeticacore$getCosmetics();
 	}
 
 	@Override
@@ -94,7 +94,6 @@ public class ApiCosmeticManager implements CosmeticManager {
 				Logging.getInstance().error("Error fetching player data by name/id.", e);
 				return null;
 			}).thenAccept(r -> {if (r != null)Minecraft.getInstance().tell(() -> updatePlayer(profile, r));}); // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
-			System.out.println("will it work who knows");
 		} else {
 			// In order to take the load off the servers (and avoid rate limits), we forward the mojang api response used in
 			// game instead of using a network of workers. This is a more long-term sustainable approach to fetching username
@@ -117,7 +116,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 	}
 
 	/**
-	 * Save cosmetics on the player given the given response.
+	 * Save cosmetics on the player given the given response. Please run this on the render thread.
 	 * @param profile the profile for which to update the player.
 	 * @param response the response received from the server.
 	 */
@@ -139,7 +138,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 		if (player == null) {
 			Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.getName(), profile.getId());
 		} else {
-			CosmeticaCosmeticsHolder holder = ((CosmeticaCosmeticsHolder) player);
+			ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);
 
 			// create a new ApiCosmetics
 			ApiCosmetics cosmetics = new ApiCosmetics().updateCosmetics(response);
@@ -171,13 +170,13 @@ public class ApiCosmeticManager implements CosmeticManager {
 					List<Accessory> accessories = new ArrayList<>();
 
 					for (OutfitAccessory accessory : outfit.getAccessories()) {
-						CosmeticaModel model = CosmeticaModel.getOrBakeModel(
+						CosmeticaModel model = CosmeticaModel.getOrCreateModel(
 								accessory.getAccessory().getId(),
 								accessory.getAccessory().getModel(),
 								accessory.getAccessory().getTexture(),
 								accessory.getAccessory().getTicksPerFrame().intValue(),
 								accessory.getAccessory().getFrames().intValue()
-						);// TODO model and texture are URLs now. dynamic url loading
+						);
 
 						List<BigDecimal> offset = accessory.getOffset();
 

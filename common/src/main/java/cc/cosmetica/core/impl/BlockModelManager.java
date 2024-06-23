@@ -17,25 +17,14 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
+import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.render.texture.CosmeticaHttpTexture;
-import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.HttpTexture;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.BlockModelRotation;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
 import java.io.*;
@@ -66,6 +55,24 @@ public class BlockModelManager {
 			CACHE_DIRECTORY = minecraftDir.resolve(".cosmetica");
 		} else {
 			CACHE_DIRECTORY = CosmeticaCoreExpectPlatform.getGameDirectory().resolve(".cosmetica");
+		}
+
+		// create cache directory if it doesn't exist
+		if (!Files.exists(CACHE_DIRECTORY)) {
+			try {
+				Files.createDirectory(CACHE_DIRECTORY);
+
+				// stupid windows
+				if (Util.getPlatform() == Util.OS.WINDOWS) {
+					try {
+						Files.setAttribute(CACHE_DIRECTORY, "dos:hidden", true);
+					} catch (Exception e) {
+						Logging.getInstance().warn("Failed to set dos:hidden for cache file on windows", e);
+					}
+				}
+			} catch (Exception e) {
+				throw new RuntimeException("Error creating Cosmetica cache directory", e);
+			}
 		}
 	}
 
@@ -137,20 +144,21 @@ public class BlockModelManager {
 	}
 
 	/**
-	 * Bake a model if not already baked, and return it.
+	 * Create and start baking a model if not already loaded, and return the global instance for that model.
+	 * Designed to avoid duplicating models for the same cosmetic.
 	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
-	 * @param jsonUrl the location of the Java Block/Item model json to download if the model hasn't been baked yet.
+	 * @param jsonUrl the location of the Java Block/Item model json to download if the model hasn't been created yet.
 	 * @param textureUrl the location of the texture for this model.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
-	 * @implNote a weak reference to the BakedModel is stored in cache.
+	 * @implNote a weak reference to the {@link CosmeticaModel} is stored in cache.
 	 * @return a {@link CosmeticaModel} with the model amnd texture location for this model.
 	 */
-	public static CosmeticaModel getOrBakeModel(String id, String jsonUrl,
-												String textureUrl, int ticksPerFrame, int frames) {
+	public static CosmeticaModel getOrCreateModel(String id, String jsonUrl,
+												  String textureUrl, int ticksPerFrame, int frames) {
 		WeakReference<CosmeticaModel> modelRef = CACHE.get(id);
 		CosmeticaModel model = modelRef == null ? null : modelRef.get(); // if the model doesn't exist or has expired, generate a new one
 
@@ -161,33 +169,44 @@ public class BlockModelManager {
 
 			model = new CosmeticaModel(textureLocation);
 
-			//try (InputStream is = new ByteArrayInputStream(jsonUrl.getBytes(StandardCharsets.UTF_8))) {
-				// create texture
-				AbstractTexture texture = new CosmeticaHttpTexture.Builder(textureUrl, LOADING_TEXTURE)
-						.frames(frames, ticksPerFrame)
-						.cached(cacheFile)
-						.onLoad(model::setTextureLoaded)
-						.build();
+			// create texture
+			AbstractTexture texture = new CosmeticaHttpTexture.Builder(textureUrl, LOADING_TEXTURE)
+					.frames(frames, ticksPerFrame)
+					.cached(cacheFile)
+					.onLoad(model::setTextureLoaded)
+					.build();
 
-				// upload texture
-				if (RenderSystem.isOnRenderThreadOrInit()) {
+			// upload texture
+			if (RenderSystem.isOnRenderThreadOrInit()) {
+				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
+			}
+			else {
+				RenderSystem.recordRenderCall(() -> {
 					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
-				}
-				else {
-					RenderSystem.recordRenderCall(() -> {
-						Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
+				});
+			}
+
+			// load model
+			final CosmeticaModel lambdaHack = model;
+			CosmeticaAPI.downloadAsync(jsonUrl)
+					.exceptionally(ex -> { // handle non-success responses
+						Logging.getInstance().error("Failed to download block model for {}", ex, id);
+						return null;
+					})
+					.thenAccept(json -> {
+						if (json == null) return;
+
+						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
+							BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
+							blockModel.name = id;
+							lambdaHack.setModel(blockModel);
+						} catch (IOException | RuntimeException e) {
+							Logging.getInstance().error("Failed to parse model " + id, e);
+						}
 					});
-				}
 
-				// create model
-				//BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
-				//blockModel.name = id;
-
-				// store in cache
-				CACHE.put(id, new WeakReference<>(model));
-			//} catch (IOException e) {
-			//	Logging.getInstance().error("Failed to parse model " + id, e);
-			//}
+			// store in cache
+			CACHE.put(id, new WeakReference<>(model));
 		}
 
 		return model;

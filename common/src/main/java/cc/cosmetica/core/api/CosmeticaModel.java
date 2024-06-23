@@ -18,6 +18,7 @@ package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
+import cc.cosmetica.core.impl.Logging;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Quaternion;
@@ -27,7 +28,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
 
 import javax.annotation.Nullable;
 
@@ -49,6 +49,7 @@ public final class CosmeticaModel {
 	 */
 	public synchronized void setTextureLoaded() {
 		this.textureLoaded = true;
+		Logging.getInstance().debug("Texture loaded for {}", this.texture);
 
 		if (this.unbakedModel != null) {
 			this.startBaking();
@@ -69,9 +70,12 @@ public final class CosmeticaModel {
 
 	private void startBaking() {
 		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
+		Logging.getInstance().debug("Scheduling baking for {}", this.texture);
+
 		RenderSystem.recordRenderCall(() -> {
 			this.model = CosmeticaModelBakery.bakeModel(this.texture, this.unbakedModel);
 			this.unbakedModel = null; // free memory
+			Logging.getInstance().debug("Baked model {}", this.texture);
 		});
 	}
 
@@ -128,16 +132,16 @@ public final class CosmeticaModel {
 	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
-	 * @param modelJson the Java Block/Item model json to use if the model hasn't been baked yet.
-	 * @param textureBase64 the base64 texture to use, if the model has not been baked yet.
+	 * @param modelURL the url to the Java Block/Item model json to use if the model hasn't been created yet.
+	 * @param textureURL the url for the texture to download, if the model has not been created yet.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
 	 * @implNote a weak reference to the BakedModel is stored in cache.
 	 * @return a {@link CosmeticaModel} with the model amnd texture location for this model.
 	 */
-	public static CosmeticaModel getOrBakeModel(String id, String modelJson,
-												String textureBase64, int ticksPerFrame, int frames) {
-		return BlockModelManager.getOrBakeModel(id, modelJson, textureBase64, ticksPerFrame, frames);
+	public static CosmeticaModel getOrCreateModel(String id, String modelURL,
+												  String textureURL, int ticksPerFrame, int frames) {
+		return BlockModelManager.getOrCreateModel(id, modelURL, textureURL, ticksPerFrame, frames);
 	}
 }

@@ -17,13 +17,20 @@
 package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.impl.CosmeticaAuthenticator;
+import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
-import gg.cloaks.javaclient.ApiClient;
+import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.api.DefaultApi;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.function.Supplier;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Call;
+import okhttp3.Response;
 
 /**
  * Provides access to the authenticated instance of the Cosmetica API.
@@ -50,7 +57,37 @@ public final class CosmeticaAPI {
 		return CompletableFuture.supplyAsync(() -> request.apply(CosmeticaAuthenticator.getCurrentApi()), MasterCosmeticManager.HTTP_THREAD_POOL);
 	}
 
+	/**
+	 * Download data from a url asynchronously. The completable future will contain an exception if not a 2XX response.
+	 * A successful response with no body will return empty string.
+	 * @param url the url to download data.
+	 * @return a completable future for the response.
+	 */
 	public static CompletableFuture<String> downloadAsync(String url) {
-		// TODO
+		Logging.getInstance().debug("Downloading " + url);
+
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				// https://www.baeldung.com/guide-to-okhttp
+				Request request = new Request.Builder()
+						.url(url)
+						.build();
+
+				Call call = DOWNLOADER.newCall(request);
+
+				try (Response response = call.execute()) {
+					if (response.code() < 200 || response.code() > 299) {
+						throw new ApiException(response.code(),
+								response.body() == null ? "(no response body)" : response.body().string());
+					}
+
+					return response.body() == null ? "" : response.body().string();
+				}
+			} catch (IOException e) {
+				throw new UncheckedIOException("Downloading from URL " + url, e);
+			}
+		}, MasterCosmeticManager.HTTP_THREAD_POOL);
 	}
+
+	private static final OkHttpClient DOWNLOADER = new OkHttpClient.Builder().build();
 }

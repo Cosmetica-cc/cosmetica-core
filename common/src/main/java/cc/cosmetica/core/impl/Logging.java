@@ -36,6 +36,8 @@ public final class Logging {
 	public void debug(String message, Object... args) {
 		if (debug) {
 			info(message, args);
+		} else {
+			this.logger.debug(message, args);
 		}
 	}
 

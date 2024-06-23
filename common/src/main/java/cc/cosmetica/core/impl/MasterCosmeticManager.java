@@ -67,9 +67,11 @@ public final class MasterCosmeticManager {
 			}
 		}
 
+		// we need to get the old cosmetic manager BEFORE we set
+		CosmeticManager old = currentManager.getValue();
+
 		// if the manager was updated, perform the update procedure
 		if (currentManager.checkAndSet(selectedManager)) {
-			CosmeticManager old = currentManager.getValue();
 			CosmeticEquipper equipper = (CosmeticEquipper) entity;
 
 			// inform old cosmetic manager the player has been revoked

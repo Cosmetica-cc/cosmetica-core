@@ -23,7 +23,7 @@ import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
  * This is ok as we will ensure only minimal data is stored if the Api Cosmetic Manager is not selected,
  * and this will be correctly garbage collected when the player is removed from the world.
  */
-public interface CosmeticaCosmeticsHolder {
+public interface ApiCosmeticsHolder {
 	ApiCosmeticManager.ApiCosmetics cosmeticacore$getCosmetics();
 	void cosmeticacore$setCosmetics(ApiCosmeticManager.ApiCosmetics cosmetics);
 }
