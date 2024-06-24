@@ -35,6 +35,7 @@ import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 
 import java.util.*;
@@ -150,5 +151,140 @@ public final class CosmeticaModelBakery {
 		}
 	}
 
+	// ======================== //
+	// Bounding Box calculation //
+	// ======================== //
 
+	public static AABB calculateBoundingBox(BlockModel model) {
+		// Find all corners
+		Collection<Vector3f> allCorners = new ArrayList<>();
+
+		for (BlockElement element : model.getElements()) {
+			Collection<Vector3f> corners = getUniqueCorners(element.from, element.to);
+
+			// rotate corners if on a rotated element
+			if (element.rotation != null) {
+				Collection<Vector3f> rotated = new HashSet<>();
+
+				for (Vector3f corner : corners) {
+					rotated.add(
+							rotateCorner(
+									corner,
+									element.rotation.origin,
+									element.rotation.axis,
+									element.rotation.angle
+							));
+				}
+
+				corners = rotated;
+			}
+
+			allCorners.addAll(corners);
+		}
+
+		// just in case
+		if (allCorners.isEmpty()) {
+			return AABB.ofSize(0, 0, 0);
+		}
+
+		// Calculate the bounding box from the corners
+		float[] smallest = new float[3];
+		float[] largest = new float[3];
+		Iterator<Vector3f> cornerIterator = allCorners.iterator();
+
+		// first corner
+		Vector3f corner = cornerIterator.next();
+		largest[0] = smallest[0] = corner.x();
+		largest[1] = smallest[1] = corner.y();
+		largest[2] = smallest[2] = corner.z();
+
+		while (cornerIterator.hasNext()) {
+			corner = cornerIterator.next();
+
+			// Update smallest coordinates
+			if (corner.x() < smallest[0]) {
+				smallest[0] = corner.x();
+			}
+			if (corner.y() < smallest[1]) {
+				smallest[1] = corner.y();
+			}
+			if (corner.z() < smallest[2]) {
+				smallest[2] = corner.z();
+			}
+
+			// Update largest coordinates
+			if (corner.x() > largest[0]) {
+				largest[0] = corner.x();
+			}
+			if (corner.y() > largest[1]) {
+				largest[1] = corner.y();
+			}
+			if (corner.z() > largest[2]) {
+				largest[2] = corner.z();
+			}
+		}
+
+		return new AABB(smallest[0], smallest[1], smallest[2], largest[0], largest[1], largest[2]);
+	}
+
+	private static Collection<Vector3f> getUniqueCorners(Vector3f from, Vector3f to) {
+		Set<Vector3f> corners = new HashSet<>();
+
+		corners.add(from);
+
+		corners.add(new Vector3f(to.x(), from.y(), from.z()));
+		corners.add(new Vector3f(from.x(), to.y(), from.z()));
+		corners.add(new Vector3f(from.x(), from.y(), to.z()));
+
+		corners.add(new Vector3f(from.x(), to.y(), to.z()));
+		corners.add(new Vector3f(to.x(), from.y(), to.z()));
+		corners.add(new Vector3f(to.x(), to.y(), from.z()));
+
+		corners.add(to);
+
+		return corners;
+	}
+
+	private static Vector3f rotateCorner(Vector3f corner, Vector3f origin, Direction.Axis axis, float angle) {
+		float[] others;
+
+		switch (axis) {
+		case X:
+			others = rotatePoint(
+					corner.y(), corner.z(),
+					origin.y(), origin.z(),
+					(float)Math.toRadians(angle)
+			);
+
+			return new Vector3f(corner.x(), others[0], others[1]);
+		case Y:
+		default:
+			others = rotatePoint(
+					corner.x(), corner.z(),
+					origin.x(), origin.z(),
+					(float)Math.toRadians(angle)
+			);
+
+			return new Vector3f(others[0], corner.y(), others[1]);
+		case Z:
+			others = rotatePoint(
+					corner.x(), corner.y(),
+					origin.x(), origin.y(),
+					(float)Math.toRadians(angle)
+			);
+
+			return new Vector3f(others[0], others[1], corner.z());
+		}
+	}
+
+	private static float[] rotatePoint(float pt0, float pt1, float o0, float o1, float angle) {
+		float sin = Mth.sin(angle);
+		float cos = Mth.cos(angle);
+		pt0 -= o0;
+		pt1 -= o1;
+		float nx = pt0 * cos - pt1 * sin;
+		float ny = pt0 * sin + pt1 * cos;
+		// round to 2 d.p.
+		return new float[] {nx + o0, ny + o1};
+	}
 }
