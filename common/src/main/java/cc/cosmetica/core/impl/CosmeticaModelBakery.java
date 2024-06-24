@@ -284,7 +284,6 @@ public final class CosmeticaModelBakery {
 		pt1 -= o1;
 		float nx = pt0 * cos - pt1 * sin;
 		float ny = pt0 * sin + pt1 * cos;
-		// round to 2 d.p.
 		return new float[] {nx + o0, ny + o1};
 	}
 }
