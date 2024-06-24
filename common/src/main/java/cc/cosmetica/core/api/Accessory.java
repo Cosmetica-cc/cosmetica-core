@@ -67,5 +67,6 @@ public final class Accessory {
 	}
 
 	public enum Flag {
+		HIDE_WITH_HELMET
 	}
 }

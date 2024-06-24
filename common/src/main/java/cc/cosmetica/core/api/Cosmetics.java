@@ -32,10 +32,28 @@ import java.util.function.BiConsumer;
  */
 public interface Cosmetics {
 	/**
+	 * Get the name of the outfit being worn.
+	 * @return the display name of the outfit being worn. Empty if no outfit is being worn.
+	 */
+	Optional<String> getOutfitName();
+
+	/**
+	 * Get the id of the outfit being worn.
+	 * @return the id of the outfit being worn. Empty if no outfit is being worn.
+	 */
+	Optional<String> getOutfitId();
+
+	/**
 	 * Get the accessories equipped on this entity.
 	 * @return the accessories this entity is equipping.
 	 */
 	Collection<Accessory> getAccessories();
+
+	/**
+	 * Get the entity's lore. This is a second nametag below the player's name.
+	 * @return an optional containing the lore, if present.
+	 */
+	Optional<String> getLore();
 
 	/**
 	 * Get the container for cosmetics being worn by the given entity.

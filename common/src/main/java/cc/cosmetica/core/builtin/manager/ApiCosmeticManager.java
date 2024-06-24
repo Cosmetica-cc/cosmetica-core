@@ -159,17 +159,30 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 
 		public ApiCosmetics updateCosmetics(PlayerResponse response) {
+			this.outfitId = null;
+			this.outfitName = null;
+			this.lore = null;
+			List<Accessory> accessories = new ArrayList<>();
+
 			// read accessories
 			if (response.isIsUser()) {
 				CosmeticaUser user = response.getUser();
 
-				// convert data
+				// read data from the response
 				assert user != null; // response.isIsUser()
+
+				// set lore
+				if (user.getLore() != null) {
+					this.lore = user.getLore().getFormatted().replaceAll("&", "§");
+				}
+
 				Outfit outfit = user.getOutfit();
 
 				if (outfit != null) {
-					List<Accessory> accessories = new ArrayList<>();
+					this.outfitId = outfit.getId();
+					this.outfitName = outfit.getName();
 
+					// equip acessories
 					for (OutfitAccessory accessory : outfit.getAccessories()) {
 						CosmeticaModel model = CosmeticaModel.getOrCreateModel(
 								accessory.getAccessory().getId(),
@@ -197,11 +210,10 @@ public class ApiCosmeticManager implements CosmeticManager {
 					// TODO once all accessories load, pop accessories
 					// This does mean if a newer accessory loads, the one in the middle which hasn't finished downloadig will show
 					// instead have a way of removing all items en
-
-					this.accessories.add(accessories);
 				}
 			}
 
+			this.accessories.add(accessories);
 			return this;
 		}
 
@@ -209,10 +221,28 @@ public class ApiCosmeticManager implements CosmeticManager {
 		// 1. replace playerresponse data on player (probably not necessary with code structure but good practise)
 		// 2. tell apicosmeticamanager to replace cosmetics (if it's an ApiCosmetics)
 		private final Queue<List<Accessory>> accessories;
+		private @Nullable String outfitName, outfitId;
+		private @Nullable String lore;
+
+		// TODO I might not use Optional to prevent this constant object creation
+		@Override
+		public Optional<String> getOutfitId() {
+			return Optional.ofNullable(this.outfitId);
+		}
+
+		@Override
+		public Optional<String> getOutfitName() {
+			return Optional.ofNullable(this.outfitName);
+		}
 
 		@Override
 		public Collection<Accessory> getAccessories() {
 			return this.accessories.peek();
+		}
+
+		@Override
+		public Optional<String> getLore() {
+			return Optional.ofNullable(this.lore);
 		}
 
 		/**
