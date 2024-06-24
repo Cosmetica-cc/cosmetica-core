@@ -18,9 +18,9 @@ package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.impl.CosmeticEquipper;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
+import cc.cosmetica.core.impl.NametagRenderer;
 import net.minecraft.world.entity.LivingEntity;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -56,6 +56,12 @@ public interface Cosmetics {
 	Optional<String> getLore();
 
 	/**
+	 * Get whether the entity should be flipped upside-down.
+	 * @return whether the entity should be flipped upside-down.
+	 */
+	boolean isUpsideDown();
+
+	/**
 	 * Get the container for cosmetics being worn by the given entity.
 	 * @param entity the entity for which to get the container.
 	 * @return the container.
@@ -72,5 +78,14 @@ public interface Cosmetics {
 	 */
 	static void registerCosmeticsChangeCallback(BiConsumer<LivingEntity, Cosmetics> onChange) {
 		MasterCosmeticManager.addCallback(onChange);
+	}
+
+	/**
+	 * Configure whether the local player's nametag should show.
+	 * @param show whether the nametag should display in third person.
+	 * @param showInInventory whether the nametag should display during {@link net.minecraft.client.gui.screens.inventory.InventoryScreen#renderEntityInInventory(int, int, int, float, float, LivingEntity) InventoryScreen#renderEntityInInventory}.
+	 */
+	static void configureOwnNametag(boolean show, boolean showInInventory) {
+		NametagRenderer.configureThirdPersonNametag(show, showInInventory);
 	}
 }

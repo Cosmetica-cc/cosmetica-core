@@ -49,8 +49,47 @@ public final class NametagRenderer {
 		// NO-OP
 	}
 
+	private static boolean showOwnNametag;
+	private static boolean showOwnNametagInventory;
+	private static boolean inventoryRendering;
+
 	private static final float GLIDING_SWIMMING_CROUCHING = 0.49974638F;
 
+	// ================ //
+	// Show Own Nametag //
+	// ================ //
+
+	public static void configureThirdPersonNametag(boolean show, boolean showInInventory) {
+		showOwnNametag = show;
+		showOwnNametagInventory = showInInventory;
+	}
+
+	public static void setRenderingInventoryEntity(boolean inInventory) {
+		inventoryRendering = inInventory;
+	}
+
+	/**
+	 * Get whether the player's own nametag should currently be rendered.
+	 * @return whether the player's own nametag should currently be rendered.
+	 */
+	public static boolean shouldShowOwnNametag() {
+		return inventoryRendering && showOwnNametagInventory || !inventoryRendering && showOwnNametag;
+	}
+
+	// ========= //
+	//   Lore    //
+	// ========= //
+
+	/**
+	 * Render lore on a player.
+	 * @param entityRenderDispatcher the entity render dispatcher.
+	 * @param player the player to render the lore for and on.
+	 * @param playerModel the model of said player
+	 * @param stack the pose stack for rendering.
+	 * @param multiBufferSource the buffer source for rendering.
+	 * @param font the font to draw text with.
+	 * @param packedLight the environment light.
+	 */
 	public static void renderLore(EntityRenderDispatcher entityRenderDispatcher, Player player, PlayerModel<AbstractClientPlayer> playerModel, PoseStack stack, MultiBufferSource multiBufferSource, Font font, int packedLight) {
 		double squaredDistance = entityRenderDispatcher.distanceToSqr(player);
 
@@ -76,6 +115,9 @@ public final class NametagRenderer {
 		}
 	}
 
+	/**
+	 * Render lore, but not necessarily bound to a player.
+	 */
 	public static void renderLore(PoseStack stack, Quaternion cameraOrientation, Font font,
 								  MultiBufferSource multiBufferSource, @Nullable String lore, Collection<Accessory> hats,
 								  boolean wearingHelmet, boolean doNametagShift, boolean discrete, boolean upsideDown,

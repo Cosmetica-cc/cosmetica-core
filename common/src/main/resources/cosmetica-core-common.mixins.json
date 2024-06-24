@@ -6,6 +6,8 @@
   "client": [
     "ClientLevelMixin",
     "LivingEntityRendererMixin",
+    "nametags.InventoryScreenMixin",
+    "nametags.LivingEntityRendererMixin",
     "nametags.PlayerRendererMixin",
     "network.AbstractClientPlayerMixin",
     "network.SkinManagerMixin",
