@@ -245,6 +245,11 @@ public class ApiCosmeticManager implements CosmeticManager {
 			return Optional.ofNullable(this.lore);
 		}
 
+		@Override
+		public boolean isUpsideDown() {
+			return false;
+		}
+
 		/**
 		 * Transform x, y, and z offsets from the server renderer space to world space.
 		 * @return a Vec3 with the render offset.

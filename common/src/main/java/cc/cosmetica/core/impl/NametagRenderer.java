@@ -133,7 +133,7 @@ public final class NametagRenderer {
 				for (Accessory accessory : hats) {
 					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
 						if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
-							//hatTopY = Math.max(hatTopY, (float) accessory.bounds().y1());
+							hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
 //							else {
 //								torsoFixedHatTopY = Math.max(torsoFixedHatTopY, (float) accessory.bounds().y1());
 //							}

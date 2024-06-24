@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
 
@@ -37,11 +38,13 @@ import javax.annotation.Nullable;
 public final class CosmeticaModel {
 	public CosmeticaModel(ResourceLocation texture) {
 		this.texture = texture;
+		this.boundingBox = ZERO_BOUNDS;
 	}
 
 	private final ResourceLocation texture;
 	private BakedModel model;
 	private BlockModel unbakedModel; // cleared when the model is baked!
+	private AABB boundingBox;
 	private boolean textureLoaded;
 
 	/**
@@ -57,11 +60,12 @@ public final class CosmeticaModel {
 	}
 
 	/**
-	 * Set the model for this {@link CosmeticaModel} to use.
+	 * Set the model and bounding box for this {@link CosmeticaModel} to use.
 	 * If both texture and model are loaded, baking will start.
 	 */
-	public synchronized void setModel(BlockModel model) {
+	public synchronized void setModel(BlockModel model, AABB boundingBox) {
 		this.unbakedModel = model;
+		this.boundingBox = boundingBox;
 
 		if (this.textureLoaded) {
 			this.startBaking();
@@ -97,6 +101,14 @@ public final class CosmeticaModel {
 	}
 
 	/**
+	 * Get the bounding box of this model, or (0,0,0\0,0,0) if the model has not been downloaded yet.
+	 * @return the bounding box of this model.
+	 */
+	public AABB getBoundingBox() {
+		return this.boundingBox;
+	}
+
+	/**
 	 * Render this model cosmetic on the given part, with the given transform.
 	 * @param modelPart the model part on which to render.
 	 * @param stack the Matrix Stack.
@@ -127,6 +139,8 @@ public final class CosmeticaModel {
 
 		stack.popPose();
 	}
+
+	private static final AABB ZERO_BOUNDS = AABB.ofSize(0, 0, 0);
 
 	/**
 	 * Get or bake a model for the given id.

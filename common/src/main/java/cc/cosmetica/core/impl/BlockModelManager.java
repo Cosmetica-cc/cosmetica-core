@@ -26,6 +26,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 
 import java.io.*;
 import java.lang.ref.WeakReference;
@@ -199,7 +200,11 @@ public class BlockModelManager {
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
 							BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
 							blockModel.name = id;
-							lambdaHack.setModel(blockModel);
+
+							// calculate bounds
+							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
+
+							lambdaHack.setModel(blockModel, aabb);
 						} catch (IOException | RuntimeException e) {
 							Logging.getInstance().error("Failed to parse model " + id, e);
 						}
