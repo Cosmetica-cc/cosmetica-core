@@ -17,6 +17,7 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
+import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.render.texture.CosmeticaHttpTexture;
@@ -40,11 +41,9 @@ import java.util.*;
  * Renderer and manager for baked block/item models.
  */
 public class BlockModelManager {
-	// The index within cachedModelIds to garbage-collect for next.
-	private static int gcIndex = 0;
 	// Cache
-	private static final List<String> CACHED_MODEL_IDS = new ArrayList<>();
-	private static final Map<String, WeakReference<CosmeticaModel>> CACHE = new HashMap<>();
+	private static final WeakCache<CosmeticaModel> MODEL_CACHE = new WeakCache<>();
+	private static final WeakCache<CachedImage> IMAGE_CACHE = new WeakCache<>();
 
 	private static final Path CACHE_DIRECTORY;
 	private static final ResourceLocation LOADING_TEXTURE = new ResourceLocation("cosmetica-core", "icon.png");
@@ -120,28 +119,8 @@ public class BlockModelManager {
 	 * Prevents memory leaks.
 	 */
 	public static void gc() {
-		if (CACHED_MODEL_IDS.isEmpty()) return;
-
-		String gcModelId = CACHED_MODEL_IDS.get(gcIndex);
-
-		// if object is no longer held in memory
-		if (CACHE.get(gcModelId).get() == null) {
-			// remove from cache
-			CACHED_MODEL_IDS.remove(gcIndex);
-			CACHE.remove(gcModelId);
-			// free the texture
-			ResourceLocation textureLocation = getModelLocation(gcModelId);
-			AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getModelLocation(gcModelId));
-			if (texture != null) Minecraft.getInstance().getTextureManager().safeClose(textureLocation, texture);
-		} else {
-			gcIndex++; // check the next one.
-			// not necessary if removed as the next item shifts back
-		}
-
-		// This is safe because CACHED_MODEL_IDS is only shrunk in this method.
-		if (gcIndex > CACHED_MODEL_IDS.size()) {
-			gcIndex = 0;
-		}
+		MODEL_CACHE.gc();
+		IMAGE_CACHE.gc();
 	}
 
 	/**
@@ -160,12 +139,12 @@ public class BlockModelManager {
 	 */
 	public static CosmeticaModel getOrCreateModel(String id, String jsonUrl,
 												  String textureUrl, int ticksPerFrame, int frames) {
-		WeakReference<CosmeticaModel> modelRef = CACHE.get(id);
-		CosmeticaModel model = modelRef == null ? null : modelRef.get(); // if the model doesn't exist or has expired, generate a new one
+		CosmeticaModel model = MODEL_CACHE.get(id);
 
+		// if the model doesn't exist or has expired, generate a new one
 		if (model == null) {
 			// model id. Primarily used for texture location.
-			ResourceLocation textureLocation = getModelLocation(id);
+			ResourceLocation textureLocation = getLocation(id);
 			File cacheFile = getCacheFile(textureLocation).toFile();
 
 			model = new CosmeticaModel(textureLocation);
@@ -174,7 +153,13 @@ public class BlockModelManager {
 			AbstractTexture texture = new CosmeticaHttpTexture.Builder(textureUrl, LOADING_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
-					.onLoad(model::setTextureLoaded)
+					.onLoad(() -> {
+						// don't store a reference to the CosmeticaModel or it will prevent GC
+						CosmeticaModel _model = MODEL_CACHE.get(id);
+						if (_model != null) {
+							_model.setTextureLoaded();
+						}
+					})
 					.build();
 
 			// upload texture
@@ -211,14 +196,79 @@ public class BlockModelManager {
 					});
 
 			// store in cache
-			CACHE.put(id, new WeakReference<>(model));
+			MODEL_CACHE.cacheWeakly(id, model);
 		}
 
 		return model;
 	}
 
+	/**
+	 * Get or download an image for the given id. This ensures a given image is only in memory once and is removed when
+	 * all references are gone.
+	 * @param id the id of the image.
+	 * @param imageURL the URL to download the image from if it's not already in memory.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Image frames are to be stored as a tilesheet, top to bottom.
+	 * @implNote a weak reference to the CachedImage is stored in cache.
+	 * @return a {@link CachedImage}.
+	 */
+	public static CachedImage getOrCreateImage(String id, String imageURL, int ticksPerFrame, int frames) {
+		CachedImage image = IMAGE_CACHE.get(id);
+
+		// if the image doesn't exist or has expired, generate a new one
+		if (image == null) {
+			// image id. Primarily used for texture location.
+			ResourceLocation textureLocation = getLocation(id);
+			File cacheFile = getCacheFile(textureLocation).toFile();
+
+			image = new CachedImage(textureLocation);
+
+			// create texture
+			AbstractTexture texture = new CosmeticaHttpTexture.Builder(imageURL, LOADING_TEXTURE)
+					.frames(frames, ticksPerFrame)
+					.cached(cacheFile)
+					.onLoad(() -> {
+						// don't store a reference to the CosmeticaModel or it will prevent GC
+						CachedImage _image = IMAGE_CACHE.get(id);
+						if (_image != null) {
+							_image.setLoaded();
+						}
+					})
+					.build();
+
+			// upload texture
+			if (RenderSystem.isOnRenderThreadOrInit()) {
+				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
+			}
+			else {
+				RenderSystem.recordRenderCall(() -> {
+					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
+				});
+			}
+
+			// store in cache
+			IMAGE_CACHE.cacheWeakly(id, image);
+		}
+
+		return image;
+	}
+
 	private static Path getCacheFile(ResourceLocation textureLocation) {
-		return CACHE_DIRECTORY.resolve(textureLocation.getNamespace()).resolve(textureLocation.getPath());
+		Path basePath = CACHE_DIRECTORY;
+
+		// default namespace
+		if (!"cosmetica-core".equals(textureLocation.getNamespace())) {
+			basePath = CACHE_DIRECTORY.resolve(textureLocation.getNamespace());
+		}
+
+		// add the path location
+		Path path = basePath.resolve(textureLocation.getPath());
+		String fileName = path.getFileName().toString();
+
+		// for caching large numbers of files it is easier to have less files in a directory
+		String subdirectory = fileName.length() < 2 ? "xx" : fileName.substring(0, 2);
+		return path.getParent().resolve(subdirectory).resolve(fileName);
 	}
 
 	/**
@@ -226,8 +276,8 @@ public class BlockModelManager {
 	 * @param id the model id, including any prefix used.
 	 * @return the location of the model's texture.
 	 */
-	public static ResourceLocation getModelLocation(String id) {
-		return new ResourceLocation("cosmetica-core", "models/" + pathify(id));
+	public static ResourceLocation getLocation(String id) {
+		return new ResourceLocation("cosmetica-core", pathify(id));
 	}
 
 	/**
@@ -256,7 +306,51 @@ public class BlockModelManager {
 		return result.toString();
 	}
 
-	// bake
+	// caches
+	private static class WeakCache<T> {
+		private int gcIndex = 0;
+		private final List<String> cachedIds = new ArrayList<>();
+		private final Map<String, WeakReference<T>> cache = new HashMap<>();
 
+		T get(String id) {
+			WeakReference<T> ref = cache.get(id);
+			return ref == null ? null : ref.get();
+		}
 
+		void cacheWeakly(String id, T t) {
+			cache.put(id, new WeakReference<>(t));
+			cachedIds.add(id);
+		}
+
+		/**
+		 * Garbage Collector. Checks the next item and removes it if it's pointed to nothing.
+		 * Prevents memory leaks.
+		 */
+		void gc() {
+			if (cachedIds.isEmpty()) return;
+
+			String gcModelId = cachedIds.get(gcIndex);
+
+			// if object is no longer held in memory
+			if (cache.get(gcModelId).get() == null) {
+				// remove from cache
+				cachedIds.remove(gcIndex);
+				cache.remove(gcModelId);
+				Logging.getInstance().debug("Cosmetica GC: removing {}", gcModelId);
+
+				// free the texture
+				ResourceLocation textureLocation = getLocation(gcModelId);
+				AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getLocation(gcModelId));
+				if (texture != null) Minecraft.getInstance().getTextureManager().safeClose(textureLocation, texture);
+			} else {
+				gcIndex++; // check the next one.
+				// not necessary if removed as the next item shifts back
+			}
+
+			// This is safe because CACHED_MODEL_IDS is only shrunk in this method.
+			if (gcIndex >= cachedIds.size()) {
+				gcIndex = 0;
+			}
+		}
+	}
 }

@@ -6,6 +6,7 @@
   "client": [
     "ClientLevelMixin",
     "LivingEntityRendererMixin",
+    "cape.MixinAbstractClientPlayer",
     "nametags.InventoryScreenMixin",
     "nametags.LivingEntityRendererMixin",
     "nametags.PlayerRendererMixin",

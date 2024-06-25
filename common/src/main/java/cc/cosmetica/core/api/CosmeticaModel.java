@@ -153,10 +153,27 @@ public final class CosmeticaModel {
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
 	 * @implNote a weak reference to the BakedModel is stored in cache.
-	 * @return a {@link CosmeticaModel} with the model amnd texture location for this model.
+	 * @return a {@link CosmeticaModel} with the model and texture location for this model.
 	 */
 	public static CosmeticaModel getOrCreateModel(String id, String modelURL,
 												  String textureURL, int ticksPerFrame, int frames) {
 		return BlockModelManager.getOrCreateModel(id, modelURL, textureURL, ticksPerFrame, frames);
+	}
+
+	/**
+	 * Get or download an image for the given id. This ensures a given image is only in memory once and is removed when
+	 * all references are gone.
+	 * @param id the id of the image. Should be unique per-image, so I recommend adding a prefix related to the purpose.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param imageURL the URL to download the image from if it's not already in memory.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Image frames are to be stored as a tilesheet, top to bottom.
+	 * @implNote a weak reference to the CachedImage is stored in cache.
+	 * @return a {@link CachedImage}.
+	 */
+	public static CachedImage getOrCreateImage(String id, String imageURL, int ticksPerFrame, int frames) {
+		return BlockModelManager.getOrCreateImage(id, imageURL, ticksPerFrame, frames);
 	}
 }

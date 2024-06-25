@@ -185,7 +185,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 					// equip acessories
 					for (OutfitAccessory accessory : outfit.getAccessories()) {
 						CosmeticaModel model = CosmeticaModel.getOrCreateModel(
-								accessory.getAccessory().getId(),
+								"accessory/" + accessory.getAccessory().getId(),
 								accessory.getAccessory().getModel(),
 								accessory.getAccessory().getTexture(),
 								accessory.getAccessory().getTicksPerFrame().intValue(),
