@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -32,13 +33,13 @@ public interface CosmeticEquipper {
 	Optional<Cosmetics> cosmeticacore$getCosmetics();
 
 	/**
-	 * Set the Cosmetics worn by this living entity.
-	 * @param cosmetics the cosmetics container on this living entity.
+	 * Update the Cosmetics worn by this living entity, if this manager is managing the entity.
+	 * @param manager the manager to update for.
 	 */
-	void cosmeticacore$setCosmetics(Cosmetics cosmetics);
+	void cosmeticacore$updateCosmetics(CosmeticManager manager);
 
 	/**
-	 * Called when the entity is removed from the client level.
+	 * Called internally when the entity is removed from the client level.
 	 */
 	void cosmeticacore$onEntityRemoved();
 }

@@ -74,6 +74,12 @@ public interface Cosmetics {
 	boolean isUpsideDown();
 
 	/**
+	 * Enqueue a task to run when Cosmetics load, or run immediately.
+	 * @param task the task to run when cosmetics load.
+	 */
+	void enqueue(Runnable task);
+
+	/**
 	 * Get the container for cosmetics being worn by the given entity.
 	 * @param entity the entity for which to get the container.
 	 * @return the container.
@@ -81,6 +87,16 @@ public interface Cosmetics {
 	static Optional<Cosmetics> getCosmetics(LivingEntity entity) {
 		CosmeticEquipper equipper = (CosmeticEquipper) entity;
 		return equipper.cosmeticacore$getCosmetics();
+	}
+
+	/**
+	 * Call this to update the entity's cosmetics, only if the given manager is still current.
+	 * @param entity the entity to update cosmetics for.
+	 * @param manager the manager for which to update.
+	 */
+	static void updateCosmetics(LivingEntity entity, CosmeticManager manager) {
+		CosmeticEquipper equipper = (CosmeticEquipper) entity;
+		equipper.cosmeticacore$updateCosmetics(manager);
 	}
 
 	/**

@@ -19,12 +19,11 @@ package cc.cosmetica.core.mixin;
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.CosmeticEquipper;
-import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.IdentityCache;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -33,6 +32,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
+import java.util.Queue;
 
 /**
  * Implements the {@link CosmeticEquipper} and connects the entity tick to polling cosmetics.
@@ -44,19 +44,24 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 	}
 
 	@Unique
-	private Cosmetics cosmeticacore$cosmetics;
+	private Queue<Cosmetics> cosmeticacore$cosmetics;
 
 	@Unique
 	private final IdentityCache<CosmeticManager> cosmeticacore$manager = new IdentityCache<>();
 
 	@Override
 	public Optional<Cosmetics> cosmeticacore$getCosmetics() {
-		return Optional.ofNullable(this.cosmeticacore$cosmetics);
+		return Optional.ofNullable(this.cosmeticacore$cosmetics.peek());
 	}
 
 	@Override
-	public void cosmeticacore$setCosmetics(Cosmetics cosmetics) {
-		this.cosmeticacore$cosmetics = cosmetics;
+	public void cosmeticacore$updateCosmetics(CosmeticManager manager) {
+		if (cosmeticacore$manager.getValue() == manager) {
+			// push a new cosmetics
+			Cosmetics next = manager.getCosmetics((LivingEntity) (Object)this);
+			this.cosmeticacore$cosmetics.add(next);
+			next.enqueue(() -> this.cosmeticacore$cosmetics.remove());
+		}
 	}
 
 	@Override
