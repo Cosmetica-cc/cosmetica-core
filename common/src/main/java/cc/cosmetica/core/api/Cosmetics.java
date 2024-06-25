@@ -74,10 +74,10 @@ public interface Cosmetics {
 	boolean isUpsideDown();
 
 	/**
-	 * Enqueue a task to run when Cosmetics load, or run immediately.
+	 * Enqueue a task to run when Cosmetics load (or fail), or run immediately.
 	 * @param task the task to run when cosmetics load.
 	 */
-	void enqueue(Runnable task);
+	void enqueue(Runnable task, Runnable onFail);
 
 	/**
 	 * Get the container for cosmetics being worn by the given entity.

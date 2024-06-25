@@ -20,6 +20,7 @@ import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import net.minecraft.world.entity.LivingEntity;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 
 /**
@@ -34,9 +35,9 @@ public interface CosmeticEquipper {
 
 	/**
 	 * Update the Cosmetics worn by this living entity, if this manager is managing the entity.
-	 * @param manager the manager to update for.
+	 * @param manager the manager to update for. Null clears all cosmetics.
 	 */
-	void cosmeticacore$updateCosmetics(CosmeticManager manager);
+	void cosmeticacore$updateCosmetics(@Nullable CosmeticManager manager);
 
 	/**
 	 * Called internally when the entity is removed from the client level.

@@ -24,28 +24,25 @@ import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import gg.cloaks.javaclient.ApiException;
-import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import gg.cloaks.javaclient.model.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
-import java.math.BigDecimal;
 import java.util.*;
 
 public class ApiCosmeticManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof AbstractClientPlayer && ((ApiCosmeticsHolder)entity).cosmeticacore$getCosmetics() != null;
+		return entity instanceof AbstractClientPlayer && ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics() != null;
 	}
 
 	@Override
 	public Cosmetics getCosmetics(LivingEntity entity) {
-		return ((ApiCosmeticsHolder)entity).cosmeticacore$getCosmetics();
+		return ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics();
 	}
 
 	@Override
@@ -142,9 +139,9 @@ public class ApiCosmeticManager implements CosmeticManager {
 			ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);
 
 			// create a new ApiCosmetics
-			ApiCosmetics cosmetics = new ApiCosmetics().updateCosmetics(response);
+			ApiCosmetics cosmetics = ApiCosmetics.fromResponse(response);
 			// store on the player
-			holder.cosmeticacore$setCosmetics(cosmetics);
+			holder.cosmeticacore$setApiCosmetics(cosmetics);
 		}
 	}
 
@@ -153,76 +150,50 @@ public class ApiCosmeticManager implements CosmeticManager {
 	 * NOTE: Do not keep non-weak references to this outside the player mixin itself for garbage collection reasons.
 	 */
 	public static final class ApiCosmetics implements Cosmetics {
-		private ApiCosmetics() {
-			this.accessories = new ArrayDeque<>();
-		}
-
-		public ApiCosmetics updateCosmetics(PlayerResponse response) {
-			// default values
-			this.outfitId = null;
-			this.outfitName = null;
-			this.lore = null;
-			this.cloak = CachedImage.NO_TEXTURE;
-			this.elytra = CachedImage.NO_TEXTURE;
-			List<Accessory> accessories = new ArrayList<>();
-
-			// read accessories
-			if (response.isIsUser()) {
-				CosmeticaUser user = response.getUser();
-
-				// read data from the response
-				assert user != null; // response.isIsUser()
-
-				// set lore
-				if (user.getLore() != null) {
-					this.lore = user.getLore().getFormatted().replaceAll("&", "§");
-				}
-
-				// set accessories from outfit
-				Outfit outfit = user.getOutfit();
-
-				if (outfit != null) {
-					this.outfitId = outfit.getId();
-					this.outfitName = outfit.getName();
-
-					// TODO use field in user to account for third-party capes
-					this.setCape(outfit.getCloak(), outfit.getElytra());
-
-					// equip acessories
-					// -> Accessory#create
-					for (OutfitAccessory accessory : outfit.getAccessories()) {
-						accessories.add(Accessory.fromOutfitAccessory(accessory));
-					}
-					// TODO once all accessories load, pop accessories
-					// This does mean if a newer accessory loads, the one in the middle which hasn't finished downloadig will show
-					// instead have a way of removing all items en
-				}
+		private ApiCosmetics(@Nullable Outfit outfit, @Nullable Lore lore) {
+			// lore
+			if (lore == null) {
+				this.lore = null;
 			} else {
-				CosmeticaPlayer player = response.getPlayer();
-
-				assert player != null; // !response.isUser()
-
-				// TODO set cape for non-users
-				//this.setCape(player.)
+				this.lore = lore.getFormatted().replaceAll("&", "§");
 			}
 
-			this.accessories.add(accessories);
-			return this;
-		}
+			// outfit
+			this.accessories = new ArrayList<>();
 
-		private void setCape(@Nullable AnimatedTextureCosmetic cloak, @Nullable AnimatedTextureCosmetic elytra) {
-			if (cloak != null) this.cloak = CosmeticaModel.getOrCreateImage("cape", cloak);
-			if (elytra != null) this.elytra = CosmeticaModel.getOrCreateImage("cape", elytra);
+			if (outfit != null) {
+				// save outfit
+				this.outfitId = outfit.getId();
+				this.outfitName = outfit.getName();
+
+				// set cape
+				@Nullable AnimatedTextureCosmetic cloak = outfit.getCloak();
+				@Nullable AnimatedTextureCosmetic elytra = outfit.getElytra();
+
+				if (cloak != null) this.cloak = CosmeticaModel.getOrCreateImage("cape", cloak); else this.cloak = CachedImage.NO_TEXTURE;
+				if (elytra != null) this.elytra = CosmeticaModel.getOrCreateImage("cape", elytra); else this.elytra = CachedImage.NO_TEXTURE;
+
+				// equip acessories
+				for (OutfitAccessory accessory : outfit.getAccessories()) {
+					accessories.add(Accessory.fromOutfitAccessory(accessory));
+				}
+			} else {
+				// no outfit
+				this.outfitName = null;
+				this.outfitId = null;
+				this.cloak = CachedImage.NO_TEXTURE;
+				this.elytra = CachedImage.NO_TEXTURE;
+			}
 		}
 
 		// this will be changed if outfit change is received from server.
 		// 1. replace playerresponse data on player (probably not necessary with code structure but good practise)
 		// 2. tell apicosmeticamanager to replace cosmetics (if it's an ApiCosmetics)
-		private CachedImage cloak = CachedImage.NO_TEXTURE;;
-		private CachedImage elytra = CachedImage.NO_TEXTURE;
-		private final Queue<List<Accessory>> accessories;
-		private @Nullable String outfitName, outfitId;
-		private @Nullable String lore;
+		private final CachedImage cloak;
+		private final CachedImage elytra;
+		private final List<Accessory> accessories;
+		private final @Nullable String outfitName, outfitId;
+		private final @Nullable String lore;
 
 		// TODO I might not use Optional to prevent this constant object creation
 		@Override
@@ -247,7 +218,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 		@Override
 		public Collection<Accessory> getAccessories() {
-			return this.accessories.peek();
+			return this.accessories;
 		}
 
 		@Override
@@ -258,6 +229,30 @@ public class ApiCosmeticManager implements CosmeticManager {
 		@Override
 		public boolean isUpsideDown() {
 			return false;
+		}
+
+		@Override
+		public void enqueue(Runnable task, Runnable onFail) {
+			//todo actual enqueue
+			task.run();
+		}
+
+		public static ApiCosmetics fromResponse(PlayerResponse response) {
+			// read accessories
+			if (response.isIsUser()) {
+				CosmeticaUser user = response.getUser();
+
+				// read data from the response
+				assert user != null; // response.isIsUser()
+
+				return new ApiCosmetics(user.getOutfit(), user.getLore());
+			} else {
+				CosmeticaPlayer player = response.getPlayer();
+
+				assert player != null; // !response.isUser()
+
+				return new ApiCosmetics(null, null);
+			}
 		}
 	}
 }

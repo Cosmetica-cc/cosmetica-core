@@ -18,8 +18,10 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
+import gg.cloaks.javaclient.model.Cosmetic;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,17 +81,17 @@ public final class MasterCosmeticManager {
 
 			if (selectedManager != null) {
 				selectedManager.onAssign(entity);
-				Cosmetics cosmetics = selectedManager.getCosmetics(entity);
-
-				// equip
-				equipper.cosmeticacore$setCosmetics(cosmetics);
-				// forward to listeners
-				for (BiConsumer<LivingEntity, Cosmetics> consumer : CALLBACKS) {
-					consumer.accept(entity, cosmetics);
-				}
-			} else {
-				equipper.cosmeticacore$setCosmetics(null); // clear cosmetics
 			}
+
+			// equip or clear
+			equipper.cosmeticacore$updateCosmetics(selectedManager);
+		}
+	}
+
+	// update all listeners to a change. called by mixin/LivingEntityMixin.
+	public static void post(LivingEntity entity, @Nullable Cosmetics newCosmetics) {
+		for (BiConsumer<LivingEntity, Cosmetics> consumer : CALLBACKS) {
+			consumer.accept(entity, newCosmetics);
 		}
 	}
 

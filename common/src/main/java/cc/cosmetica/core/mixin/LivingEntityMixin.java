@@ -31,6 +31,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayDeque;
 import java.util.Optional;
 import java.util.Queue;
 
@@ -43,8 +44,10 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 		super(entityType, level);
 	}
 
+	// allows us to use older cosmetics while newer ones are still loading.
+	// this should not get very big.
 	@Unique
-	private Queue<Cosmetics> cosmeticacore$cosmetics;
+	private final Queue<Cosmetics> cosmeticacore$cosmetics = new ArrayDeque<>();
 
 	@Unique
 	private final IdentityCache<CosmeticManager> cosmeticacore$manager = new IdentityCache<>();
@@ -57,10 +60,44 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 	@Override
 	public void cosmeticacore$updateCosmetics(CosmeticManager manager) {
 		if (cosmeticacore$manager.getValue() == manager) {
-			// push a new cosmetics
-			Cosmetics next = manager.getCosmetics((LivingEntity) (Object)this);
-			this.cosmeticacore$cosmetics.add(next);
-			next.enqueue(() -> this.cosmeticacore$cosmetics.remove());
+			if (manager == null) {
+				synchronized (this.cosmeticacore$cosmetics) {
+					this.cosmeticacore$cosmetics.clear();
+				}
+
+				// forward to listeners
+				MasterCosmeticManager.post((LivingEntity) (Object) this, null);
+			} else {
+				// push a new cosmetics
+				Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
+
+				synchronized (this.cosmeticacore$cosmetics) {
+					this.cosmeticacore$cosmetics.add(next);
+				}
+
+				next.enqueue(() -> {
+					boolean updated = false;
+
+					synchronized (this.cosmeticacore$cosmetics) {
+						// fast-forward to front
+						if (this.cosmeticacore$cosmetics.contains(next)) {
+							updated = true;
+
+							while (this.cosmeticacore$cosmetics.peek() != next)
+								this.cosmeticacore$cosmetics.remove();
+						}
+					}
+
+					if (updated) {
+						// forward to listeners
+						MasterCosmeticManager.post((LivingEntity) (Object) this, next);
+					}
+				}, () -> {
+					synchronized (this.cosmeticacore$cosmetics) {
+						this.cosmeticacore$cosmetics.remove(next);
+					}
+				});
+			}
 		}
 	}
 

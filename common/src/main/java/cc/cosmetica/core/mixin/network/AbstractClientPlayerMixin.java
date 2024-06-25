@@ -32,12 +32,12 @@ public class AbstractClientPlayerMixin implements ApiCosmeticsHolder {
 	private ApiCosmeticManager.ApiCosmetics cosmeticacore$apiCosmetics;
 
 	@Override
-	public ApiCosmeticManager.ApiCosmetics cosmeticacore$getCosmetics() {
+	public ApiCosmeticManager.ApiCosmetics cosmeticacore$getApiCosmetics() {
 		return this.cosmeticacore$apiCosmetics;
 	}
 
 	@Override
-	public void cosmeticacore$setCosmetics(ApiCosmeticManager.ApiCosmetics cosmetics) {
+	public void cosmeticacore$setApiCosmetics(ApiCosmeticManager.ApiCosmetics cosmetics) {
 		this.cosmeticacore$apiCosmetics = cosmetics;
 	}
 }

@@ -24,6 +24,6 @@ import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
  * and this will be correctly garbage collected when the player is removed from the world.
  */
 public interface ApiCosmeticsHolder {
-	ApiCosmeticManager.ApiCosmetics cosmeticacore$getCosmetics();
-	void cosmeticacore$setCosmetics(ApiCosmeticManager.ApiCosmetics cosmetics);
+	ApiCosmeticManager.ApiCosmetics cosmeticacore$getApiCosmetics();
+	void cosmeticacore$setApiCosmetics(ApiCosmeticManager.ApiCosmetics cosmetics);
 }

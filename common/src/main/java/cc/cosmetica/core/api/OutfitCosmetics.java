@@ -87,4 +87,10 @@ public class OutfitCosmetics implements Cosmetics {
 	public boolean isUpsideDown() {
 		return false;
 	}
+
+	@Override
+	public void enqueue(Runnable task, Runnable onFail) {
+		// todo actually enqueue
+		task.run();
+	}
 }
