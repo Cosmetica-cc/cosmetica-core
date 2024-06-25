@@ -229,7 +229,7 @@ public class BlockModelManager {
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
 					.onLoad(() -> {
-						// don't store a reference to the CosmeticaModel or it will prevent GC
+						// don't store a reference to the CachedImage or it will prevent GC
 						CachedImage _image = IMAGE_CACHE.get(id);
 						if (_image != null) {
 							_image.setLoaded();

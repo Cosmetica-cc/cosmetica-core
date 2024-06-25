@@ -162,6 +162,8 @@ public class ApiCosmeticManager implements CosmeticManager {
 			this.outfitId = null;
 			this.outfitName = null;
 			this.lore = null;
+			this.cloak = CachedImage.NO_TEXTURE;
+			this.elytra = CachedImage.NO_TEXTURE;
 			List<Accessory> accessories = new ArrayList<>();
 
 			// read accessories
@@ -176,16 +178,21 @@ public class ApiCosmeticManager implements CosmeticManager {
 					this.lore = user.getLore().getFormatted().replaceAll("&", "§");
 				}
 
+				// set accessories from outfit
 				Outfit outfit = user.getOutfit();
 
 				if (outfit != null) {
 					this.outfitId = outfit.getId();
 					this.outfitName = outfit.getName();
 
+					// TODO use field in user to account for third-party capes
+					this.setCape(outfit.getCloak(), outfit.getElytra());
+
 					// equip acessories
 					for (OutfitAccessory accessory : outfit.getAccessories()) {
 						CosmeticaModel model = CosmeticaModel.getOrCreateModel(
-								"accessory/" + accessory.getAccessory().getId(),
+								"accessory",
+								accessory.getAccessory().getId(),
 								accessory.getAccessory().getModel(),
 								accessory.getAccessory().getTexture(),
 								accessory.getAccessory().getTicksPerFrame().intValue(),
@@ -211,15 +218,29 @@ public class ApiCosmeticManager implements CosmeticManager {
 					// This does mean if a newer accessory loads, the one in the middle which hasn't finished downloadig will show
 					// instead have a way of removing all items en
 				}
+			} else {
+				CosmeticaPlayer player = response.getPlayer();
+
+				assert player != null; // !response.isUser()
+
+				// TODO set cape for non-users
+				//this.setCape(player.)
 			}
 
 			this.accessories.add(accessories);
 			return this;
 		}
 
+		private void setCape(@Nullable AnimatedTextureCosmetic cloak, @Nullable AnimatedTextureCosmetic elytra) {
+			if (cloak != null) this.cloak = CosmeticaModel.getOrCreateImage("cape", cloak);
+			if (elytra != null) this.elytra = CosmeticaModel.getOrCreateImage("cape", elytra);
+		}
+
 		// this will be changed if outfit change is received from server.
 		// 1. replace playerresponse data on player (probably not necessary with code structure but good practise)
 		// 2. tell apicosmeticamanager to replace cosmetics (if it's an ApiCosmetics)
+		private CachedImage cloak = CachedImage.NO_TEXTURE;;
+		private CachedImage elytra = CachedImage.NO_TEXTURE;
 		private final Queue<List<Accessory>> accessories;
 		private @Nullable String outfitName, outfitId;
 		private @Nullable String lore;
@@ -233,6 +254,16 @@ public class ApiCosmeticManager implements CosmeticManager {
 		@Override
 		public Optional<String> getOutfitName() {
 			return Optional.ofNullable(this.outfitName);
+		}
+
+		@Override
+		public CachedImage getCloak() {
+			return this.cloak;
+		}
+
+		@Override
+		public CachedImage getElytra() {
+			return this.elytra;
 		}
 
 		@Override

@@ -23,6 +23,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
+import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BlockModel;
@@ -144,7 +145,8 @@ public final class CosmeticaModel {
 
 	/**
 	 * Get or bake a model for the given id.
-	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
+	 * @param category the category of the model. Allowed characters are the same as id.
+	 * @param id the id of the model. Should be unique per-model, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
 	 * @param modelURL the url to the Java Block/Item model json to use if the model hasn't been created yet.
@@ -155,15 +157,29 @@ public final class CosmeticaModel {
 	 * @implNote a weak reference to the BakedModel is stored in cache.
 	 * @return a {@link CosmeticaModel} with the model and texture location for this model.
 	 */
-	public static CosmeticaModel getOrCreateModel(String id, String modelURL,
+	public static CosmeticaModel getOrCreateModel(String category, String id, String modelURL,
 												  String textureURL, int ticksPerFrame, int frames) {
-		return BlockModelManager.getOrCreateModel(id, modelURL, textureURL, ticksPerFrame, frames);
+		return BlockModelManager.getOrCreateModel(category + "/" + id, modelURL, textureURL, ticksPerFrame, frames);
+	}
+
+	/**
+	 * Get or download an image for the given cosmetic. This ensures a given image is only in memory once and is removed when
+	 * all references are gone.
+	 * @param category the category of the image. Allowed characters are the same as id.
+	 * @param cosmetic the animated texture cosmetic. The id will be retrieved from cosmetic#getId()
+	 * @implNote a weak reference to the CachedImage is stored in cache.
+	 * @return a {@link CachedImage}.
+	 */
+	public static CachedImage getOrCreateImage(String category, AnimatedTextureCosmetic cosmetic) {
+		return BlockModelManager.getOrCreateImage(category + "/" + cosmetic.getId(),
+				cosmetic.getTexture(), cosmetic.getTicksPerFrame().intValue(), cosmetic.getFrames().intValue());
 	}
 
 	/**
 	 * Get or download an image for the given id. This ensures a given image is only in memory once and is removed when
 	 * all references are gone.
-	 * @param id the id of the image. Should be unique per-image, so I recommend adding a prefix related to the purpose.
+	 * @param category the category of the image. Allowed characters are the same as id.
+	 * @param id the id of the image. Should be unique per-image, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
 	 * @param imageURL the URL to download the image from if it's not already in memory.
@@ -173,7 +189,8 @@ public final class CosmeticaModel {
 	 * @implNote a weak reference to the CachedImage is stored in cache.
 	 * @return a {@link CachedImage}.
 	 */
-	public static CachedImage getOrCreateImage(String id, String imageURL, int ticksPerFrame, int frames) {
-		return BlockModelManager.getOrCreateImage(id, imageURL, ticksPerFrame, frames);
+	public static CachedImage getOrCreateImage(String category, String id,
+											   String imageURL, int ticksPerFrame, int frames) {
+		return BlockModelManager.getOrCreateImage(category + "/" + id, imageURL, ticksPerFrame, frames);
 	}
 }

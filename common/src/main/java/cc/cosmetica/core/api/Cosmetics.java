@@ -44,6 +44,18 @@ public interface Cosmetics {
 	Optional<String> getOutfitId();
 
 	/**
+	 * Get the cloak texture.
+	 * @return the cloak texture.
+	 */
+	CachedImage getCloak();
+
+	/**
+	 * Get the elytra texture.
+	 * @return the elytra texture.
+	 */
+	CachedImage getElytra();
+
+	/**
 	 * Get the accessories equipped on this entity.
 	 * @return the accessories this entity is equipping.
 	 */
