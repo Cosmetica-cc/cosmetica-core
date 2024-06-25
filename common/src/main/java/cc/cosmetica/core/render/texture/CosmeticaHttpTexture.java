@@ -100,7 +100,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 	@Override
 	public void close() {
 		//Debug.info("Closing image on thread {} due to dispose. Are we allowed? {}", Thread.currentThread(), RenderSystem.isOnRenderThreadOrInit());
-		Logging.getInstance().debug("Closing image,,,");
+		Logging.getInstance().debug("Closing image {}", this.url);
 		if (this.image != null) this.image.close();
 		//Debug.info("Disposed of image.");
 	}

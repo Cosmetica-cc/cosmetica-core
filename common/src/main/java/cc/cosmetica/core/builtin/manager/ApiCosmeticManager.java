@@ -154,11 +154,11 @@ public class ApiCosmeticManager implements CosmeticManager {
 	 */
 	public static final class ApiCosmetics implements Cosmetics {
 		private ApiCosmetics() {
-			// default values
 			this.accessories = new ArrayDeque<>();
 		}
 
 		public ApiCosmetics updateCosmetics(PlayerResponse response) {
+			// default values
 			this.outfitId = null;
 			this.outfitName = null;
 			this.lore = null;
@@ -189,30 +189,9 @@ public class ApiCosmeticManager implements CosmeticManager {
 					this.setCape(outfit.getCloak(), outfit.getElytra());
 
 					// equip acessories
+					// -> Accessory#create
 					for (OutfitAccessory accessory : outfit.getAccessories()) {
-						CosmeticaModel model = CosmeticaModel.getOrCreateModel(
-								"accessory",
-								accessory.getAccessory().getId(),
-								accessory.getAccessory().getModel(),
-								accessory.getAccessory().getTexture(),
-								accessory.getAccessory().getTicksPerFrame().intValue(),
-								accessory.getAccessory().getFrames().intValue()
-						);
-
-						List<BigDecimal> offset = accessory.getOffset();
-
-						accessories.add(new Accessory(
-								accessory.getAccessory().getName(),
-								accessory.getAccessory().getAttachment(),
-								accessory.isMirrored(),
-								model,
-								attachmentTransform(
-										accessory.getAccessory().getAttachment(),
-										offset.get(0).doubleValue(),
-										offset.get(1).doubleValue(),
-										offset.get(2).doubleValue()
-								))
-						);
+						accessories.add(Accessory.fromOutfitAccessory(accessory));
 					}
 					// TODO once all accessories load, pop accessories
 					// This does mean if a newer accessory loads, the one in the middle which hasn't finished downloadig will show
@@ -279,40 +258,6 @@ public class ApiCosmeticManager implements CosmeticManager {
 		@Override
 		public boolean isUpsideDown() {
 			return false;
-		}
-
-		/**
-		 * Transform x, y, and z offsets from the server renderer space to world space.
-		 * @return a Vec3 with the render offset.
-		 */
-		private static Vec3 attachmentTransform(AttachmentEnum attachment, double x, double y, double z) {
-			double dy;
-			double dx;
-			
-			switch (attachment) {
-			case HEAD:
-				dy = 8.0;
-				dx = 8.0;
-				break;
-			case RIGHT_ARM:
-				dy = 0.0;
-				dx = 8.5;
-				break;
-			case LEFT_ARM:
-				dy = 0.0;
-				dx = 7.5;
-				break;
-			default:
-				dy = -2.0;
-				dx = 8.0;
-				break;
-			}
-
-			return new Vec3(
-					(x + dx) / 16.0,
-					(y + dy) / 16.0,
-					(z + 8.0) / 16.0
-			);
 		}
 	}
 }

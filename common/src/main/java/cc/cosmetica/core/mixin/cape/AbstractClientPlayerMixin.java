@@ -53,7 +53,7 @@ public abstract class AbstractClientPlayerMixin extends Player {
 	private void addCosmeticaCloaks(CallbackInfoReturnable<ResourceLocation> info) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
 
-		if (cosmetics.isPresent()) { // ignore npcs
+		if (cosmetics.isPresent()) {
 			info.setReturnValue(cosmetics.get().getCloak().location); // set the return value to our one
 		}
 	}
@@ -70,7 +70,7 @@ public abstract class AbstractClientPlayerMixin extends Player {
 	private void addCosmeticaElytras(CallbackInfoReturnable<ResourceLocation> info) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
 
-		if (cosmetics.isPresent()) { // ignore npcs
+		if (cosmetics.isPresent()) {
 			CachedImage image = cosmetics.get().getElytra();
 			info.setReturnValue(image.isLoaded() ? image.location : COSMETICACORE$WINGS_LOCATION); // set the return value to our one
 		}

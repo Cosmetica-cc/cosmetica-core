@@ -17,10 +17,13 @@
 package cc.cosmetica.core.api;
 
 import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
+import gg.cloaks.javaclient.model.OutfitAccessory;
 import net.minecraft.world.phys.Vec3;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * Represents an Accessory equipped on a user.
@@ -68,5 +71,71 @@ public final class Accessory {
 
 	public enum Flag {
 		HIDE_WITH_HELMET
+	}
+
+	/**
+	 * Create an {@link Accessory} from the given {@link OutfitAccessory}.
+	 * @param accessory the OutfitAccessory received from the server.
+	 * @return an Accessory from the given OutfitAccessory.
+	 * @apiNote don't keep this longer than you need it so that the models and textures can be garbage collected.
+	 */
+	public static Accessory fromOutfitAccessory(OutfitAccessory accessory) {
+		CosmeticaModel model = CosmeticaModel.getOrCreateModel(
+				"accessory",
+				accessory.getAccessory().getId(),
+				accessory.getAccessory().getModel(),
+				accessory.getAccessory().getTexture(),
+				accessory.getAccessory().getTicksPerFrame().intValue(),
+				accessory.getAccessory().getFrames().intValue()
+		);
+
+		List<BigDecimal> offset = accessory.getOffset();
+
+		return new Accessory(
+				accessory.getAccessory().getName(),
+				accessory.getAccessory().getAttachment(),
+				accessory.isMirrored(),
+				model,
+				attachmentTransform(
+						accessory.getAccessory().getAttachment(),
+						offset.get(0).doubleValue(),
+						offset.get(1).doubleValue(),
+						offset.get(2).doubleValue()
+				)
+		);
+	}
+
+	/**
+	 * Transform x, y, and z offsets from the server renderer space to world space.
+	 * @return a Vec3 with the render offset.
+	 */
+	private static Vec3 attachmentTransform(AttachmentEnum attachment, double x, double y, double z) {
+		double dy;
+		double dx;
+
+		switch (attachment) {
+		case HEAD:
+			dy = 8.0;
+			dx = 8.0;
+			break;
+		case RIGHT_ARM:
+			dy = 0.0;
+			dx = 8.5;
+			break;
+		case LEFT_ARM:
+			dy = 0.0;
+			dx = 7.5;
+			break;
+		default:
+			dy = -2.0;
+			dx = 8.0;
+			break;
+		}
+
+		return new Vec3(
+				(x + dx) / 16.0,
+				(y + dy) / 16.0,
+				(z + 8.0) / 16.0
+		);
 	}
 }

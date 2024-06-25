@@ -268,6 +268,10 @@ public class BlockModelManager {
 
 		// for caching large numbers of files it is easier to have less files in a directory
 		String subdirectory = fileName.length() < 2 ? "xx" : fileName.substring(0, 2);
+		// _ character is used in the replacement for capitals so it will appear more often. so split it into more categories
+		if (fileName.length() > 2 && subdirectory.charAt(0) == '_' || subdirectory.charAt(1) == '_') {
+			subdirectory = fileName.substring(0, 3);
+		}
 		return path.getParent().resolve(subdirectory).resolve(fileName);
 	}
 
@@ -329,18 +333,18 @@ public class BlockModelManager {
 		void gc() {
 			if (cachedIds.isEmpty()) return;
 
-			String gcModelId = cachedIds.get(gcIndex);
+			String id = cachedIds.get(gcIndex);
 
 			// if object is no longer held in memory
-			if (cache.get(gcModelId).get() == null) {
+			if (cache.get(id).get() == null) {
 				// remove from cache
 				cachedIds.remove(gcIndex);
-				cache.remove(gcModelId);
-				Logging.getInstance().debug("Cosmetica GC: removing {}", gcModelId);
+				cache.remove(id);
+				Logging.getInstance().debug("Cosmetica GC: removing {}", id);
 
 				// free the texture
-				ResourceLocation textureLocation = getLocation(gcModelId);
-				AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getLocation(gcModelId));
+				ResourceLocation textureLocation = getLocation(id);
+				AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getLocation(id));
 				if (texture != null) Minecraft.getInstance().getTextureManager().safeClose(textureLocation, texture);
 			} else {
 				gcIndex++; // check the next one.
