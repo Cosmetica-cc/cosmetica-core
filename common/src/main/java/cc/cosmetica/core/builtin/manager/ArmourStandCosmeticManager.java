@@ -36,4 +36,32 @@ public class ArmourStandCosmeticManager implements CosmeticManager {
 	public Cosmetics getCosmetics(LivingEntity entity) {
 		return null;
 	}
+
+	/**
+	 * Get whether something is an outfit id. That is, a dashless UUID.
+	 * @param text
+	 * @return
+	 */
+	public static boolean isOutfitId(String text) {
+		// Check length (without dashes, a UUID should have exactly 32 characters)
+		if (text.length() != 32) {
+			return false;
+		}
+
+		// Check if all characters are hexadecimal
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (!isHexadecimalChar(c)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean isHexadecimalChar(char c) {
+		return (c >= '0' && c <= '9') ||
+				(c >= 'a' && c <= 'f') ||
+				(c >= 'A' && c <= 'F');
+	}
 }

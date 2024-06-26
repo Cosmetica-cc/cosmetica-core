@@ -20,6 +20,7 @@ import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.*;
 import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -37,12 +38,12 @@ import java.util.*;
 public class ApiCosmeticManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof AbstractClientPlayer && ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics() != null;
+		return entity instanceof AbstractClientPlayer && false;//fixme debug memory  && ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics() != null;
 	}
 
 	@Override
 	public Cosmetics getCosmetics(LivingEntity entity) {
-		return ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics();
+		return null;//fixme debug memory((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics();
 	}
 
 	@Override
@@ -85,7 +86,9 @@ public class ApiCosmeticManager implements CosmeticManager {
 				try {
 					return api.playersControllerGetPlayer(lookupBy);
 				} catch (ApiException e) {
-					Logging.getInstance().error("Error fetching player data by name/id.", e);
+					if (e.getCode() != 404) {
+						Logging.getInstance().error("Error fetching player data by name/id.", e);
+					}
 					return null;
 				}
 			}).exceptionally(e -> {
@@ -106,7 +109,9 @@ public class ApiCosmeticManager implements CosmeticManager {
 									.signature(textureProperty.getSignature())
 					);
 				} catch (ApiException e) {
-					Logging.getInstance().error("Error fetching player data for texture packet.", e);
+					if (e.getCode() != 404) {
+						Logging.getInstance().error("Error fetching player data for texture packet.", e);
+					}
 					return null;
 				}
 			}).thenAccept(r -> Minecraft.getInstance().tell(() -> updatePlayer(profile, r)));
@@ -175,7 +180,16 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 				// equip acessories
 				for (OutfitAccessory accessory : outfit.getAccessories()) {
-					accessories.add(Accessory.fromOutfitAccessory(accessory));
+					Accessory k =Accessory.fromOutfitAccessory(accessory);
+//					MasterCosmeticManager.HTTP_THREAD_POOL.submit(() -> { // debug memory
+//						try {
+//							Thread.sleep(10000);
+//							System.out.println("ok dont need " + k.getName() + " anymore");
+//						} catch (InterruptedException e) {
+//							throw new RuntimeException(e);
+//						}
+//					});
+					accessories.add(k);
 				}
 			} else {
 				// no outfit
