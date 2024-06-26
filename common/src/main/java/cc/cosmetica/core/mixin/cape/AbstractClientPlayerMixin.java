@@ -57,26 +57,4 @@ public abstract class AbstractClientPlayerMixin extends Player {
 			info.setReturnValue(cosmetics.get().getCloak().location); // set the return value to our one
 		}
 	}
-
-	// Elytra
-	@Inject(at = @At("HEAD"), method = "isElytraLoaded", cancellable = true)
-	private void isCosmeticaElytraLoaded(CallbackInfoReturnable<Boolean> info) {
-		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
-		// we want to make sure elytra is always controlled by us (so cloak can't be misused as elytra)
-		info.setReturnValue(cosmetics.isPresent());
-	}
-
-	@Inject(at = @At("HEAD"), method = "getElytraTextureLocation", cancellable = true)
-	private void addCosmeticaElytras(CallbackInfoReturnable<ResourceLocation> info) {
-		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
-
-		if (cosmetics.isPresent()) {
-			CachedImage image = cosmetics.get().getElytra();
-			info.setReturnValue(image.isLoaded() ? image.location : COSMETICACORE$WINGS_LOCATION); // set the return value to our one
-		}
-	}
-
-	// ElytraLayer#WINGS_LOCATION
-	@Unique
-	private static final ResourceLocation COSMETICACORE$WINGS_LOCATION = new ResourceLocation("textures/entity/elytra.png");
 }
