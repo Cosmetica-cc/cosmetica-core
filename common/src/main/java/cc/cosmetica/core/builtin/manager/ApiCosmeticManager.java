@@ -146,7 +146,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 			// create a new ApiCosmetics
 			ApiCosmetics cosmetics = ApiCosmetics.fromResponse(response);
 			// store on the player
-			holder.cosmeticacore$setApiCosmetics(cosmetics);
+			//fixme holder.cosmeticacore$setApiCosmetics(cosmetics);
 		}
 	}
 
