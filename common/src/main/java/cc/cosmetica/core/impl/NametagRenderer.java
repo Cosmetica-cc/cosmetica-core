@@ -21,6 +21,7 @@ import cc.cosmetica.core.api.Cosmetics;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Quaternion;
+import gg.cloaks.javaclient.model.CosmeticaUser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;

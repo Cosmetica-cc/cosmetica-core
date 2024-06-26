@@ -38,12 +38,12 @@ import java.util.*;
 public class ApiCosmeticManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof AbstractClientPlayer && false;//fixme debug memory  && ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics() != null;
+		return entity instanceof AbstractClientPlayer && ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics() != null;
 	}
 
 	@Override
 	public Cosmetics getCosmetics(LivingEntity entity) {
-		return null;//fixme debug memory((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics();
+		return ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics();
 	}
 
 	@Override
@@ -146,7 +146,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 			// create a new ApiCosmetics
 			ApiCosmetics cosmetics = ApiCosmetics.fromResponse(response);
 			// store on the player
-			//fixme holder.cosmeticacore$setApiCosmetics(cosmetics);
+			holder.cosmeticacore$setApiCosmetics(cosmetics);
 		}
 	}
 
@@ -180,16 +180,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 				// equip acessories
 				for (OutfitAccessory accessory : outfit.getAccessories()) {
-					Accessory k =Accessory.fromOutfitAccessory(accessory);
-//					MasterCosmeticManager.HTTP_THREAD_POOL.submit(() -> { // debug memory
-//						try {
-//							Thread.sleep(10000);
-//							System.out.println("ok dont need " + k.getName() + " anymore");
-//						} catch (InterruptedException e) {
-//							throw new RuntimeException(e);
-//						}
-//					});
-					accessories.add(k);
+					accessories.add(Accessory.fromOutfitAccessory(accessory));
 				}
 			} else {
 				// no outfit
