@@ -57,6 +57,8 @@ public class ApiCosmeticManager implements CosmeticManager {
 		// TODO clear built models to store minimal data when not owning a player (in case switch to another manager)
 	}
 
+	private static final char[] ALLOWED_USERNAME_CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".toCharArray();
+
 	/**
 	 * Look up and store Cosmetica data for the given game profile.
 	 * @param profile the profile to look up and store data for.
@@ -67,6 +69,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 		if (uuid == null) {
 			Logging.getInstance().warn("(Cosmetica) Profile has no uuid, {}", profile.getName());
+			//TODO use username to look up
 			return;
 		}
 
@@ -74,12 +77,25 @@ public class ApiCosmeticManager implements CosmeticManager {
 			// use request via uuid or name if we cannot use the packet
 			String lookupBy;
 
-			if (uuid.version() == 4) {
-				lookupBy = uuid.toString();
-			} else {
+			// v3 uuid is for offline players
+			if (uuid.version() == 3) {
 				lookupBy = profile.getName();
-				// TODO check valid name
+
+				// skip names that aren't actual usernames
+				// verify length
+				if (lookupBy.isEmpty() || lookupBy.length() > 16) {
+					return;
+				}
+				for (char c : lookupBy.toCharArray()) {
+					// if the character isn't allowed, skip
+					if (Arrays.binarySearch(ALLOWED_USERNAME_CHARACTERS, c) < 0) {
+						return;
+					}
+				}
+			} else {
+				lookupBy = uuid.toString();
 			}
+
 			Logging.getInstance().debug("Looking up user by {}", lookupBy);
 
 			CosmeticaAPI.performAsync(api -> {

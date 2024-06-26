@@ -16,6 +16,9 @@
 
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
+import cc.cosmetica.core.impl.Logging;
+import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import gg.cloaks.javaclient.model.Outfit;
 import gg.cloaks.javaclient.model.OutfitAccessory;
@@ -24,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Cosmetics that are loaded from an outfit.
@@ -92,5 +96,23 @@ public class OutfitCosmetics implements Cosmetics {
 	public void enqueue(Runnable task, Runnable onFail) {
 		// todo actually enqueue
 		task.run();
+	}
+
+	/**
+	 * Get cosmetics by outift id.
+	 * @param outfitId the outfit id. A v4 uuid.
+	 * @return a completable future to contain the cosmetics on a successful call, otherwise contains null.
+	 */
+	public static CompletableFuture<? extends Cosmetics> getAsyncById(String outfitId) {
+		return CosmeticaAPI.performAsync(api -> api.outfitsControllerGet(outfitId))
+				.thenApply(OutfitCosmetics::new)
+				.exceptionally(e -> {
+					/* probably no outfit exists */
+					if (!(e instanceof ApiException && ((ApiException) e).getCode() == 404)) {
+						Logging.getInstance().error("Error looking up outfit {}", e, outfitId);
+					}
+
+					return null;
+				});
 	}
 }

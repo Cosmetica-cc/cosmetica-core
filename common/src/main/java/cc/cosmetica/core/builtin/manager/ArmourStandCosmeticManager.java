@@ -18,50 +18,52 @@ package cc.cosmetica.core.builtin.manager;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.builtin.OutfitCosmeticsHolder;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.decoration.ArmorStand;
+
+import javax.annotation.Nullable;
+import java.util.UUID;
 
 /**
  * Manages cosmetics for armour stands that represent outfits.
  */
 public class ArmourStandCosmeticManager implements CosmeticManager {
-	boolean hasOutfit = false;
-
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof ArmorStand && hasOutfit; // todo actual has outfit
+		return entity instanceof OutfitCosmeticsHolder && ((OutfitCosmeticsHolder) entity).cosmeticacore$getOutfitCosmetics() != null;
 	}
 
 	@Override
 	public Cosmetics getCosmetics(LivingEntity entity) {
-		return null;
+		return ((OutfitCosmeticsHolder) entity).cosmeticacore$getOutfitCosmetics();
 	}
 
 	/**
-	 * Get whether something is an outfit id. That is, a dashless UUID.
-	 * @param text
-	 * @return
+	 * Get whether something is an outfit uuid. Dashed or dashless.
+	 * @param uuidString the text to check.
+	 * @return the uuid string to use if the string is a valid potential outfit id. Otherwise null.
 	 */
-	public static boolean isOutfitId(String text) {
-		// Check length (without dashes, a UUID should have exactly 32 characters)
-		if (text.length() != 32) {
-			return false;
+	public static @Nullable String isOutfitUuid(String uuidString) {
+		if (uuidString.length() == 32) {
+			// Add dashes to form a standard UUID format
+			uuidString = uuidString.substring(0, 8) + "-" +
+					uuidString.substring(8, 12) + "-" +
+					uuidString.substring(12, 16) + "-" +
+					uuidString.substring(16, 20) + "-" +
+					uuidString.substring(20);
 		}
 
-		// Check if all characters are hexadecimal
-		for (int i = 0; i < text.length(); i++) {
-			char c = text.charAt(i);
-			if (!isHexadecimalChar(c)) {
-				return false;
-			}
+		// only 36-length strings are valid uuids
+		if (uuidString.length() != 36) {
+			return null;
 		}
 
-		return true;
-	}
-
-	private static boolean isHexadecimalChar(char c) {
-		return (c >= '0' && c <= '9') ||
-				(c >= 'a' && c <= 'f') ||
-				(c >= 'A' && c <= 'F');
+		// Verify if the string is a valid UUID and check if it's version 4
+		try {
+			UUID uuid = UUID.fromString(uuidString);
+			return uuid.version() == 4 ? uuid.toString() : null;
+		} catch (IllegalArgumentException e) {
+			return null; // Invalid UUID format
+		}
 	}
 }

@@ -28,13 +28,14 @@ public interface CosmeticManager {
 	 * @param entity the entity to query whether it should be managed.
 	 * @return whether this entity should be managed by this cosmetic manager.
 	 * @apiNote This is potentially called every tick for every LivingEntity on the client, so make it fast and concise!
+	 * 		    If this returns true, {@link CosmeticManager#getCosmetics(LivingEntity)} will be called shortly after.
 	 */
 	boolean canManage(LivingEntity entity);
 
 	/**
 	 * Get the cosmetics to apply to the given entity being managed.
 	 * @param entity the entity being managed by this.
-	 * @return the cosmetics that should be rendered on this living entity.
+	 * @return the cosmetics that should be rendered on this living entity. Cannot be null.
 	 */
 	Cosmetics getCosmetics(LivingEntity entity);
 

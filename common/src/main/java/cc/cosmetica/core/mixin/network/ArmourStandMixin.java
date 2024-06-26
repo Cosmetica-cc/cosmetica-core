@@ -17,6 +17,8 @@
 package cc.cosmetica.core.mixin.network;
 
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.OutfitCosmetics;
+import cc.cosmetica.core.builtin.OutfitCosmeticsHolder;
 import cc.cosmetica.core.builtin.manager.ArmourStandCosmeticManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -25,17 +27,17 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(ArmorStand.class)
-public abstract class ArmourStandMixin extends LivingEntity {
+public abstract class ArmourStandMixin extends LivingEntity implements OutfitCosmeticsHolder {
 	protected ArmourStandMixin(EntityType<? extends LivingEntity> entityType, Level level) {
 		super(entityType, level);
 	}
@@ -44,20 +46,37 @@ public abstract class ArmourStandMixin extends LivingEntity {
 	private TextComponent cosmeticacore$customName;
 	@Unique
 	@Nullable
-	private CompletableFuture<Cosmetics> cosmeticacore$armourCosmetics;
+	private CompletableFuture<? extends Cosmetics> cosmeticacore$armourCosmetics;
+
+	@Nullable
+	@Override
+	public Cosmetics cosmeticacore$getOutfitCosmetics() {
+		return this.cosmeticacore$armourCosmetics == null ? null : this.cosmeticacore$armourCosmetics.getNow(null);
+	}
 
 	@Inject(at = @At("RETURN"), method = "tick")
 	private void onTick(CallbackInfo ci) {
-		Component customName = this.getCustomName();
+		if (this.level.isClientSide()) { // don't compute on the server
+			Component customName = this.getCustomName();
 
-		if (this.cosmeticacore$customName != customName) { // assuming name instance won't be changed
-			if (customName instanceof TextComponent && ArmourStandCosmeticManager.isOutfitId(((TextComponent)customName).getText())) {
-				this.cosmeticacore$customName = (TextComponent) customName;
+			if (this.cosmeticacore$customName != customName) { // assuming name instance won't be changed
+				String text = customName instanceof TextComponent ? ((TextComponent) customName).getText() : null;
 
-				this.cosmeticacore$armourCosmetics = null;//ArmourStandCosmeticManager.getCosmetics;
-			} else {
-				this.cosmeticacore$customName = null;
-				this.cosmeticacore$armourCosmetics = null;
+				if (text != null) {
+					this.cosmeticacore$customName = (TextComponent) customName;
+
+					// try look up cosmetics
+					String uuid = ArmourStandCosmeticManager.isOutfitUuid(text);
+
+					if (uuid == null) {
+						this.cosmeticacore$armourCosmetics = null;
+					} else {
+						this.cosmeticacore$armourCosmetics = OutfitCosmetics.getAsyncById(uuid);
+					}
+				} else {
+					this.cosmeticacore$customName = null;
+					this.cosmeticacore$armourCosmetics = null;
+				}
 			}
 		}
 	}
