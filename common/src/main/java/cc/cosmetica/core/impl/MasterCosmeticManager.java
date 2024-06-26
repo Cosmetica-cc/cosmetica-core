@@ -40,12 +40,14 @@ public final class MasterCosmeticManager {
 
 	public static final ExecutorService HTTP_THREAD_POOL = Executors.newFixedThreadPool(30);
 	// sorted collection of cosmetic managers
-	private static final Collection<PrioritisedManager> COSMETIC_MANAGERS = new TreeSet<>();
+	private static final TreeSet<PrioritisedManager> COSMETIC_MANAGERS = new TreeSet<>();
 	// callbacks
 	private static final Collection<BiConsumer<LivingEntity, Cosmetics>> CALLBACKS = new ArrayList<>();
 
 	public static void registerCosmeticManager(int priority, CosmeticManager manager) {
-		COSMETIC_MANAGERS.add(new PrioritisedManager(priority, manager));
+		if (!COSMETIC_MANAGERS.add(new PrioritisedManager(priority, manager))) {
+			throw new IllegalArgumentException("Duplicate manager at priority " + priority);
+		}
 	}
 
 	public static void addCallback(BiConsumer<LivingEntity, Cosmetics> callback) {
@@ -99,21 +101,14 @@ public final class MasterCosmeticManager {
 		PrioritisedManager(int priority, CosmeticManager manager) {
 			this.priority = priority;
 			this.manager = manager;
-			this.order = globalOrder++; // to prevent same-priority managers replacing each other
 		}
 
 		private final int priority;
-		private final int order;
 		private final CosmeticManager manager;
 
 		@Override
 		public int compareTo(@NotNull MasterCosmeticManager.PrioritisedManager pm) {
-			if (this.priority == pm.priority) {
-				return this.order - pm.order;
-			}
 			return this.priority - pm.priority;
 		}
-
-		private static int globalOrder = 0;
 	}
 }
