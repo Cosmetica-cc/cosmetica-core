@@ -107,8 +107,9 @@ public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 		poseStack.mulPose(Vector3f.YP.rotationDegrees(180.0f - s / 2.0f));
 		// cosmetica start
 		ResourceLocation cloakLocation = cosmetics.get().getCloak().location;
+		RenderType type = RenderType.entityTranslucent(cloakLocation);
 		// cosmetica end
-		VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.entitySolid(cloakLocation));
+		VertexConsumer vertexConsumer = multiBufferSource.getBuffer(type);
 		this.cloak.render(poseStack, vertexConsumer, i, OverlayTexture.NO_OVERLAY);
 		poseStack.popPose();
 	}
