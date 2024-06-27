@@ -33,9 +33,5 @@ public class BuiltinManagers {
 		CosmeticManagers.registerCosmeticManager(0, new ApiCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(1, new ArmourStandCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(50, new CachedCosmeticManager());
-
-		if (Boolean.getBoolean("cosmetica.debug")) {
-			Cosmetics.configureOwnNametag(true, false);
-		}
 	}
 }

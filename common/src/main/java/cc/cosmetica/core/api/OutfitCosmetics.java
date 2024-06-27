@@ -88,6 +88,16 @@ public class OutfitCosmetics implements Cosmetics {
 	}
 
 	@Override
+	public CachedImage getIcon() {
+		return CachedImage.NO_TEXTURE;
+	}
+
+	@Override
+	public boolean isTransparentIcon() {
+		return false;
+	}
+
+	@Override
 	public boolean isUpsideDown() {
 		return false;
 	}

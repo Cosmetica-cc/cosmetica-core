@@ -18,6 +18,7 @@ package cc.cosmetica.core.mixin;
 
 import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
 import net.minecraft.client.model.ArmorStandArmorModel;
 import net.minecraft.client.model.ArmorStandModel;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -41,6 +42,11 @@ public abstract class ArmourStandModelMixin extends ArmorStandArmorModel {
 
 	@Inject(at = @At("RETURN"), method="setupAnim(Lnet/minecraft/world/entity/decoration/ArmorStand;FFFFF)V")
 	private void afterSetupAnim(ArmorStand armorStand, float f, float g, float h, float i, float j, CallbackInfo ci) {
+		// only run if the feature is enabled.
+		if (!MasterCosmeticManager.armourStandArms) {
+			return;
+		}
+
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(armorStand);
 
 		if (cosmetics.isPresent()) {

@@ -21,6 +21,7 @@ import cc.cosmetica.core.api.*;
 import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
+import cc.cosmetica.core.render.texture.CosmeticaHttpTexture;
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -171,12 +172,22 @@ public class ApiCosmeticManager implements CosmeticManager {
 	 * NOTE: Do not keep non-weak references to this outside the player mixin itself for garbage collection reasons.
 	 */
 	public static final class ApiCosmetics implements Cosmetics {
-		private ApiCosmetics(@Nullable Outfit outfit, @Nullable Lore lore) {
+		private ApiCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon) {
 			// lore
 			if (lore == null) {
 				this.lore = null;
 			} else {
 				this.lore = lore.getFormatted().replaceAll("&", "§");
+			}
+
+			// icon
+			if (icon == null) {
+				this.icon = CachedImage.NO_TEXTURE;
+				this.transparentIcon = false;
+			} else {
+				this.icon = CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
+						icon.getFrames().intValue(), icon.getTicksPerFrame().intValue());
+				this.transparentIcon = false; // TODO transparent icons
 			}
 
 			// outfit
@@ -212,6 +223,8 @@ public class ApiCosmeticManager implements CosmeticManager {
 		// 2. tell apicosmeticamanager to replace cosmetics (if it's an ApiCosmetics)
 		private final CachedImage cloak;
 		private final CachedImage elytra;
+		private final CachedImage icon;
+		private final boolean transparentIcon;
 		private final List<Accessory> accessories;
 		private final @Nullable String outfitName, outfitId;
 		private final @Nullable String lore;
@@ -243,6 +256,16 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 
 		@Override
+		public CachedImage getIcon() {
+			return this.icon;
+		}
+
+		@Override
+		public boolean isTransparentIcon() {
+			return this.transparentIcon;
+		}
+
+		@Override
 		public Optional<String> getLore() {
 			return Optional.ofNullable(this.lore);
 		}
@@ -266,13 +289,13 @@ public class ApiCosmeticManager implements CosmeticManager {
 				// read data from the response
 				assert user != null; // response.isIsUser()
 
-				return new ApiCosmetics(user.getOutfit(), user.getLore());
+				return new ApiCosmetics(user.getOutfit(), user.getLore(), user.getIcon());
 			} else {
 				CosmeticaPlayer player = response.getPlayer();
 
-				assert player != null; // !response.isUser()
+				assert player != null; // !response.isIsUser()
 
-				return new ApiCosmetics(null, null);
+				return new ApiCosmetics(null, null, null);
 			}
 		}
 	}

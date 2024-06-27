@@ -38,6 +38,9 @@ public final class MasterCosmeticManager {
 	private MasterCosmeticManager() {
 	}
 
+	// on by default
+	public static boolean armourStandArms = true;
+
 	public static final ExecutorService HTTP_THREAD_POOL = Executors.newFixedThreadPool(30);
 	// sorted collection of cosmetic managers
 	private static final TreeSet<PrioritisedManager> COSMETIC_MANAGERS = new TreeSet<>();

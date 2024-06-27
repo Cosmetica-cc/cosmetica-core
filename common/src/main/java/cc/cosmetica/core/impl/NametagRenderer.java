@@ -50,11 +50,14 @@ public final class NametagRenderer {
 		// NO-OP
 	}
 
-	private static boolean showOwnNametag;
-	private static boolean showOwnNametagInventory;
+	// default only in-game
+	private static boolean showOwnNametag = true;
+	private static boolean showOwnNametagInventory = false;
 	private static boolean inventoryRendering;
 
 	private static final float GLIDING_SWIMMING_CROUCHING = 0.49974638F;
+
+	public static final char ICON_CHARACTER = "\uE38D";
 
 	// ================ //
 	// Show Own Nametag //
@@ -187,5 +190,11 @@ public final class NametagRenderer {
 
 			stack.popPose();
 		}
+	}
+
+	public static int debug(Font instance, Component component, float offsetX, float offsetY, int color, boolean bl, Matrix4f transform, MultiBufferSource mbs, boolean bl2, int k, int i) {
+		k = 0;
+		instance.drawInBatch(component, offsetX, offsetY, color, bl, transform, mbs, bl2, k, i);
+		return 0;
 	}
 }

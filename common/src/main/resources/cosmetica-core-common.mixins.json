@@ -11,6 +11,8 @@
     "cape.ArmourStandRendererMixin",
     "cape.CapeLayerMixin",
     "cape.ElytraLayerMixin",
+    "nametags.EntityRendererMixin",
+    "nametags.FontSetMixin",
     "nametags.InventoryScreenMixin",
     "nametags.LivingEntityRendererMixin",
     "nametags.PlayerRendererMixin",

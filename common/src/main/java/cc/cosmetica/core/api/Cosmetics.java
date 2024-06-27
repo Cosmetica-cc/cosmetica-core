@@ -44,13 +44,13 @@ public interface Cosmetics {
 	Optional<String> getOutfitId();
 
 	/**
-	 * Get the cloak texture.
+	 * Get the cloak texture. {@link CachedImage#NO_TEXTURE} if no texture.
 	 * @return the cloak texture.
 	 */
 	CachedImage getCloak();
 
 	/**
-	 * Get the elytra texture.
+	 * Get the elytra texture. {@link CachedImage#NO_TEXTURE} if no texture.
 	 * @return the elytra texture.
 	 */
 	CachedImage getElytra();
@@ -66,6 +66,18 @@ public interface Cosmetics {
 	 * @return an optional containing the lore, if present.
 	 */
 	Optional<String> getLore();
+
+	/**
+	 * Get the nametag icon to use. {@link CachedImage#NO_TEXTURE} if no texture.
+	 * @return the nametag icon to use.
+	 */
+	CachedImage getIcon();
+
+	/**
+	 * Get whether the icon retrieved from {@link CachedImage} should render with reduced opacity.
+	 * @return whether the icon should be rendered with reduced opacity.
+	 */
+	boolean isTransparentIcon();
 
 	/**
 	 * Get whether the entity should be flipped upside-down.
@@ -109,11 +121,20 @@ public interface Cosmetics {
 	}
 
 	/**
-	 * Configure whether the local player's nametag should show.
+	 * Configure whether the local player's nametag should show. By default it shows in game.
 	 * @param show whether the nametag should display in third person.
 	 * @param showInInventory whether the nametag should display during {@link net.minecraft.client.gui.screens.inventory.InventoryScreen#renderEntityInInventory(int, int, int, float, float, LivingEntity) InventoryScreen#renderEntityInInventory}.
 	 */
 	static void configureOwnNametag(boolean show, boolean showInInventory) {
 		NametagRenderer.configureThirdPersonNametag(show, showInInventory);
+	}
+
+	/**
+	 * Configure whether armour stand arms should show for arm cosmetics.
+	 * @param showForCosmetics whether the armour stand arms should be forced to display if an armour stand has arm
+	 *                         cosmetics.
+	 */
+	static void configureArmourStandArms(boolean showForCosmetics) {
+		MasterCosmeticManager.armourStandArms = showForCosmetics;
 	}
 }
