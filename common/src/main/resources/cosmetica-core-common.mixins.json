@@ -12,7 +12,7 @@
     "cape.CapeLayerMixin",
     "cape.ElytraLayerMixin",
     "nametags.EntityRendererMixin",
-    "nametags.FontSetMixin",
+    "nametags.FontStringRenderOutputMixin",
     "nametags.InventoryScreenMixin",
     "nametags.LivingEntityRendererMixin",
     "nametags.PlayerRendererMixin",

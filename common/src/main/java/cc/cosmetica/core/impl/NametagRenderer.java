@@ -17,11 +17,11 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.Accessory;
+import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Quaternion;
-import gg.cloaks.javaclient.model.CosmeticaUser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -29,7 +29,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 
@@ -37,10 +36,9 @@ import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.gui.Font;
 
 import javax.annotation.Nullable;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Render nametags and stuff in nametags.
@@ -57,7 +55,29 @@ public final class NametagRenderer {
 
 	private static final float GLIDING_SWIMMING_CROUCHING = 0.49974638F;
 
-	public static final char ICON_CHARACTER = "\uE38D";
+	// ============ //
+	// Nametag Icon //
+	// ============ //
+
+	// don't prevent the cached image being Garbage Collected
+	@Nullable
+	private static WeakReference<CachedImage> preparedIcon;
+
+	public static @Nullable CachedImage getPreparedIcon() {
+		try {
+			return preparedIcon == null ? null : preparedIcon.get();
+		} finally {
+			preparedIcon = null;
+		}
+	}
+
+	/**
+	 * Prepare an icon to render it at the front of the next font draw call.
+	 * @param icon the icon to render.
+	 */
+	public static void prepareIcon(CachedImage icon) {
+		preparedIcon = new WeakReference<>(icon);
+	}
 
 	// ================ //
 	// Show Own Nametag //

@@ -1,0 +1,75 @@
+/*
+ * Copyright 2024 Cosmetica
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package cc.cosmetica.core.mixin.nametags;
+
+import cc.cosmetica.core.api.CachedImage;
+import cc.cosmetica.core.impl.NametagRenderer;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix4f;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.font.glyphs.BakedGlyph;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/**
+ * Add Cosmetica Icon.
+ */
+@Mixin(Font.StringRenderOutput.class)
+public class FontStringRenderOutputMixin {
+	@Shadow private float x;
+
+	@Shadow @Final private Matrix4f pose;
+
+	@Shadow @Final MultiBufferSource bufferSource;
+
+	@Shadow @Final private boolean seeThrough;
+
+	@Shadow private float y;
+
+	@Shadow @Final private int packedLightCoords;
+
+	@Inject(at = @At("RETURN"), method="<init>")
+	private void accept(Font font, MultiBufferSource multiBufferSource, float f, float g, int i, boolean bl, Matrix4f matrix4f, boolean bl2, int j, CallbackInfo ci) {
+		CachedImage icon = NametagRenderer.getPreparedIcon();
+
+		if (icon != null) {
+			// see FontTexture#add
+			BakedGlyph glyph = new BakedGlyph(
+					RenderType.text(icon.location),
+					RenderType.textSeeThrough(icon.location),
+					// u0 u1 v0 v1
+					0, 1, 0, 1,
+					// left right up down. See RawGlyph
+					0, icon.getWidth(), 0, icon.getHeight()
+			);
+
+			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(this.seeThrough));
+
+			// italic, x, y, pose, vc, r,g,b,a, light
+			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1,1, this.packedLightCoords);
+
+			// + advance
+			this.x += icon.getWidth() + 1.0f;
+		}
+	}
+}

@@ -29,13 +29,32 @@ public final class CachedImage {
 
 	public final ResourceLocation location;
 	private boolean loaded;
+	private int width, height;
 
 	public boolean isLoaded() {
 		return this.loaded;
 	}
 
-	public void setLoaded() {
+	/**
+	 * Get the width, if the image is loaded. Otherwise 0.
+	 * @return the width of the cached image.
+	 */
+	public int getWidth() {
+		return this.width;
+	}
+
+	/**
+	 * Get the height, if the image is loaded. Otherwise 0.
+	 * @return the height of the cached image.
+	 */
+	public int getHeight() {
+		return this.height;
+	}
+
+	public void setLoaded(int width, int height) {
 		if (this == NO_TEXTURE) throw new IllegalArgumentException("Cannot set NO_TEXTURE as loaded.");
+		this.width = width;
+		this.height = height;
 		this.loaded = true;
 	}
 

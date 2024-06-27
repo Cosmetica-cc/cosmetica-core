@@ -153,7 +153,7 @@ public class BlockModelManager {
 			AbstractTexture texture = new CosmeticaHttpTexture.Builder(textureUrl, LOADING_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
-					.onLoad(() -> {
+					.onLoad(image -> {
 						// don't store a reference to the CosmeticaModel or it will prevent GC
 						CosmeticaModel _model = MODEL_CACHE.get(id);
 						if (_model != null) {
@@ -228,11 +228,11 @@ public class BlockModelManager {
 			AbstractTexture texture = new CosmeticaHttpTexture.Builder(imageURL, LOADING_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
-					.onLoad(() -> {
+					.onLoad(nativeImage -> {
 						// don't store a reference to the CachedImage or it will prevent GC
 						CachedImage _image = IMAGE_CACHE.get(id);
 						if (_image != null) {
-							_image.setLoaded();
+							_image.setLoaded(nativeImage.getWidth(), nativeImage.getHeight());
 						}
 					})
 					.build();

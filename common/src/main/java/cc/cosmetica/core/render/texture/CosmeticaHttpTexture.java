@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.texture.Tickable;
 import net.minecraft.resources.ResourceLocation;
 
 import java.io.File;
+import java.util.function.Consumer;
 
 /**
  * An animated texture that is used by Cosmetica. Adapted from CosmeticIconTexture in Cosmetica 1.
@@ -32,7 +33,7 @@ import java.io.File;
  */
 public class CosmeticaHttpTexture extends HttpTexture {
 	private CosmeticaHttpTexture(File file, String url, ResourceLocation loadingTexture,
-								 int frames, int ticksPerFrame, Runnable onFirstUpload)
+								 int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload)
 			throws IllegalArgumentException {
 		super(file, url, loadingTexture, false, null);
 
@@ -53,7 +54,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 	private final String url;
 	private final int frames;
 	private final int ticksPerFrame;
-	private final Runnable onFirstUpload;
+	private final Consumer<NativeImage>  onFirstUpload;
 
 	private int frameHeight;
 	private int frame;
@@ -74,7 +75,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 
 		try {
 			this.upload(image, false);
-			this.onFirstUpload.run();
+			this.onFirstUpload.accept(image);
 		} catch (IllegalStateException e) {
 			Logging.getInstance().error("Error while uploading Cosmeitca texture (url: {})", e, this.url);
 		}
@@ -129,7 +130,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 	 * adding the unnecessary overhead of ticking every static texture (which will be most textures).
 	 */
 	private static class Animated extends CosmeticaHttpTexture implements Tickable {
-		private Animated(File file, String url, ResourceLocation loadingTexture, int frames, int ticksPerFrame, Runnable onLoad) throws IllegalArgumentException {
+		private Animated(File file, String url, ResourceLocation loadingTexture, int frames, int ticksPerFrame, Consumer<NativeImage>  onLoad) throws IllegalArgumentException {
 			super(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
 		}
 
@@ -151,7 +152,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 		private File file;
 		private int frames = 1;
 		private int ticksPerFrame = 1;
-		private Runnable onLoad;
+		private Consumer<NativeImage>  onLoad;
 
 		/**
 		 * Constructs a new Builder instance.
@@ -199,7 +200,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 		 * @param onLoad The task to run when the texture is loaded.
 		 * @return This Builder instance.
 		 */
-		public Builder onLoad(Runnable onLoad) {
+		public Builder onLoad(Consumer<NativeImage>  onLoad) {
 			this.onLoad = onLoad;
 			return this;
 		}
