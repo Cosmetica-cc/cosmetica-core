@@ -67,7 +67,7 @@ public class FontStringRenderOutputMixin {
 
 			if (NametagRenderer.shouldReadjustNametagPosition()) {
 				this.cosmeticacore$advance = advance;
-				this.x -= advance/2.0f;
+				this.x -= advance/1.5f;
 			}
 
 			// see FontTexture#add
@@ -97,7 +97,7 @@ public class FontStringRenderOutputMixin {
 	)
 	private float adjustBackgroundStart(float f) {
 		if (this.cosmeticacore$advance != null) {
-			f -= this.cosmeticacore$advance/2.0f;
+			f -= this.cosmeticacore$advance/1.5f;
 		}
 		return f;
 	}
