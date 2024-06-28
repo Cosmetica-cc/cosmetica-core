@@ -40,7 +40,7 @@ public class EntityRendererMixin {
 		if (entity instanceof LivingEntity && component.getString().equals(entity.getName().getString())) {
 			Cosmetics.getCosmetics((LivingEntity)entity).ifPresent(c -> {
 				if (c.getIcon().isLoaded()) {
-					NametagRenderer.prepareIcon(c.getIcon());
+					NametagRenderer.prepareIcon(c.getIcon(), true);
 				}
 			});
 		}

@@ -63,7 +63,7 @@ public final class NametagRenderer {
 	@Nullable
 	private static WeakReference<CachedImage> preparedIcon;
 	private static int iconDrawCount;
-
+	private static boolean readjustNametagPosition;
 
 	public static @Nullable CachedImage getPreparedIcon() {
 		try {
@@ -77,21 +77,28 @@ public final class NametagRenderer {
 		}
 	}
 
+	public static boolean shouldReadjustNametagPosition() {
+		return readjustNametagPosition;
+	}
+
 	/**
 	 * Prepare an icon to render it at the front of the next font draw call.
 	 * @param icon the icon to render.
+	 * @param readjustTextPosition whether to shift the text left accordingly.
 	 */
-	public static void prepareIcon(CachedImage icon) {
-		prepareIcon(icon, 1);
+	public static void prepareIcon(CachedImage icon, boolean readjustTextPosition) {
+		prepareIcon(icon, 1, readjustTextPosition);
 	}
 
 	/**
 	 * Prepare an icon to render it at the front of the next font draw call.
 	 * @param icon the icon to render.
 	 * @param count the number of font renders to add the icon to  Typically two for shadow.
+	 * @param readjustTextPosition whether to shift the text left accordingly.
 	 */
-	public static void prepareIcon(CachedImage icon, int count) {
+	public static void prepareIcon(CachedImage icon, int count, boolean readjustTextPosition) {
 		iconDrawCount = count;
+		readjustNametagPosition = readjustTextPosition;
 		preparedIcon = new WeakReference<>(icon);
 	}
 

@@ -17,11 +17,9 @@
 package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.api.CachedImage;
-import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -29,8 +27,10 @@ import net.minecraft.client.renderer.RenderType;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -50,6 +50,9 @@ public class FontStringRenderOutputMixin {
 
 	@Shadow @Final private int packedLightCoords;
 
+	@Unique
+	private Float cosmeticacore$advance = null;
+
 	@Inject(at = @At("RETURN"), method="<init>")
 	private void accept(Font font, MultiBufferSource buf, float initialX, float initialY,
 						int colour, boolean dropShadow, Matrix4f matrix4f, boolean seeThrough, int light, CallbackInfo ci) {
@@ -58,6 +61,14 @@ public class FontStringRenderOutputMixin {
 		if (icon != null) {
 			// see BitmapProvider$Builder.create for how this is scaled
 			float scale = 8.0f / icon.getHeight();
+
+			// adjust start position if necessary
+			float advance = scale*icon.getWidth() + 1.0f;
+
+			if (NametagRenderer.shouldReadjustNametagPosition()) {
+				this.cosmeticacore$advance = advance;
+				this.x -= advance/2.0f;
+			}
 
 			// see FontTexture#add
 			BakedGlyph glyph = new BakedGlyph(
@@ -75,7 +86,19 @@ public class FontStringRenderOutputMixin {
 			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1,1, this.packedLightCoords);
 
 			// + advance
-			this.x += scale*icon.getWidth() + 1.0f;
+			this.x += advance;
 		}
+	}
+
+	@ModifyArg(
+			method = "finish",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/font/glyphs/BakedGlyph$Effect;<init>(FFFFFFFFF)V"),
+			index = 0
+	)
+	private float adjustBackgroundStart(float f) {
+		if (this.cosmeticacore$advance != null) {
+			f -= this.cosmeticacore$advance/2.0f;
+		}
+		return f;
 	}
 }
