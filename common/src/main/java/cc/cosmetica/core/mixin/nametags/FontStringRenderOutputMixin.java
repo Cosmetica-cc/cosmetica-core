@@ -66,7 +66,7 @@ public class FontStringRenderOutputMixin {
 					// u0 u1 v0 v1
 					0, 1, 0, 1,
 					// left right up down. See RawGlyph
-					0, scale*icon.getWidth(), 0, scale*icon.getHeight()
+					0, scale*icon.getWidth(), 3.0f, scale*icon.getHeight() + 3.0f
 			);
 
 			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(this.seeThrough));
