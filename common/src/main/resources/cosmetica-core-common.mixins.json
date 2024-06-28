@@ -16,6 +16,7 @@
     "nametags.InventoryScreenMixin",
     "nametags.LivingEntityRendererMixin",
     "nametags.PlayerRendererMixin",
+    "nametags.PlayerTabOverlayMixin",
     "network.AbstractClientPlayerMixin",
     "network.SkinManagerMixin",
     "texture.HttpTextureMixin",

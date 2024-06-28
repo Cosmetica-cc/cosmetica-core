@@ -30,6 +30,9 @@ configurations {
 dependencies {
     forge "net.minecraftforge:forge:${rootProject.forge_version}"
 
+    api "gg.cloaks:javaclient:${cosmetica_java_client_version}"
+    include "gg.cloaks:javaclient:${cosmetica_java_client_version}"
+
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 }
