@@ -172,7 +172,7 @@ public final class CosmeticaModel {
 	 */
 	public static CachedImage getOrCreateImage(String category, AnimatedTextureCosmetic cosmetic) {
 		return BlockModelManager.getOrCreateImage(category + "/" + cosmetic.getId(),
-				cosmetic.getTexture(), cosmetic.getTicksPerFrame().intValue(), cosmetic.getFrames().intValue());
+				cosmetic.getTexture(), cosmetic.getFrames().intValue(), cosmetic.getTicksPerFrame().intValue());
 	}
 
 	/**
@@ -183,14 +183,14 @@ public final class CosmeticaModel {
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
 	 * @param imageURL the URL to download the image from if it's not already in memory.
-	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @implNote a weak reference to the CachedImage is stored in cache.
 	 * @return a {@link CachedImage}.
 	 */
 	public static CachedImage getOrCreateImage(String category, String id,
-											   String imageURL, int ticksPerFrame, int frames) {
-		return BlockModelManager.getOrCreateImage(category + "/" + id, imageURL, ticksPerFrame, frames);
+											   String imageURL, int frames, int ticksPerFrame) {
+		return BlockModelManager.getOrCreateImage(category + "/" + id, imageURL, frames, ticksPerFrame);
 	}
 }

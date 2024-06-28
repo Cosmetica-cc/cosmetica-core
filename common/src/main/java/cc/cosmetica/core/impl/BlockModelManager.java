@@ -207,13 +207,13 @@ public class BlockModelManager {
 	 * all references are gone.
 	 * @param id the id of the image.
 	 * @param imageURL the URL to download the image from if it's not already in memory.
-	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @implNote a weak reference to the CachedImage is stored in cache.
 	 * @return a {@link CachedImage}.
 	 */
-	public static CachedImage getOrCreateImage(String id, String imageURL, int ticksPerFrame, int frames) {
+	public static CachedImage getOrCreateImage(String id, String imageURL, int frames, int ticksPerFrame) {
 		CachedImage image = IMAGE_CACHE.get(id);
 
 		// if the image doesn't exist or has expired, generate a new one

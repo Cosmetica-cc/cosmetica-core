@@ -17,9 +17,11 @@
 package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.api.CachedImage;
+import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
 import net.minecraft.client.renderer.MultiBufferSource;
