@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.mixin.nametags;
 
+import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.PlayerModel;
@@ -25,6 +26,8 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -45,6 +48,14 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 			ordinal = 1
 	), method = "renderNameTag(Lnet/minecraft/client/player/AbstractClientPlayer;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V")
 	protected void onRenderNameTag(AbstractClientPlayer entity, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+		// add lore
 		NametagRenderer.renderLore(this.entityRenderDispatcher, entity, this.getModel(), stack, buffer, this.getFont(), packedLight);
+
+		// add nametag icons
+		Cosmetics.getCosmetics(entity).ifPresent(c -> {
+			if (c.getIcon().isLoaded()) {
+				NametagRenderer.prepareIcon(c.getIcon(), entity.isDiscrete() ? 1 : 2, true);
+			}
+		});
 	}
 }
