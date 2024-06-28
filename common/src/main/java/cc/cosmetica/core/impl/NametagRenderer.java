@@ -62,12 +62,18 @@ public final class NametagRenderer {
 	// don't prevent the cached image being Garbage Collected
 	@Nullable
 	private static WeakReference<CachedImage> preparedIcon;
+	private static int iconDrawCount;
+
 
 	public static @Nullable CachedImage getPreparedIcon() {
 		try {
 			return preparedIcon == null ? null : preparedIcon.get();
 		} finally {
-			preparedIcon = null;
+			if (iconDrawCount > 0) {
+				if (--iconDrawCount <= 0) {
+					preparedIcon = null;
+				}
+			}
 		}
 	}
 
@@ -76,6 +82,16 @@ public final class NametagRenderer {
 	 * @param icon the icon to render.
 	 */
 	public static void prepareIcon(CachedImage icon) {
+		prepareIcon(icon, 1);
+	}
+
+	/**
+	 * Prepare an icon to render it at the front of the next font draw call.
+	 * @param icon the icon to render.
+	 * @param count the number of font renders to add the icon to  Typically two for shadow.
+	 */
+	public static void prepareIcon(CachedImage icon, int count) {
+		iconDrawCount = count;
 		preparedIcon = new WeakReference<>(icon);
 	}
 

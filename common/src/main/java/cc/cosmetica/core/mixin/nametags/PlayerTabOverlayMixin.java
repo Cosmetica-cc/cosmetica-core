@@ -53,7 +53,7 @@ public class PlayerTabOverlayMixin {
 			if (player != null) {
 				Cosmetics.getCosmetics(player).ifPresent(cosmetics -> {
 					if (cosmetics.getIcon().isLoaded()) {
-						NametagRenderer.prepareIcon(cosmetics.getIcon());
+						NametagRenderer.prepareIcon(cosmetics.getIcon(), 2);
 					}
 				});
 			}
