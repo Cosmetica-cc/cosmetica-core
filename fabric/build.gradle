@@ -32,7 +32,6 @@ dependencies {
 
     // bundle okhttp and javaclient
     shadow "gg.cloaks:javaclient:${cosmetica_java_client_version}"
-    shadow 'com.squareup.okhttp3:okhttp:4.10.0'
 }
 
 processResources {

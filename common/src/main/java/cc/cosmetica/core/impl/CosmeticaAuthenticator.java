@@ -16,24 +16,19 @@
 
 package cc.cosmetica.core.impl;
 
-import com.google.gson.Gson;
+import cc.cosmetica.core.util.Response;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
-import okhttp3.*;
 
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.UUID;
@@ -48,8 +43,6 @@ public final class CosmeticaAuthenticator {
 
 	/* Constants */
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-	private static final Gson GSON = new Gson();
-	public static final OkHttpClient HTTP = new OkHttpClient.Builder().build();
 	private static final String apiUrl = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
 
 	/* Singleton */
@@ -103,10 +96,9 @@ public final class CosmeticaAuthenticator {
 		String verifyToken;
 		byte[] publicKey;
 
-		try (Response response = post(authURL + "/java/key", keyRequest)) {
+		try (Response response = Response.post(authURL + "/java/key", keyRequest)) {
 			if (response.isSuccessful()) {
-				assert response.body() != null;
-				JsonObject jo = JsonParser.parseString(response.body().string()).getAsJsonObject();
+				JsonObject jo = response.getEntityJson().getAsJsonObject();
 
 				sessionId = jo.get("sessionId").getAsString();
 				verifyToken = jo.get("verifyToken").getAsString();
@@ -129,7 +121,7 @@ public final class CosmeticaAuthenticator {
 		loginRequest.addProperty("selectedProfile", uuid.toString().replaceAll("-", ""));
 		loginRequest.addProperty("serverId", serverId);
 
-		try (Response response = post("https://sessionserver.mojang.com/session/minecraft/join", loginRequest)) {
+		try (Response response = Response.post("https://sessionserver.mojang.com/session/minecraft/join", loginRequest)) {
 			// Ensure successful
 			if (!response.isSuccessful()) {
 				logBadResponse("Could not log in to Cosmetica", response);
@@ -164,10 +156,9 @@ public final class CosmeticaAuthenticator {
 		verifyRequest.addProperty("verifyToken", verifyTokenEncrypted);
 		verifyRequest.addProperty("sessionId", sessionId);
 
-		try (Response response = post(authURL + "/java/verify", verifyRequest)) {
+		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {
-				assert response.body() != null;
-				JsonObject jo = JsonParser.parseString(response.body().string()).getAsJsonObject();
+				JsonObject jo = response.getEntityJson().getAsJsonObject();
 
 				ApiClient newClient = new ApiClient()
 						.setBasePath(apiUrl)
@@ -181,18 +172,7 @@ public final class CosmeticaAuthenticator {
 	}
 
 	private static void logBadResponse(String message, Response response) throws IOException {
-		Logging.getInstance().warn("{}: Error {}, {}", message, response.code(), response.body() == null ? "null" : response.body().string());
-	}
-
-	private static Response post(String url, JsonObject body) throws IOException {
-		RequestBody requestBody = RequestBody.create(GSON.toJson(body), MediaType.parse("application/json"));
-
-		Request request = new Request.Builder()
-				.url(url)
-				.post(requestBody)
-				.build();
-
-		return HTTP.newCall(request).execute();
+		Logging.getInstance().warn("{}: Error {}, {}", message, response.getStatusCode(), response.getEntity() == null ? "null" : response.getEntityString());
 	}
 
 	/**

@@ -19,6 +19,7 @@ package cc.cosmetica.core.api;
 import cc.cosmetica.core.impl.CosmeticaAuthenticator;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
+import cc.cosmetica.core.util.Response;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.api.DefaultApi;
 
@@ -26,10 +27,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-
-import okhttp3.Request;
-import okhttp3.Call;
-import okhttp3.Response;
 
 /**
  * Provides access to the authenticated instance of the Cosmetica API.
@@ -75,20 +72,13 @@ public final class CosmeticaAPI {
 
 		return CompletableFuture.supplyAsync(() -> {
 			try {
-				// https://www.baeldung.com/guide-to-okhttp
-				Request request = new Request.Builder()
-						.url(url)
-						.build();
-
-				Call call = CosmeticaAuthenticator.HTTP.newCall(request);
-
-				try (Response response = call.execute()) {
-					if (response.code() < 200 || response.code() > 299) {
-						throw new ApiException(response.code(),
-								response.body() == null ? "(no response body)" : response.body().string());
+				try (Response response = Response.get(url)) {
+					if (!response.isSuccessful()) {
+						throw new ApiException(response.getStatusCode(),
+								response.getEntity() == null ? "(no response body)" : response.getEntityString());
 					}
 
-					return response.body() == null ? "" : response.body().string();
+					return response.getEntity() == null ? "" : response.getEntityString();
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException("Downloading from URL " + url, e);
