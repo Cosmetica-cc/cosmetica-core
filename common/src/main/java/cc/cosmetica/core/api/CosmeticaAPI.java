@@ -27,7 +27,6 @@ import java.io.UncheckedIOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Call;
 import okhttp3.Response;
@@ -45,6 +44,14 @@ public final class CosmeticaAPI {
 	 */
 	public static DefaultApi getInstance() {
 		return CosmeticaAuthenticator.getCurrentApi();
+	}
+
+	/**
+	 * Get whether cosmetica-core is currently authenticated.
+	 * @return whether the cosmetica-core api instance is currently authenticated.
+	 */
+	public static boolean isAuthenticated() {
+		return CosmeticaAuthenticator.isAuthenticated();
 	}
 
 	/**
@@ -73,7 +80,7 @@ public final class CosmeticaAPI {
 						.url(url)
 						.build();
 
-				Call call = DOWNLOADER.newCall(request);
+				Call call = CosmeticaAuthenticator.HTTP.newCall(request);
 
 				try (Response response = call.execute()) {
 					if (response.code() < 200 || response.code() > 299) {
@@ -88,6 +95,4 @@ public final class CosmeticaAPI {
 			}
 		}, MasterCosmeticManager.HTTP_THREAD_POOL);
 	}
-
-	private static final OkHttpClient DOWNLOADER = new OkHttpClient.Builder().build();
 }
