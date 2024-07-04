@@ -26,10 +26,13 @@ dependencies {
     }
 
     api "gg.cloaks:javaclient:${cosmetica_java_client_version}"
-    include "gg.cloaks:javaclient:${cosmetica_java_client_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+
+    // bundle okhttp and javaclient
+    shadow "gg.cloaks:javaclient:${cosmetica_java_client_version}"
+    shadow 'com.squareup.okhttp3:okhttp:4.10.0'
 }
 
 processResources {
@@ -43,7 +46,7 @@ processResources {
 shadowJar {
     exclude "architectury.common.json"
 
-    configurations = [project.configurations.shadowCommon]
+    configurations = [project.configurations.shadowCommon, project.configurations.shadow]
     archiveClassifier = "dev-shadow"
 }
 

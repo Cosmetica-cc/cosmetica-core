@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
 architectury {
@@ -31,10 +31,13 @@ dependencies {
     forge "net.minecraftforge:forge:${rootProject.forge_version}"
 
     api "gg.cloaks:javaclient:${cosmetica_java_client_version}"
-    shadow "gg.cloaks:javaclient:${cosmetica_java_client_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
+
+    // bundle okhttp and javaclient
+    shadow "gg.cloaks:javaclient:${cosmetica_java_client_version}"
+    shadow 'com.squareup.okhttp3:okhttp:4.10.0'
 }
 
 processResources {
@@ -49,7 +52,9 @@ shadowJar {
     exclude "fabric.mod.json"
     exclude "architectury.common.json"
 
-    configurations = [project.configurations.shadowCommon]
+    exclude "o"
+
+    configurations = [project.configurations.shadowCommon, project.configurations.shadow]
     archiveClassifier = "dev-shadow"
 }
 
