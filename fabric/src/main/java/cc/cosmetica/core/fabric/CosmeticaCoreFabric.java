@@ -17,11 +17,13 @@
 package cc.cosmetica.core.fabric;
 
 import cc.cosmetica.core.builtin.BuiltinManagers;
-import net.fabricmc.api.ModInitializer;
+import cc.cosmetica.core.impl.CosmeticaAuthenticator;
+import net.fabricmc.api.ClientModInitializer;
 
-public class CosmeticaCoreFabric implements ModInitializer {
+public class CosmeticaCoreFabric implements ClientModInitializer {
     @Override
-    public void onInitialize() {
+    public void onInitializeClient() {
+        CosmeticaAuthenticator.authenticate();
         new BuiltinManagers().init();
     }
 }

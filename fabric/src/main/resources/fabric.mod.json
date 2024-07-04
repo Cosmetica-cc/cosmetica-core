@@ -15,7 +15,7 @@
   "icon": "assets/cosmetica-core/icon.png",
   "environment": "client",
   "entrypoints": {
-    "main": [
+    "client": [
       "cc.cosmetica.core.fabric.CosmeticaCoreFabric"
     ]
   },

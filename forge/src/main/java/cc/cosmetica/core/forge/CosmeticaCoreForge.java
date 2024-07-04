@@ -17,6 +17,7 @@
 package cc.cosmetica.core.forge;
 
 import cc.cosmetica.core.builtin.BuiltinManagers;
+import cc.cosmetica.core.impl.CosmeticaAuthenticator;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -28,6 +29,7 @@ public class CosmeticaCoreForge {
 	}
 
 	private void onClientSetup(FMLClientSetupEvent event) {
+		CosmeticaAuthenticator.authenticate();
 		new BuiltinManagers().init();
 	}
 }

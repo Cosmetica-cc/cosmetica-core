@@ -19,9 +19,12 @@ package cc.cosmetica.core.impl;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.User;
 import okhttp3.*;
 
 import javax.crypto.Cipher;
@@ -73,10 +76,15 @@ public final class CosmeticaAuthenticator {
 		apiInstance = new DefaultApi(Configuration.getDefaultApiClient());
 	}
 
-	public static void authenticate(UUID uuid, String username, String sessionToken) {
+	public static void authenticate() {
+		User user = Minecraft.getInstance().getUser();
+		authenticate(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken());
+	}
+
+	public static void authenticate(UUID uuid, String username, String accessToken) {
 		MasterCosmeticManager.HTTP_THREAD_POOL.submit(() -> {
 			try {
-				_authenticate(uuid, username, sessionToken);
+				_authenticate(uuid, username, accessToken);
 			} catch (IOException e) {
 				Logging.getInstance().error("Error authenticating with Cosmetica", e);
 			}
