@@ -23,7 +23,7 @@ import net.minecraft.world.entity.LivingEntity;
 /**
  * Cosmetics received from the API for yourself.
  */
-public class SelfCosmeticsManager implements CosmeticManager {
+public class SelfCosmeticManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
 		return false;

@@ -26,7 +26,7 @@ import net.minecraft.world.entity.LivingEntity;
 /**
  * Cosmetic manager for cached cosmetics for yourself.
  */
-public class CachedCosmeticsManager implements CosmeticManager {
+public class CachedCosmeticManager implements CosmeticManager {
 	boolean cached = false;
 	@Override
 	public boolean canManage(LivingEntity entity) {
