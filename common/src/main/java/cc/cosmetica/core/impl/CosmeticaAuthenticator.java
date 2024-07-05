@@ -135,7 +135,7 @@ public final class CosmeticaAuthenticator {
 		String verifyTokenEncrypted;
 
 		try {
-			KeyFactory keyFactory = KeyFactory.getInstance("DES");
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			PublicKey publicKeyO = keyFactory.generatePublic(keySpec);
 
 			Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -165,6 +165,7 @@ public final class CosmeticaAuthenticator {
 						.addDefaultHeader("Authorization", "Bearer " + jo.get("jwt").getAsString());
 
 				// TODO parse user
+				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
 				apiInstance = new DefaultApi(newClient);
 				authenticated = true;
 			}

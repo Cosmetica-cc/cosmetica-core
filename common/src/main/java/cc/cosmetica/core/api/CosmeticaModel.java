@@ -32,6 +32,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 /**
  * Contains model data for a cosmetica model.
@@ -65,6 +66,8 @@ public final class CosmeticaModel {
 	 * If both texture and model are loaded, baking will start.
 	 */
 	public synchronized void setModel(BlockModel model, AABB boundingBox) {
+		Objects.requireNonNull(model, "Block model cannot be null (" + this.texture + ")");
+
 		this.unbakedModel = model;
 		this.boundingBox = boundingBox;
 

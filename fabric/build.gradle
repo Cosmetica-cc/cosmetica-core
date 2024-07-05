@@ -45,6 +45,12 @@ processResources {
 shadowJar {
     exclude "architectury.common.json"
 
+    relocate 'com.fasterxml.jackson', 'cc.cosmetica.com.fasterxml.jackson'
+    relocate 'org.apache.hc', 'cc.cosmetica.org.apache.hc'
+    relocate 'org.apache.commons', 'cc.cosmetica.org.apache.commons'
+    relocate 'org.slf4j', 'cc.cosmetica.org.slf4j'
+    exclude 'javax/xml/**'
+
     configurations = [project.configurations.shadowCommon, project.configurations.shadow]
     archiveClassifier = "dev-shadow"
 }
