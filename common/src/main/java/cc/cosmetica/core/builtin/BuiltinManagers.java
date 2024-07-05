@@ -17,12 +17,10 @@
 package cc.cosmetica.core.builtin;
 
 import cc.cosmetica.core.api.CosmeticManagers;
-import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import cc.cosmetica.core.builtin.manager.ArmourStandCosmeticManager;
-import cc.cosmetica.core.builtin.manager.CachedCosmeticManager;
+import cc.cosmetica.core.builtin.manager.CachedCosmeticsManager;
 import cc.cosmetica.core.builtin.manager.TestCosmeticManager;
-import net.fabricmc.loader.api.FabricLoader;
 
 /**
  * Registers the built-in cosmetic managers in the Cosmetica.
@@ -32,6 +30,6 @@ public class BuiltinManagers {
 		CosmeticManagers.registerCosmeticManager(-100, new TestCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(0, new ApiCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(1, new ArmourStandCosmeticManager());
-		CosmeticManagers.registerCosmeticManager(50, new CachedCosmeticManager());
+		CosmeticManagers.registerCosmeticManager(50, new CachedCosmeticsManager());
 	}
 }

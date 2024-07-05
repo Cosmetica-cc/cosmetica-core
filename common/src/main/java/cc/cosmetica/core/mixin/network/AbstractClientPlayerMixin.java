@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.mixin.network;
 
+import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -29,15 +30,15 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(AbstractClientPlayer.class)
 public class AbstractClientPlayerMixin implements ApiCosmeticsHolder {
 	@Unique
-	private ApiCosmeticManager.ApiCosmetics cosmeticacore$apiCosmetics;
+	private PlayerCosmetics cosmeticacore$apiCosmetics;
 
 	@Override
-	public ApiCosmeticManager.ApiCosmetics cosmeticacore$getApiCosmetics() {
+	public PlayerCosmetics cosmeticacore$getApiCosmetics() {
 		return this.cosmeticacore$apiCosmetics;
 	}
 
 	@Override
-	public void cosmeticacore$setApiCosmetics(ApiCosmeticManager.ApiCosmetics cosmetics) {
+	public void cosmeticacore$setApiCosmetics(PlayerCosmetics cosmetics) {
 		this.cosmeticacore$apiCosmetics = cosmetics;
 	}
 }

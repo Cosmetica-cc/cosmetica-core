@@ -18,22 +18,15 @@ package cc.cosmetica.core.builtin.manager;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
-import cc.cosmetica.core.impl.UUIDs;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Cosmetic manager for cached cosmetics for yourself.
+ * Cosmetics received from the API for yourself.
  */
-public class CachedCosmeticManager implements CosmeticManager {
-	boolean cached = false;
+public class SelfCosmeticsManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof AbstractClientPlayer // && isCached
-				// todo don't call fromString every tick, but be able to detect acount switching (explicitly?)
-				&& cached
-				&& entity.getUUID().equals(UUIDs.fromString(Minecraft.getInstance().getUser().getUuid()));
+		return false;
 	}
 
 	@Override
