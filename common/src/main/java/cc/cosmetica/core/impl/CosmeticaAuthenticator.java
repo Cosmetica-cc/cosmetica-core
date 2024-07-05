@@ -135,7 +135,7 @@ public final class CosmeticaAuthenticator {
 		String verifyTokenEncrypted;
 
 		try {
-			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+			KeyFactory keyFactory = KeyFactory.getInstance("RSASSA-PSS");
 			PublicKey publicKeyO = keyFactory.generatePublic(keySpec);
 
 			Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -168,6 +168,8 @@ public final class CosmeticaAuthenticator {
 				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
 				apiInstance = new DefaultApi(newClient);
 				authenticated = true;
+			} else {
+				logBadResponse("Cosmetica authentication failed", response);
 			}
 		}
 	}
