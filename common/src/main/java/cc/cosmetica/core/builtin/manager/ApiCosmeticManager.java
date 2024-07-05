@@ -127,7 +127,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 					);
 				} catch (ApiException e) {
 					if (e.getCode() != 404) {
-						Logging.getInstance().error("Error fetching player data for texture packet.", e);
+						Logging.getInstance().error("Error fetching player data ({}) for texture packet.", e, uuid);
 					}
 					return null;
 				}
