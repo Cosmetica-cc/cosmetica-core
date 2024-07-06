@@ -17,7 +17,6 @@
 package cc.cosmetica.core.builtin;
 
 import cc.cosmetica.core.api.PlayerCosmetics;
-import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 
 /**
  * Duck interface to access and modify the api cosmetics on a player.

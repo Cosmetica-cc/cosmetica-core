@@ -16,30 +16,35 @@
 
 package cc.cosmetica.core.builtin.manager;
 
-import cc.cosmetica.core.api.Accessory;
-import cc.cosmetica.core.api.*;
+import cc.cosmetica.core.api.CosmeticManager;
+import cc.cosmetica.core.api.CosmeticaAPI;
+import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.impl.MasterCosmeticManager;
-import cc.cosmetica.core.render.texture.CosmeticaHttpTexture;
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import gg.cloaks.javaclient.ApiException;
-import gg.cloaks.javaclient.model.*;
+import gg.cloaks.javaclient.model.PlayerResponse;
+import gg.cloaks.javaclient.model.TexturePacketDto;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.UUID;
 
+/**
+ * Stores cosmetics from the API for other players.
+ */
 public class ApiCosmeticManager implements CosmeticManager {
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof AbstractClientPlayer && ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics() != null;
+		return entity instanceof RemotePlayer && ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics() != null;
 	}
 
 	@Override
@@ -152,12 +157,17 @@ public class ApiCosmeticManager implements CosmeticManager {
 		if (player == null) {
 			Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.getName(), profile.getId());
 		} else {
-			ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);
-
 			// create a new ApiCosmetics
 			PlayerCosmetics cosmetics = PlayerCosmetics.fromResponse(response);
-			// store on the player
-			holder.cosmeticacore$setApiCosmetics(cosmetics);
+
+			if (player == Minecraft.getInstance().player) {
+				// configure own cosmetics
+				SelfCosmeticManager.cosmetics = cosmetics;
+			} else {
+				// store on the player
+				ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);
+				holder.cosmeticacore$setApiCosmetics(cosmetics);
+			}
 		}
 	}
 }

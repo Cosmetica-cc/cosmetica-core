@@ -18,7 +18,6 @@ package cc.cosmetica.core.mixin.network;
 
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
-import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import net.minecraft.client.player.AbstractClientPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

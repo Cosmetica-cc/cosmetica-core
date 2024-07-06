@@ -38,6 +38,9 @@ public final class MasterCosmeticManager {
 	private MasterCosmeticManager() {
 	}
 
+	// updated by MinecraftMixin
+	public static int tickCount;
+
 	// on by default
 	public static boolean armourStandArms = true;
 
@@ -64,6 +67,12 @@ public final class MasterCosmeticManager {
 	 * @param currentManager the reference for the cosmetic manager currently controlling cosmetics.
 	 */
 	public static void pollCosmetics(LivingEntity entity, IdentityCache<CosmeticManager> currentManager) {
+		// check it's distributed to this tick.
+		if ((entity.getId() & 3) != (tickCount & 3)) {
+			return;
+		}
+
+		// recompute the correct manager
 		CosmeticManager selectedManager = null;
 
 		// find which manager controls the cosmetics currently
