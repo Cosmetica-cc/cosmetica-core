@@ -98,7 +98,7 @@ public final class CosmeticaAPI {
 	 */
 	public static boolean login() throws IOException {
 		User user = Minecraft.getInstance().getUser();
-		CosmeticaAuthenticator.login(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken());
+		return CosmeticaAuthenticator.login(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken());
 	}
 
 	/**
@@ -109,7 +109,7 @@ public final class CosmeticaAPI {
 	 * @return whether login was successful.
 	 */
 	public static boolean authenticate(UUID uuid, String username, String accessToken) throws IOException {
-		CosmeticaAuthenticator.login(uuid, username, accessToken);
+		return CosmeticaAuthenticator.login(uuid, username, accessToken);
 	}
 
 	/**
