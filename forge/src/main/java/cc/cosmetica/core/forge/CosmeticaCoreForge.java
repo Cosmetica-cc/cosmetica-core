@@ -29,7 +29,6 @@ public class CosmeticaCoreForge {
 	}
 
 	private void onClientSetup(FMLClientSetupEvent event) {
-		CosmeticaAuthenticator.authenticate();
 		new BuiltinManagers().init();
 	}
 }

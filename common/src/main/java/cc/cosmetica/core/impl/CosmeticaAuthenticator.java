@@ -21,8 +21,6 @@ import com.google.gson.JsonObject;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.User;
 
 import javax.crypto.Cipher;
 import java.io.IOException;
@@ -69,22 +67,16 @@ public final class CosmeticaAuthenticator {
 		apiInstance = new DefaultApi(Configuration.getDefaultApiClient());
 	}
 
-	public static void authenticate() {
-		User user = Minecraft.getInstance().getUser();
-		authenticate(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken());
+	public static void authenticate(String jwt) {
+		ApiClient newClient = new ApiClient()
+				.setBasePath(apiUrl)
+				.addDefaultHeader("Authorization", "Bearer " + jwt);
+
+		apiInstance = new DefaultApi(newClient);
+		authenticated = true;
 	}
 
-	public static void authenticate(UUID uuid, String username, String accessToken) {
-		MasterCosmeticManager.HTTP_THREAD_POOL.submit(() -> {
-			try {
-				_authenticate(uuid, username, accessToken);
-			} catch (IOException | RuntimeException e) {
-				Logging.getInstance().error("Error authenticating with Cosmetica", e);
-			}
-		});
-	}
-
-	private static void _authenticate(UUID uuid, String username, String accessToken) throws IOException {
+	public static boolean login(UUID uuid, String username, String accessToken) throws IOException {
 		// Get the authentication server to authenticate with
 		String authURL = apiInstance.authControllerGetAuthServer().getUrl();
 
@@ -105,7 +97,7 @@ public final class CosmeticaAuthenticator {
 				publicKey = Base64.getDecoder().decode(jo.get("publicKey").getAsString());
 			} else {
 				logBadResponse("Request to key was not successful", response);
-				return;
+				return false;
 			}
 		}
 
@@ -125,7 +117,7 @@ public final class CosmeticaAuthenticator {
 			// Ensure successful
 			if (!response.isSuccessful()) {
 				logBadResponse("Could not log in to Cosmetica", response);
-				return;
+				return false;
 			}
 		}
 
@@ -147,7 +139,7 @@ public final class CosmeticaAuthenticator {
 			);
 		} catch (GeneralSecurityException e) {
 			Logging.getInstance().error("Error encrypting data", e);
-			return;
+			return false;
 		}
 
 		// Verify with auth server
@@ -159,17 +151,13 @@ public final class CosmeticaAuthenticator {
 		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {
 				JsonObject jo = response.readEntityJson().getAsJsonObject();
-
-				ApiClient newClient = new ApiClient()
-						.setBasePath(apiUrl)
-						.addDefaultHeader("Authorization", "Bearer " + jo.get("jwt").getAsString());
-
 				// TODO parse user
+				authenticate(jo.get("jwt").getAsString());
 				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
-				apiInstance = new DefaultApi(newClient);
-				authenticated = true;
+				return true;
 			} else {
 				logBadResponse("Cosmetica authentication failed", response);
+				return false;
 			}
 		}
 	}

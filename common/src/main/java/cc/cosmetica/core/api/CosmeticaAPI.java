@@ -22,9 +22,12 @@ import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.util.Response;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.api.DefaultApi;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.User;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -45,6 +48,7 @@ public final class CosmeticaAPI {
 
 	/**
 	 * Get whether cosmetica-core is currently authenticated.
+	 *
 	 * @return whether the cosmetica-core api instance is currently authenticated.
 	 */
 	public static boolean isAuthenticated() {
@@ -53,9 +57,10 @@ public final class CosmeticaAPI {
 
 	/**
 	 * Perform a task async on the Cosmetica threadpool. Intended for API requests to cosmetica.
+	 *
 	 * @param request the request to perform.
+	 * @param <T>     the type of the promise.
 	 * @return a {@link CompletableFuture} that promises the response of the request.
-	 * @param <T> the type of the promise.
 	 */
 	public static <T> CompletableFuture<T> performAsync(Function<DefaultApi, T> request) {
 		return CompletableFuture.supplyAsync(() -> request.apply(CosmeticaAuthenticator.getCurrentApi()), MasterCosmeticManager.HTTP_THREAD_POOL);
@@ -64,6 +69,7 @@ public final class CosmeticaAPI {
 	/**
 	 * Download data from a url asynchronously. The completable future will contain an exception if not a 2XX response.
 	 * A successful response with no body will return empty string.
+	 *
 	 * @param url the url to download data.
 	 * @return a completable future for the response.
 	 */
@@ -84,5 +90,33 @@ public final class CosmeticaAPI {
 				throw new UncheckedIOException("Downloading from URL " + url, e);
 			}
 		}, MasterCosmeticManager.HTTP_THREAD_POOL);
+	}
+
+	/**
+	 * Log in with the currently logged-in user. Does not spawn another thread.
+	 * @return whether login was successful.
+	 */
+	public static boolean login() throws IOException {
+		User user = Minecraft.getInstance().getUser();
+		CosmeticaAuthenticator.login(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken());
+	}
+
+	/**
+	 * Log in with the given profile. The parameters must complement each other for this to work. Does not spawn another thread.
+	 * @param uuid the uuid of the user to sign in as.
+	 * @param username the username of the user to sign in as.
+	 * @param accessToken the minecraft access token to use to sign in.
+	 * @return whether login was successful.
+	 */
+	public static boolean authenticate(UUID uuid, String username, String accessToken) throws IOException {
+		CosmeticaAuthenticator.login(uuid, username, accessToken);
+	}
+
+	/**
+	 * Immediately authenticate with the given JSON Web Token.
+	 * @param jwt the json web token with which to authenticate.
+	 */
+	public static void authenticate(String jwt) {
+		CosmeticaAuthenticator.authenticate(jwt);
 	}
 }
