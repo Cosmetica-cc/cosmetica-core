@@ -7,7 +7,6 @@
     "ArmourStandModelMixin",
     "ClientLevelMixin",
     "LivingEntityRendererMixin",
-    "TempDebugMultiplayerAllower",
     "cape.AbstractClientPlayerMixin",
     "cape.ArmourStandRendererMixin",
     "cape.CapeLayerMixin",

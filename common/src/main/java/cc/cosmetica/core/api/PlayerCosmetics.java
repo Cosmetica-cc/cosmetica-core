@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import gg.cloaks.javaclient.model.*;
 
 import javax.annotation.Nullable;
@@ -170,5 +171,14 @@ public final class PlayerCosmetics implements Cosmetics {
 	 */
 	public static PlayerCosmetics fromUser(CosmeticaUser user) {
 		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon());
+	}
+
+	/**
+	 * Set the cosmetics to be used by the local player.
+	 * @param cosmetics the cosmetics to be used by the local player.
+	 * @implNote via the built-in manager SelfCosmeticManager.
+	 */
+	public static void setOwnCosmetics(PlayerCosmetics cosmetics) {
+		SelfCosmeticManager.cosmetics = cosmetics;
 	}
 }

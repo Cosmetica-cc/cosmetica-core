@@ -16,11 +16,14 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.util.Response;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
+import gg.cloaks.javaclient.model.CosmeticaUser;
 
 import javax.crypto.Cipher;
 import java.io.IOException;
@@ -151,9 +154,15 @@ public final class CosmeticaAuthenticator {
 		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {
 				JsonObject jo = response.readEntityJson().getAsJsonObject();
-				// TODO parse user
 				authenticate(jo.get("jwt").getAsString());
 				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
+
+				// set user
+				CosmeticaUser user = apiInstance.getApiClient().getObjectMapper().readValue(
+						new Gson().toJson(jo.get("user")),
+						CosmeticaUser.class
+				);
+				PlayerCosmetics.setOwnCosmetics(PlayerCosmetics.fromUser(user));
 				return true;
 			} else {
 				logBadResponse("Cosmetica authentication failed", response);
