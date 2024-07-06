@@ -75,10 +75,10 @@ public final class CosmeticaAPI {
 				try (Response response = Response.get(url)) {
 					if (!response.isSuccessful()) {
 						throw new ApiException(response.getStatusCode(),
-								response.getEntity() == null ? "(no response body)" : response.getEntityString());
+								response.getEntity() == null ? "(no response body)" : response.readEntityString());
 					}
 
-					return response.getEntity() == null ? "" : response.getEntityString();
+					return response.getEntity() == null ? "" : response.readEntityString();
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException("Downloading from URL " + url, e);

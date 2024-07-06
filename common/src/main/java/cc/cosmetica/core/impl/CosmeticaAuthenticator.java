@@ -78,7 +78,7 @@ public final class CosmeticaAuthenticator {
 		MasterCosmeticManager.HTTP_THREAD_POOL.submit(() -> {
 			try {
 				_authenticate(uuid, username, accessToken);
-			} catch (IOException e) {
+			} catch (IOException | RuntimeException e) {
 				Logging.getInstance().error("Error authenticating with Cosmetica", e);
 			}
 		});
@@ -98,7 +98,7 @@ public final class CosmeticaAuthenticator {
 
 		try (Response response = Response.post(authURL + "/java/key", keyRequest)) {
 			if (response.isSuccessful()) {
-				JsonObject jo = response.getEntityJson().getAsJsonObject();
+				JsonObject jo = response.readEntityJson().getAsJsonObject();
 
 				sessionId = jo.get("sessionId").getAsString();
 				verifyToken = jo.get("verifyToken").getAsString();
@@ -138,7 +138,7 @@ public final class CosmeticaAuthenticator {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			PublicKey publicKeyO = keyFactory.generatePublic(keySpec);
 
-			Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+			Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPPadding");
 			cipher.init(Cipher.ENCRYPT_MODE, publicKeyO);
 
 			sharedSecretEncrypted = Base64.getEncoder().encodeToString(cipher.doFinal(sharedSecret));
@@ -158,7 +158,7 @@ public final class CosmeticaAuthenticator {
 
 		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {
-				JsonObject jo = response.getEntityJson().getAsJsonObject();
+				JsonObject jo = response.readEntityJson().getAsJsonObject();
 
 				ApiClient newClient = new ApiClient()
 						.setBasePath(apiUrl)
@@ -175,7 +175,7 @@ public final class CosmeticaAuthenticator {
 	}
 
 	private static void logBadResponse(String message, Response response) throws IOException {
-		Logging.getInstance().warn("{}: Error {}, {}", message, response.getStatusCode(), response.getEntity() == null ? "null" : response.getEntityString());
+		Logging.getInstance().warn("{}: Error {}, {}", message, response.getStatusCode(), response.getEntity() == null ? "null" : response.readEntityString());
 	}
 
 	/**

@@ -28,9 +28,11 @@ public final class CosmeticManagers {
 
 	/**
 	 * Register a Cosmetic manager to be used by Cosmetica Core.
-	 * @param priority the priority of the CosmeticManager. Lower numbers are prioritised over higher ones.
+	 * @param priority the priority of the CosmeticManager. Lower numbers are prioritised over higher ones. Duplicate
+	 *                 priorities are not allowed (the method will fail fast).
 	 * @param manager the manager to register.
 	 * @apiNote the "API" cosmetic manager has a priority of 0.
+	 * @implNote built in Cosmetic Manager priorities can be found at {@link cc.cosmetica.core.builtin.BuiltinManagers#init()}.
 	 */
 	public static void registerCosmeticManager(int priority, CosmeticManager manager) {
 		MasterCosmeticManager.registerCosmeticManager(priority, manager);

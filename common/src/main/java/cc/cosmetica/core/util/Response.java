@@ -72,24 +72,34 @@ public class Response implements Closeable {
 		return this.response.getEntity();
 	}
 
-	public String getEntityString() throws IOException {
+	/**
+	 * Parse this response as a string. This will consume the entity content.
+	 * @return the response as a string.
+	 * @throws IOException if an IO exception occurs during the operation.
+	 */
+	public String readEntityString() throws IOException {
 		HttpEntity entity = this.getEntity();
 		return entity == null ? "" : EntityUtils.toString(entity, StandardCharsets.UTF_8);
 	}
 
-	public byte[] getEntityBytes() throws IOException {
+	/**
+	 * Parse this response as a byte array. This will consume the entity content.
+	 * @return the response as a byte array.
+	 * @throws IOException if an IO exception occurs during the operation.
+	 */
+	public byte[] readEntityBytes() throws IOException {
 		HttpEntity entity = this.getEntity();
 		return entity == null ? new byte[0] : EntityUtils.toByteArray(this.getEntity());
 	}
 
 	/**
-	 * Parse this response as JSON.
+	 * Parse this response as JSON. This will consume the entity content.
 	 * @return the response body as a JSON element.
 	 * @throws NullPointerException if the response is empty.
 	 * @throws IOException if an IO exception occurs during the operation.
 	 * @throws JsonParseException if the JSON is malformed.
 	 */
-	public JsonElement getEntityJson() throws NullPointerException, IOException, JsonParseException {
+	public JsonElement readEntityJson() throws NullPointerException, IOException, JsonParseException {
 		String s = EntityUtils.toString(Objects.requireNonNull(this.getEntity(), "Response body is missing"), StandardCharsets.UTF_8).trim();
 		return new JsonParser().parse(s);
 	}

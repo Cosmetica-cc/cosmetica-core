@@ -48,13 +48,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 	}
 
 	@Override
-	public void onAssign(LivingEntity entity) {
-		System.out.println("i am now assigned this entity " + entity.getName());
-	}
-
-	@Override
 	public void onRevoke(LivingEntity entity) {
-		System.out.println("i am no longer assigned this entity " + entity.getName());
 		// TODO clear built models to store minimal data when not owning a player (in case switch to another manager)
 	}
 
