@@ -135,7 +135,7 @@ public final class CosmeticaAuthenticator {
 		String verifyTokenEncrypted;
 
 		try {
-			KeyFactory keyFactory = KeyFactory.getInstance("RSASSA-PSS");
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			PublicKey publicKeyO = keyFactory.generatePublic(keySpec);
 
 			Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");

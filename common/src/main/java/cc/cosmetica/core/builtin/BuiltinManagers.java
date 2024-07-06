@@ -19,7 +19,6 @@ package cc.cosmetica.core.builtin;
 import cc.cosmetica.core.api.CosmeticManagers;
 import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import cc.cosmetica.core.builtin.manager.ArmourStandCosmeticManager;
-import cc.cosmetica.core.builtin.manager.CachedCosmeticManager;
 import cc.cosmetica.core.builtin.manager.TestCosmeticManager;
 
 /**
