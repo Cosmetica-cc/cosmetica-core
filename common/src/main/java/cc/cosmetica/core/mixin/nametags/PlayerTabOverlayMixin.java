@@ -74,7 +74,7 @@ public class PlayerTabOverlayMixin {
 				Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(player);
 
 				if (cosmetics.isPresent()) {
-					CachedImage icon = cosmetics.get().getIcon();
+					CachedImage icon = cosmetics.get().getNametag().getIcon();
 
 					if (icon.isLoaded()) {
 						additionalWidth = icon.getWidth() * (8.0f / icon.getHeight());
@@ -102,8 +102,10 @@ public class PlayerTabOverlayMixin {
 
 			if (player != null) {
 				Cosmetics.getCosmetics(player).ifPresent(cosmetics -> {
-					if (cosmetics.getIcon().isLoaded()) {
-						NametagRenderer.prepareIcon(cosmetics.getIcon(), 2, false);
+					CachedImage icon = cosmetics.getNametag().getIcon();
+
+					if (icon.isLoaded()) {
+						NametagRenderer.prepareIcon(icon, 2, false);
 					}
 				});
 			}

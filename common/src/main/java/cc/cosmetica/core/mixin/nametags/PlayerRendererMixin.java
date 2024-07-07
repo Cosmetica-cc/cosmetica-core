@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.mixin.nametags;
 
+import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -53,8 +54,10 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 
 		// add nametag icons
 		Cosmetics.getCosmetics(entity).ifPresent(c -> {
-			if (c.getIcon().isLoaded()) {
-				NametagRenderer.prepareIcon(c.getIcon(), entity.isDiscrete() ? 1 : 2, true);
+			CachedImage icon = c.getNametag().getIcon();
+
+			if (icon.isLoaded()) {
+				NametagRenderer.prepareIcon(icon, entity.isDiscrete() ? 1 : 2, true);
 			}
 		});
 	}

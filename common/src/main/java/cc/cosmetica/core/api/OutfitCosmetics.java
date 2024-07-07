@@ -83,18 +83,13 @@ public class OutfitCosmetics implements Cosmetics {
 	}
 
 	@Override
-	public Optional<String> getLore() {
+	public Optional<NametagConfig> getLore() {
 		return Optional.empty();
 	}
 
 	@Override
-	public CachedImage getIcon() {
-		return CachedImage.NO_TEXTURE;
-	}
-
-	@Override
-	public boolean isTransparentIcon() {
-		return false;
+	public NametagConfig getNametag() {
+		return NametagConfig.EMPTY;
 	}
 
 	@Override

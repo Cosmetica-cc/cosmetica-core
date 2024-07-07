@@ -62,22 +62,16 @@ public interface Cosmetics {
 	Collection<Accessory> getAccessories();
 
 	/**
-	 * Get the entity's lore. This is a second nametag below the player's name.
+	 * Get Cosmetica's modifications to the entity's nametag.
+	 * @return Cosmetica's modifications to the entity's nametag.
+	 */
+	NametagConfig getNametag();
+
+	/**
+	 * Get the entity's lore. This is a second nametag below their name.
 	 * @return an optional containing the lore, if present.
 	 */
-	Optional<String> getLore();
-
-	/**
-	 * Get the nametag icon to use. {@link CachedImage#NO_TEXTURE} if no texture.
-	 * @return the nametag icon to use.
-	 */
-	CachedImage getIcon();
-
-	/**
-	 * Get whether the icon retrieved from {@link CachedImage} should render with reduced opacity.
-	 * @return whether the icon should be rendered with reduced opacity.
-	 */
-	boolean isTransparentIcon();
+	Optional<NametagConfig> getLore();
 
 	/**
 	 * Get whether the entity should be flipped upside-down.

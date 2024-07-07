@@ -19,6 +19,7 @@ package cc.cosmetica.core.impl;
 import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.NametagConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Quaternion;
@@ -149,7 +150,7 @@ public final class NametagRenderer {
 						entityRenderDispatcher.cameraOrientation(),
 						font,
 						multiBufferSource,
-						cosmetics.get().getLore().orElse(null),
+						cosmetics.get().getLore().map(NametagConfig::getPrefix).orElse(null),
 						cosmetics.get().getAccessories(),
 						player.hasItemInSlot(EquipmentSlot.HEAD),
 						!player.isSleeping(), // doNametagShift

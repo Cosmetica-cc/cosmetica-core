@@ -36,21 +36,14 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @param icon the icon on the player.
 	 */
 	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon) {
+		// nametag
+		this.nametag = new NametagConfig("", "", icon);
+
 		// lore
 		if (lore == null) {
 			this.lore = null;
 		} else {
-			this.lore = lore.getFormatted().replaceAll("&", "§");
-		}
-
-		// icon
-		if (icon == null) {
-			this.icon = CachedImage.NO_TEXTURE;
-			this.transparentIcon = false;
-		} else {
-			this.icon = CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
-					icon.getFrames().intValue(), icon.getTicksPerFrame().intValue());
-			this.transparentIcon = false; // TODO transparent icons
+			this.lore = new NametagConfig(lore.getFormatted().replaceAll("&", "§"), "", null);
 		}
 
 		// outfit
@@ -83,11 +76,10 @@ public final class PlayerCosmetics implements Cosmetics {
 
 	private final CachedImage cloak;
 	private final CachedImage elytra;
-	private final CachedImage icon;
-	private final boolean transparentIcon;
 	private final List<Accessory> accessories;
 	private final @Nullable String outfitName, outfitId;
-	private final @Nullable String lore;
+	private final NametagConfig nametag;
+	private final @Nullable NametagConfig lore;
 
 	// TODO I might not use Optional to prevent this constant object creation
 	@Override
@@ -116,17 +108,12 @@ public final class PlayerCosmetics implements Cosmetics {
 	}
 
 	@Override
-	public CachedImage getIcon() {
-		return this.icon;
+	public NametagConfig getNametag() {
+		return this.nametag;
 	}
 
 	@Override
-	public boolean isTransparentIcon() {
-		return this.transparentIcon;
-	}
-
-	@Override
-	public Optional<String> getLore() {
+	public Optional<NametagConfig> getLore() {
 		return Optional.ofNullable(this.lore);
 	}
 
