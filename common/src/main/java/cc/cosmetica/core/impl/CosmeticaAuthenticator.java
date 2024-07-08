@@ -16,11 +16,16 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.util.Response;
+import cc.cosmetica.core.util.Websocket;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import gg.cloaks.javaclient.ApiClient;
+import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
 import gg.cloaks.javaclient.model.CosmeticaUser;
@@ -49,6 +54,7 @@ public final class CosmeticaAuthenticator {
 	/* Singleton */
 	private static DefaultApi apiInstance;
 	private static boolean authenticated;
+	private static Object websocket;
 
 	static {
 		Logging.getInstance().debug("Using API url: {}", apiUrl);
@@ -70,13 +76,66 @@ public final class CosmeticaAuthenticator {
 		apiInstance = new DefaultApi(Configuration.getDefaultApiClient());
 	}
 
-	public static void authenticate(String jwt) {
+	public static void authenticate(String jwt, UUID uuid) {
 		ApiClient newClient = new ApiClient()
 				.setBasePath(apiUrl)
 				.addDefaultHeader("Authorization", "Bearer " + jwt);
 
 		apiInstance = new DefaultApi(newClient);
 		authenticated = true;
+
+		// Log in to africa websocket
+		CosmeticaAPI.performAsync(DefaultApi::africaControllerRequestSession)
+				.thenApply(africaSession -> {
+					Logging.getInstance().info("Connecting to {}", africaSession.getName());
+					Logging.getInstance().info(africaSession.getMessage());
+
+					Websocket websocket1 = new Websocket("Cosmetica Websocket", africaSession.getUrl()) {
+						@Override
+						protected void reconnect() {
+
+						}
+
+						@Override
+						protected void receive(JsonElement data) {
+//							Logging.getInstance().info(data);
+						}
+					};
+
+					try {
+						websocket1.connect();
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+
+					JsonObject authData = new JsonObject();
+					authData.add("uuid", new JsonPrimitive(uuid.toString()));
+					authData.add("token", new JsonPrimitive(africaSession.getToken()));
+					sendEvent(websocket1, "auth", authData);
+
+					return websocket1;
+				})
+				.exceptionally(ex -> {
+					if (ex instanceof ApiException) {
+						if (((ApiException) ex).getCode() == 412) {
+							Logging.getInstance().error("Africa servers are full or offline!");
+						} else {
+							Logging.getInstance().error("Error connecting to Africa", ex);
+						}
+					} else {
+						Logging.getInstance().error("Could not connect to Africa", ex);
+					}
+
+					return null;
+				});
+	}
+
+	private static void sendEvent(Websocket websocket, String event, JsonElement data) {
+		JsonObject packet = new JsonObject();
+		packet.add("event", new JsonPrimitive(event));
+		packet.add("data", data);
+		System.out.println(new Gson().toJson(packet));
+		websocket.send(packet);
 	}
 
 	public static boolean login(UUID uuid, String username, String accessToken) throws IOException {
@@ -154,7 +213,7 @@ public final class CosmeticaAuthenticator {
 		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {
 				JsonObject jo = response.readEntityJson().getAsJsonObject();
-				authenticate(jo.get("jwt").getAsString());
+				authenticate(jo.get("jwt").getAsString(), uuid);
 				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
 
 				// set user

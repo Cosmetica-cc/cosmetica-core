@@ -49,6 +49,10 @@ public final class Logging {
 		this.logger.warn(message, args);
 	}
 
+	public void error(String message, Object... args) {
+		this.logger.error(message, args);
+	}
+
 	public void error(String message, Throwable t) {
 		this.logger.error(message, t);
 	}

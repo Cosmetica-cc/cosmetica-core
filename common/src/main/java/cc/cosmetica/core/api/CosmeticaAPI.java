@@ -124,7 +124,7 @@ public final class CosmeticaAPI {
 	 * Immediately authenticate with the given JSON Web Token.
 	 * @param jwt the json web token with which to authenticate.
 	 */
-	public static void authenticate(String jwt) {
-		CosmeticaAuthenticator.authenticate(jwt);
+	public static void authenticate(String jwt, UUID uuid) {
+		CosmeticaAuthenticator.authenticate(jwt, uuid);
 	}
 }

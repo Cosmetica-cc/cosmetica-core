@@ -16,12 +16,22 @@
 
 package cc.cosmetica.core.fabric;
 
+import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.builtin.BuiltinManagers;
+import cc.cosmetica.core.impl.CosmeticaAuthenticator;
 import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.client.Minecraft;
 
 public class CosmeticaCoreFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         new BuiltinManagers().init();
+
+        // Development Testing Auth
+        String devAuth = System.getProperty("cosmetica.token");
+
+        if (devAuth != null) {
+            CosmeticaAPI.authenticate(devAuth, Minecraft.getInstance().getUser().getGameProfile().getId());
+        }
     }
 }
