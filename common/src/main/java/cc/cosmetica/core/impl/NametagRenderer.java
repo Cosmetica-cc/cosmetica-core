@@ -150,7 +150,7 @@ public final class NametagRenderer {
 						entityRenderDispatcher.cameraOrientation(),
 						font,
 						multiBufferSource,
-						cosmetics.get().getLore().map(NametagConfig::getPrefix).orElse(null),
+						cosmetics.get().getLore().orElse(null),
 						cosmetics.get().getAccessories(),
 						player.hasItemInSlot(EquipmentSlot.HEAD),
 						!player.isSleeping(), // doNametagShift
@@ -167,7 +167,7 @@ public final class NametagRenderer {
 	 * Render lore, but not necessarily bound to a player.
 	 */
 	public static void renderLore(PoseStack stack, Quaternion cameraOrientation, Font font,
-								  MultiBufferSource multiBufferSource, @Nullable String lore, Collection<Accessory> hats,
+								  MultiBufferSource multiBufferSource, @Nullable NametagConfig lore, Collection<Accessory> hats,
 								  boolean wearingHelmet, boolean doNametagShift, boolean discrete, boolean upsideDown,
 								  float playerHeight, float xRotHead, int packedLight) {
 		// how much do we need to shift up nametags?
@@ -206,7 +206,9 @@ public final class NametagRenderer {
 
 		// render lore
 		if (lore != null) {
-			Component component = new TextComponent(lore);
+			Component component = new TextComponent(lore.getPrefix() /* Prefix doubles as main text */);
+			CachedImage loreIcon = lore.getIcon();
+			boolean showLoreIcon = loreIcon.isLoaded();
 
 			boolean fullyRender = !discrete;
 
@@ -226,9 +228,11 @@ public final class NametagRenderer {
 
 			float xOffset = (float) (-font.width(component) / 2);
 
+			if (showLoreIcon) prepareIcon(loreIcon, true);
 			font.drawInBatch(component, xOffset, 0, 553648127, false, textModel, multiBufferSource, fullyRender, alphaARGB, packedLight);
 
 			if (fullyRender) {
+				if (showLoreIcon) prepareIcon(loreIcon, true);
 				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, false, 0, packedLight);
 			}
 
