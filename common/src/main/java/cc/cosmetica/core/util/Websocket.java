@@ -204,7 +204,7 @@ public abstract class Websocket {
 
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-			Logging.getInstance().error("Error in Cosmetica websocket", cause);
+			Logging.getInstance().error("Error in {}", cause, Websocket.this.name);
 			if (!this.handshakeFuture.isDone()) {
 				this.handshakeFuture.setFailure(cause);
 			}
