@@ -181,6 +181,9 @@ public final class CosmeticaAuthenticator {
 						Logging.getInstance().error("Could not connect to Africa", ex);
 					}
 
+					// try reconnect again if it fails
+					reconnect(api, userUUID);
+
 					return null;
 				});
 	}
