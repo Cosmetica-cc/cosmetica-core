@@ -57,13 +57,21 @@ public final class CosmeticaAPI {
 
 	/**
 	 * Perform a task async on the Cosmetica threadpool. Intended for API requests to cosmetica.
+	 * If the request returns a 401, the API instance is deauthenticated.
 	 *
 	 * @param request the request to perform.
 	 * @param <T>     the type of the promise.
 	 * @return a {@link CompletableFuture} that promises the response of the request.
 	 */
 	public static <T> CompletableFuture<T> performAsync(Function<DefaultApi, T> request) {
-		return CompletableFuture.supplyAsync(() -> request.apply(CosmeticaAuthenticator.getCurrentApi()), MasterCosmeticManager.HTTP_THREAD_POOL);
+		return CompletableFuture.supplyAsync(() -> request.apply(CosmeticaAuthenticator.getCurrentApi()), MasterCosmeticManager.HTTP_THREAD_POOL)
+				.exceptionally(t -> {
+					if (t instanceof ApiException && ((ApiException) t).getCode() == 401) {
+						CosmeticaAuthenticator.deauthenticate();
+					}
+
+					throw (RuntimeException)t;
+				});
 	}
 
 	/**
