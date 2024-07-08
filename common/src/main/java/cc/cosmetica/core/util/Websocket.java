@@ -133,12 +133,12 @@ public abstract class Websocket {
 	}
 
 	/**
-	 * Close the websocket
-	 * @return the web socket.
+	 * Close the websocket.
+	 * @return the future. Null if there was no channel.
 	 */
 	public ChannelFuture closeFuture() {
 		if (this.channel == null) {
-			throw new IllegalStateException("No websocket connection has been initiated");
+			return null; // this is ok probably
 		}
 
 		// Shut down websocket and its event loop group

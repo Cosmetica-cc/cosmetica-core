@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 /**
@@ -44,7 +46,12 @@ public final class MasterCosmeticManager {
 	// on by default
 	public static boolean armourStandArms = true;
 
-	public static final ExecutorService HTTP_THREAD_POOL = Executors.newFixedThreadPool(30);
+	public static final ExecutorService HTTP_THREAD_POOL;
+	static {
+		AtomicInteger integer = new AtomicInteger(1);
+		HTTP_THREAD_POOL = Executors.newFixedThreadPool(30, r -> new Thread(r, "Cosmetica Worker #" + integer.getAndIncrement()));
+	}
+
 	// sorted collection of cosmetic managers
 	private static final TreeSet<PrioritisedManager> COSMETIC_MANAGERS = new TreeSet<>();
 	// callbacks

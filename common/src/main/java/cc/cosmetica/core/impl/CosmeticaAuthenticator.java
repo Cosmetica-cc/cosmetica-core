@@ -38,6 +38,8 @@ import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Handles authentication for Cosmetica.
@@ -49,17 +51,20 @@ public final class CosmeticaAuthenticator {
 
 	/* Constants */
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-	private static final String apiUrl = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
+	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, "Cosmetica Reconnector"));
+	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
 
 	/* Singleton */
 	private static DefaultApi apiInstance;
 	private static boolean authenticated;
-	private static Object websocket;
+
+	private static Websocket websocket;
+	private int reconnect;
 
 	static {
-		Logging.getInstance().debug("Using API url: {}", apiUrl);
+		Logging.getInstance().debug("Using API url: {}", BASE_PATH);
 
-		ApiClient defaultClient = Configuration.getDefaultApiClient().setBasePath(apiUrl);
+		ApiClient defaultClient = Configuration.getDefaultApiClient().setBasePath(BASE_PATH);
 		apiInstance = new DefaultApi(defaultClient);
 	}
 
@@ -71,18 +76,29 @@ public final class CosmeticaAuthenticator {
 		return authenticated;
 	}
 
+	// synchronised, because it would be pretty bad if it became null before it closed the socket
+	private static synchronized void resetWebsocket() {
+		if (websocket != null) {
+			websocket.closeFuture();
+			websocket = null;
+		}
+	}
+
 	public static void deauthenticate() {
 		authenticated = false;
 		apiInstance = new DefaultApi(Configuration.getDefaultApiClient());
+		resetWebsocket();
 	}
 
 	public static void authenticate(String jwt, UUID uuid) {
 		ApiClient newClient = new ApiClient()
-				.setBasePath(apiUrl)
+				.setBasePath(BASE_PATH)
 				.addDefaultHeader("Authorization", "Bearer " + jwt);
 
 		apiInstance = new DefaultApi(newClient);
 		authenticated = true;
+		// ensure websocket is disconnected
+		resetWebsocket();
 
 		// Log in to africa websocket
 		CosmeticaAPI.performAsync(DefaultApi::africaControllerRequestSession)
@@ -98,7 +114,7 @@ public final class CosmeticaAuthenticator {
 
 						@Override
 						protected void receive(JsonElement data) {
-//							Logging.getInstance().info(data);
+							Logging.getInstance().info("{}", data);
 						}
 					};
 
@@ -139,6 +155,9 @@ public final class CosmeticaAuthenticator {
 	}
 
 	public static boolean login(UUID uuid, String username, String accessToken) throws IOException {
+		// ensure we are deauthenticated.
+		deauthenticate();
+
 		// Get the authentication server to authenticate with
 		String authURL = apiInstance.authControllerGetAuthServer().getUrl();
 
