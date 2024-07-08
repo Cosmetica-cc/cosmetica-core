@@ -32,7 +32,6 @@ import io.netty.handler.codec.http.websocketx.*;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import net.minecraft.client.Minecraft;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
@@ -56,9 +55,14 @@ public abstract class Websocket {
 	private Channel channel;
 
 	/**
-	 * Reconnect the websocket.
+	 * Called upon the websocket being connected successfully.
 	 */
-	protected abstract void reconnect();
+	protected abstract void onConnected();
+
+	/**
+	 * Called upon connection dropped.
+	 */
+	protected abstract void connectionDropped();
 
 	/**
 	 * Called when data is received from the websocket.
@@ -156,7 +160,6 @@ public abstract class Websocket {
 
 		private final WebSocketClientHandshaker handshaker;
 		private ChannelPromise handshakeFuture;
-		private int reconnectTimeout;
 
 		public ChannelFuture handshakeFuture() {
 			return this.handshakeFuture;
@@ -174,29 +177,16 @@ public abstract class Websocket {
 
 		@Override
 		public void channelInactive(ChannelHandlerContext ctx) {
-			// Compute new timeout (get longer each attempt)
-			int timeout = this.reconnectTimeout;
-			this.reconnectTimeout = this.reconnectTimeout == 0 ? 2 : Math.min(this.reconnectTimeout * 2, 60);
-			
-			// Schedule reconnect
-			Logging.getInstance().warn("{} disconnected unexpectedly. Attempting reconnect in {} seconds.", Websocket.this.name, timeout);
-			
-			ctx.channel().eventLoop().schedule(() -> {
-				try {
-					Logging.getInstance().debug("{} attempting to reconnect...", Websocket.this.name);
-					Websocket.this.reconnect();
-				} catch (Exception e) {
-					System.out.println("Reconnect attempt failed: " + e.getMessage());
-				}
-			}, timeout, TimeUnit.SECONDS);
+			// Call the callback. Handled by user.
+			Websocket.this.connectionDropped();
 		}
 
 		@Override
 		protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
 			if (!this.handshaker.isHandshakeComplete()) {
 				this.handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
-				this.reconnectTimeout = 0; // reset falloff
 				Logging.getInstance().debug("{} connected!", Websocket.this.name);
+				Websocket.this.onConnected();
 				this.handshakeFuture.setSuccess();
 				return;
 			}

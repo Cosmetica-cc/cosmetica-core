@@ -40,6 +40,7 @@ import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Handles authentication for Cosmetica.
@@ -59,7 +60,7 @@ public final class CosmeticaAuthenticator {
 	private static boolean authenticated;
 
 	private static Websocket websocket;
-	private int reconnect;
+	private static int reconnectTimeout = 0;
 
 	static {
 		Logging.getInstance().debug("Using API url: {}", BASE_PATH);
@@ -100,6 +101,36 @@ public final class CosmeticaAuthenticator {
 		// ensure websocket is disconnected
 		resetWebsocket();
 
+		// log in to africa
+		logInToAfrica(uuid);
+	}
+
+	private static void reconnect(DefaultApi session, UUID user) {
+		// Compute new timeout (get longer each attempt)
+		int timeout = reconnectTimeout;
+		reconnectTimeout = reconnectTimeout == 0 ? 2 : Math.min(reconnectTimeout * 2, 60);
+
+		// Schedule reconnect
+		Logging.getInstance().warn("Cosmetica Africa disconnected unexpectedly. Attempting reconnect in {} seconds.", timeout);
+
+		SCHEDULER.schedule(() -> {
+			if (apiInstance != session) {
+				Logging.getInstance().info("Session changed. Aborting reconnect.");
+			} else {
+				try {
+					Logging.getInstance().debug("Attempting to reconnect to Cosmetica Africa...");
+					logInToAfrica(user);
+				} catch (Exception e) {
+					System.out.println("Reconnect attempt failed: " + e.getMessage());
+				}
+			}
+		}, timeout, TimeUnit.SECONDS);
+	}
+
+	private static void logInToAfrica(UUID userUUID) {
+		// a reference to the api instance being used for this session.
+		final DefaultApi api = apiInstance;
+
 		// Log in to africa websocket
 		CosmeticaAPI.performAsync(DefaultApi::africaControllerRequestSession)
 				.thenApply(africaSession -> {
@@ -108,8 +139,16 @@ public final class CosmeticaAuthenticator {
 
 					Websocket websocket1 = new Websocket("Cosmetica Websocket", africaSession.getUrl()) {
 						@Override
-						protected void reconnect() {
+						protected void onConnected() {
+							reconnectTimeout = 0;
+						}
 
+						@Override
+						protected void connectionDropped() {
+							// upon drop only reconnect if still authenticated the same.
+							if (api == apiInstance) {
+								reconnect(api, userUUID);
+							}
 						}
 
 						@Override
@@ -125,7 +164,7 @@ public final class CosmeticaAuthenticator {
 					}
 
 					JsonObject authData = new JsonObject();
-					authData.add("uuid", new JsonPrimitive(uuid.toString()));
+					authData.add("uuid", new JsonPrimitive(userUUID.toString()));
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
 					sendEvent(websocket1, "auth", authData);
 
