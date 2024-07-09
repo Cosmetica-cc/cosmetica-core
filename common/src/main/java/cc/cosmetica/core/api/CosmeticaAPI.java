@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.api;
 
-import cc.cosmetica.core.impl.CosmeticaAuthenticator;
+import cc.cosmetica.core.impl.CosmeticaSession;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.util.Response;
@@ -43,7 +43,7 @@ public final class CosmeticaAPI {
 	 * Get the current instance of {@link DefaultApi}.
 	 */
 	public static DefaultApi getInstance() {
-		return CosmeticaAuthenticator.getCurrentApi();
+		return CosmeticaSession.getCurrentSession().api;
 	}
 
 	/**
@@ -52,7 +52,7 @@ public final class CosmeticaAPI {
 	 * @return whether the cosmetica-core api instance is currently authenticated.
 	 */
 	public static boolean isAuthenticated() {
-		return CosmeticaAuthenticator.isAuthenticated();
+		return CosmeticaSession.getCurrentSession().isAuthenticated();
 	}
 
 	/**
@@ -64,10 +64,10 @@ public final class CosmeticaAPI {
 	 * @return a {@link CompletableFuture} that promises the response of the request.
 	 */
 	public static <T> CompletableFuture<T> performAsync(Function<DefaultApi, T> request) {
-		return CompletableFuture.supplyAsync(() -> request.apply(CosmeticaAuthenticator.getCurrentApi()), MasterCosmeticManager.HTTP_THREAD_POOL)
+		return CompletableFuture.supplyAsync(() -> request.apply(CosmeticaSession.getCurrentSession().api), MasterCosmeticManager.HTTP_THREAD_POOL)
 				.exceptionally(t -> {
 					if (t instanceof ApiException && ((ApiException) t).getCode() == 401) {
-						CosmeticaAuthenticator.deauthenticate();
+						CosmeticaSession.deauthenticate();
 					}
 
 					throw (RuntimeException)t;
@@ -106,7 +106,7 @@ public final class CosmeticaAPI {
 	 */
 	public static boolean login() throws IOException {
 		User user = Minecraft.getInstance().getUser();
-		return CosmeticaAuthenticator.login(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken());
+		return CosmeticaSession.login(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken());
 	}
 
 	/**
@@ -117,7 +117,7 @@ public final class CosmeticaAPI {
 	 * @return whether login was successful.
 	 */
 	public static boolean authenticate(UUID uuid, String username, String accessToken) throws IOException {
-		return CosmeticaAuthenticator.login(uuid, username, accessToken);
+		return CosmeticaSession.login(uuid, username, accessToken);
 	}
 
 	/**
@@ -125,6 +125,6 @@ public final class CosmeticaAPI {
 	 * @param jwt the json web token with which to authenticate.
 	 */
 	public static void authenticate(String jwt, UUID uuid) {
-		CosmeticaAuthenticator.authenticate(jwt, uuid);
+		CosmeticaSession.authenticate(jwt, uuid);
 	}
 }

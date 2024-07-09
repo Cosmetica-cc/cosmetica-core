@@ -18,7 +18,6 @@ package cc.cosmetica.core.fabric;
 
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.builtin.BuiltinManagers;
-import cc.cosmetica.core.impl.CosmeticaAuthenticator;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.Minecraft;
 

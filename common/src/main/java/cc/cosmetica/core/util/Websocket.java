@@ -178,6 +178,7 @@ public abstract class Websocket {
 		@Override
 		public void channelInactive(ChannelHandlerContext ctx) {
 			// Call the callback. Handled by user.
+			Logging.getInstance().debug("channel inactive");
 			Websocket.this.connectionDropped();
 		}
 

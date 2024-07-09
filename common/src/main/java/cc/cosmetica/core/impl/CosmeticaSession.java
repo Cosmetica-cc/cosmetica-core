@@ -30,6 +30,7 @@ import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
 import gg.cloaks.javaclient.model.CosmeticaUser;
 
+import javax.annotation.Nullable;
 import javax.crypto.Cipher;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -43,94 +44,23 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Handles authentication for Cosmetica.
+ * Handles authentication and websocket for Cosmetica.
  */
-public final class CosmeticaAuthenticator {
-	private CosmeticaAuthenticator() {
-		// NO-OP
+public final class CosmeticaSession {
+	private CosmeticaSession(ApiClient client, @Nullable UUID user) {
+		this.api = new DefaultApi(client);
+		this.user = user;
 	}
 
-	/* Constants */
-	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, "Cosmetica Reconnector"));
-	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
+	public final DefaultApi api;
+	private final @Nullable UUID user;
+	private Websocket websocket;
 
-	/* Singleton */
-	private static DefaultApi apiInstance;
-	private static boolean authenticated;
-
-	private static Websocket websocket;
-	private static int reconnectTimeout = 0;
-
-	static {
-		Logging.getInstance().debug("Using API url: {}", BASE_PATH);
-
-		ApiClient defaultClient = Configuration.getDefaultApiClient().setBasePath(BASE_PATH);
-		apiInstance = new DefaultApi(defaultClient);
+	public boolean isAuthenticated() {
+		return user != null;
 	}
 
-	public static DefaultApi getCurrentApi() {
-		return apiInstance;
-	}
-
-	public static boolean isAuthenticated() {
-		return authenticated;
-	}
-
-	// synchronised, because it would be pretty bad if it became null before it closed the socket
-	private static synchronized void resetWebsocket() {
-		if (websocket != null) {
-			websocket.closeFuture();
-			websocket = null;
-		}
-	}
-
-	public static void deauthenticate() {
-		authenticated = false;
-		apiInstance = new DefaultApi(Configuration.getDefaultApiClient());
-		resetWebsocket();
-	}
-
-	public static void authenticate(String jwt, UUID uuid) {
-		ApiClient newClient = new ApiClient()
-				.setBasePath(BASE_PATH)
-				.addDefaultHeader("Authorization", "Bearer " + jwt);
-
-		apiInstance = new DefaultApi(newClient);
-		authenticated = true;
-		// ensure websocket is disconnected
-		resetWebsocket();
-
-		// log in to africa
-		logInToAfrica(uuid);
-	}
-
-	private static void reconnect(DefaultApi session, UUID user) {
-		// Compute new timeout (get longer each attempt)
-		int timeout = reconnectTimeout;
-		reconnectTimeout = reconnectTimeout == 0 ? 2 : Math.min(reconnectTimeout * 2, 60);
-
-		// Schedule reconnect
-		Logging.getInstance().warn("Cosmetica Africa disconnected unexpectedly. Attempting reconnect in {} seconds.", timeout);
-
-		SCHEDULER.schedule(() -> {
-			if (apiInstance != session) {
-				Logging.getInstance().info("Session changed. Aborting reconnect.");
-			} else {
-				try {
-					Logging.getInstance().debug("Attempting to reconnect to Cosmetica Africa...");
-					logInToAfrica(user);
-				} catch (Exception e) {
-					System.out.println("Reconnect attempt failed: " + e.getMessage());
-				}
-			}
-		}, timeout, TimeUnit.SECONDS);
-	}
-
-	private static void logInToAfrica(UUID userUUID) {
-		// a reference to the api instance being used for this session.
-		final DefaultApi api = apiInstance;
-
+	private void logInToAfrica() {
 		// Log in to africa websocket
 		CosmeticaAPI.performAsync(DefaultApi::africaControllerRequestSession)
 				.thenApply(africaSession -> {
@@ -146,8 +76,8 @@ public final class CosmeticaAuthenticator {
 						@Override
 						protected void connectionDropped() {
 							// upon drop only reconnect if still authenticated the same.
-							if (api == apiInstance) {
-								reconnect(api, userUUID);
+							if (CosmeticaSession.this == getCurrentSession()) {
+								reconnectSocket();
 							}
 						}
 
@@ -164,7 +94,7 @@ public final class CosmeticaAuthenticator {
 					}
 
 					JsonObject authData = new JsonObject();
-					authData.add("uuid", new JsonPrimitive(userUUID.toString()));
+					authData.add("uuid", new JsonPrimitive(this.user.toString()));
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
 					sendEvent(websocket1, "auth", authData);
 
@@ -181,11 +111,98 @@ public final class CosmeticaAuthenticator {
 						Logging.getInstance().error("Could not connect to Africa", ex);
 					}
 
-					// try reconnect again if it fails
-					reconnect(api, userUUID);
+					// try reconnect again if it fails and we are still current auth
+					if (CosmeticaSession.this == getCurrentSession()) {
+						reconnectSocket();
+					}
 
 					return null;
 				});
+	}
+
+	// synchronised, because it would be pretty bad if it became null before it closed the socket
+	private synchronized void closeSocket() {
+		if (websocket != null) {
+			websocket.closeFuture();
+			websocket = null;
+		}
+	}
+
+	/* Constants */
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, "Cosmetica Reconnector"));
+	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
+
+	/* Singleton */
+	private static CosmeticaSession authenticationInstance;
+	private static int reconnectTimeout = 0;
+	private static boolean isScheduled;
+
+	static {
+		Logging.getInstance().debug("Using API url: {}", BASE_PATH);
+
+		ApiClient defaultClient = Configuration.getDefaultApiClient().setBasePath(BASE_PATH);
+		authenticationInstance = new CosmeticaSession(defaultClient, null);
+	}
+
+	public static CosmeticaSession getCurrentSession() {
+		return authenticationInstance;
+	}
+
+	public static void deauthenticate() {
+		authenticationInstance.closeSocket(); // close existing auth websocket
+		/* Default client already has base path set */
+		authenticationInstance = new CosmeticaSession(Configuration.getDefaultApiClient(), null);
+	}
+
+	public static void authenticate(String jwt, UUID uuid) {
+		ApiClient newClient = new ApiClient()
+				.setBasePath(BASE_PATH)
+				.addDefaultHeader("Authorization", "Bearer " + jwt);
+
+		// ensure old websocket is disconnected
+		authenticationInstance.closeSocket();
+		authenticationInstance = new CosmeticaSession(newClient, uuid);
+
+		// log in to africa
+		authenticationInstance.logInToAfrica();
+	}
+
+	private static void reconnectSocket() {
+		synchronized (SCHEDULER) {
+			if (isScheduled) {
+				return;
+			}
+
+			isScheduled = true;
+		}
+
+		// Compute new timeout (get longer each attempt)
+		int timeout = reconnectTimeout;
+		reconnectTimeout = reconnectTimeout == 0 ? 2 : Math.min(reconnectTimeout * 2, 60);
+
+		// Schedule reconnect
+		Logging.getInstance().warn("Cosmetica Africa disconnected unexpectedly. Attempting reconnect in {} seconds.", timeout);
+
+		SCHEDULER.schedule(() -> {
+			CosmeticaSession session = getCurrentSession();
+
+			// we are running the scheduled task.
+			synchronized (SCHEDULER) {
+				isScheduled = false;
+			}
+
+			if (!session.isAuthenticated()) {
+				Logging.getInstance().info("Session changed. Aborting reconnect.");
+			} else {
+				try {
+					Logging.getInstance().debug("Attempting to reconnect to Cosmetica Africa...");
+					session.logInToAfrica();
+				} catch (Exception e) {
+					System.out.println("Reconnect attempt failed: " + e.getMessage());
+				}
+			}
+		}, timeout, TimeUnit.SECONDS);
 	}
 
 	private static void sendEvent(Websocket websocket, String event, JsonElement data) {
@@ -201,7 +218,7 @@ public final class CosmeticaAuthenticator {
 		deauthenticate();
 
 		// Get the authentication server to authenticate with
-		String authURL = apiInstance.authControllerGetAuthServer().getUrl();
+		String authURL = getCurrentSession().api.authControllerGetAuthServer().getUrl();
 
 		// Initiate a session
 		JsonObject keyRequest = new JsonObject();
@@ -278,7 +295,7 @@ public final class CosmeticaAuthenticator {
 				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
 
 				// set user
-				CosmeticaUser user = apiInstance.getApiClient().getObjectMapper().readValue(
+				CosmeticaUser user = getCurrentSession().api.getApiClient().getObjectMapper().readValue(
 						new Gson().toJson(jo.get("user")),
 						CosmeticaUser.class
 				);
