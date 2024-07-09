@@ -28,18 +28,13 @@ public class NametagConfig {
 	 * Create a new nametag config.
 	 * @param prefix the text to prepend to the nametag. For custom nametags, this is the primary text.
 	 * @param suffix the text to append to the nametag.
-	 * @param icon the icon to display before the nametag.
+	 * @param icon the icon image to display before the nametag.
+	 * @param transparentIcon whether to show transparent icon.
 	 */
-	public NametagConfig(String prefix, String suffix, @Nullable Icon icon) {
+	public NametagConfig(String prefix, String suffix, CachedImage icon, boolean transparentIcon) {
 		// icon
-		if (icon == null) {
-			this.icon = CachedImage.NO_TEXTURE;
-			this.transparentIcon = false;
-		} else {
-			this.icon = CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
-					icon.getFrames().intValue(), icon.getTicksPerFrame().intValue());
-			this.transparentIcon = false; // TODO transparent icons
-		}
+		this.icon = icon;
+		this.transparentIcon = transparentIcon;
 
 		// affix
 		this.prefix = prefix;
@@ -74,5 +69,5 @@ public class NametagConfig {
 		return this.suffix;
 	}
 
-	public static final NametagConfig EMPTY = new NametagConfig("", "", null);
+	public static final NametagConfig EMPTY = new NametagConfig("", "", CachedImage.NO_TEXTURE, false);
 }

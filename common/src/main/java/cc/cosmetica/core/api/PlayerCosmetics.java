@@ -37,13 +37,20 @@ public final class PlayerCosmetics implements Cosmetics {
 	 */
 	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon) {
 		// nametag
-		this.nametag = new NametagConfig("", "", icon);
+		CachedImage iconImage = icon == null ? CachedImage.NO_TEXTURE :
+				CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
+						icon.getFrames().intValue(), icon.getTicksPerFrame().intValue());
+		this.nametag = new NametagConfig("", "", iconImage, false);
 
 		// lore
 		if (lore == null) {
 			this.lore = null;
 		} else {
-			this.lore = new NametagConfig(lore.getFormatted().replaceAll("&", "§"), "", null);
+			this.lore = new NametagConfig(
+					lore.getFormatted().replaceAll("&", "§"), "",
+					lore.getIconUrl() == null ? CachedImage.NO_TEXTURE :
+							CosmeticaModel.getOrCreateImage("lore", lore.getService(), lore.getIconUrl(), 1, 1),
+					false);
 		}
 
 		// outfit
