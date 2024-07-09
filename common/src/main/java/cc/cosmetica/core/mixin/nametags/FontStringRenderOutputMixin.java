@@ -63,7 +63,7 @@ public class FontStringRenderOutputMixin {
 			float scale = 8.0f / icon.getHeight();
 
 			// adjust start position if necessary
-			float advance = scale*icon.getWidth() + 1.0f;
+			float advance = scale*icon.getWidth() + 2.0f;
 
 			if (NametagRenderer.shouldReadjustNametagPosition()) {
 				this.cosmeticacore$advance = advance;
