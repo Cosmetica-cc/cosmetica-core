@@ -337,7 +337,7 @@ public class BlockModelManager {
 			return ref == null ? null : ref.get();
 		}
 
-		void cacheWeakly(String id, T t) {
+		synchronized void cacheWeakly(String id, T t) {
 			cache.put(id, new WeakReference<>(t));
 			cachedIds.add(id);
 		}
@@ -346,7 +346,7 @@ public class BlockModelManager {
 		 * Garbage Collector. Checks the next item and removes it if it's pointed to nothing.
 		 * Prevents memory leaks.
 		 */
-		void gc() {
+		synchronized void gc() {
 			if (cachedIds.isEmpty()) return;
 
 			String id = cachedIds.get(gcIndex);
