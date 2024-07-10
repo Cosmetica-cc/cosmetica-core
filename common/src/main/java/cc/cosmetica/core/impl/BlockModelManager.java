@@ -165,7 +165,7 @@ public class BlockModelManager {
 							Logging.getInstance().debug("Texture loaded for {}", id);
 							_model.setTextureLoaded();
 						} else {
-							Logging.getInstance().debug("Texture failed to load for {}", id);
+							Logging.getInstance().debug("Texture failed to load for {} (Model is missing)", id);
 						}
 					})
 					.build();
@@ -246,7 +246,7 @@ public class BlockModelManager {
 							Logging.getInstance().debug("Texture loaded for {}", id);
 							_image.setLoaded(nativeImage.getWidth(), nativeImage.getHeight());
 						} else {
-							Logging.getInstance().debug("Texture failed to load for {}", id);
+							Logging.getInstance().debug("Texture failed to load for {} (CachedImage is missing)", id);
 						}
 					})
 					.build();
