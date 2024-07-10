@@ -19,9 +19,12 @@ package cc.cosmetica.core.render;
 import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.mixin.PlayerModelAccessor;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
@@ -44,6 +47,9 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 				//System.out.println("rendering accessory " + accessory.getName() + " on " + accessory.getAttachment().getValue()	);
 				ModelPart part = null;
 
+				// additional shifting for slim/thick arms
+				float additionalXOffset = 0;
+
 				switch (accessory.getAttachment()) {
 				case HEAD:
 					part = this.getParentModel().head;
@@ -55,11 +61,25 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 					part = accessory.isMirrored() ?
 							this.getParentModel().rightArm :
 							this.getParentModel().leftArm;
+
+					// thin skin: shift
+					if (this.getParentModel() instanceof PlayerModel) {
+						if (((PlayerModelAccessor) this.getParentModel()).isSlim()) {
+							additionalXOffset += 0.5f;
+						}
+					}
 					break;
 				case RIGHT_ARM:
 					part = accessory.isMirrored() ?
 							this.getParentModel().leftArm :
 							this.getParentModel().rightArm;
+
+					// thin skin: shift
+					if (this.getParentModel() instanceof PlayerModel) {
+						if (((PlayerModelAccessor) this.getParentModel()).isSlim()) {
+							additionalXOffset += 0.5f;
+						}
+					}
 					break;
 				case LEFT_LEG:
 					part = accessory.isMirrored() ?
@@ -84,7 +104,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 				if (part.visible) {
 					accessory.getModel().renderOnPart(
 							part, poseStack, multiBufferSource, light,
-							(float) offset.x, (float) offset.y, (float) offset.z,
+							(float) offset.x + additionalXOffset, (float) offset.y, (float) offset.z,
 							accessory.isMirrored()
 					);
 				}

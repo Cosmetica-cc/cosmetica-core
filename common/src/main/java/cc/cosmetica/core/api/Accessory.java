@@ -42,7 +42,7 @@ public final class Accessory {
 	private final AttachmentEnum attachment;
 	private final CosmeticaModel model;
 	private final Vec3 offset;
-	private boolean mirrored;
+	private final boolean mirrored;
 	private final Collection<Flag> flags;
 
 	public String getName() {
@@ -120,11 +120,11 @@ public final class Accessory {
 			break;
 		case RIGHT_ARM:
 			dy = 0.0;
-			dx = 8.5;
+			dx = 8.0;
 			break;
 		case LEFT_ARM:
 			dy = 0.0;
-			dx = 7.5;
+			dx = 7.0;
 			break;
 		default:
 			dy = -2.0;
