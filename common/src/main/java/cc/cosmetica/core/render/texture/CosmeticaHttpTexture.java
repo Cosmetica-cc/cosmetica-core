@@ -64,9 +64,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 	public void onDownload(NativeImage image) {
 		// memory management
 		if (this.image != null && ((NativeImageAccessorMixin)(Object)this.image).getPixels() != 0L) {
-			//Debug.info("Closing image on thread {} due to load. Are we allowed? {}", Thread.currentThread(), RenderSystem.isOnRenderThreadOrInit());
 			this.image.close();
-			//Debug.info("Closed image.");
 		}
 
 		this.image = image;
