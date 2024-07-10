@@ -49,6 +49,8 @@ public class BlockModelManager {
 	private static final ResourceLocation LOADING_TEXTURE = new ResourceLocation("cosmetica-core", "icon.png");
 
 	static {
+		// find cache directory location
+		// preferred location: .minecraft/.cosmetica
 		Path minecraftDir = findDefaultInstallDir("minecraft");
 
 		if (Files.isDirectory(minecraftDir)) {
@@ -56,6 +58,8 @@ public class BlockModelManager {
 		} else {
 			CACHE_DIRECTORY = CosmeticaCoreExpectPlatform.getGameDirectory().resolve(".cosmetica");
 		}
+
+		Logging.getInstance().debug("Cosmetica cache directory: {}", CACHE_DIRECTORY);
 
 		// create cache directory if it doesn't exist
 		if (!Files.exists(CACHE_DIRECTORY)) {
