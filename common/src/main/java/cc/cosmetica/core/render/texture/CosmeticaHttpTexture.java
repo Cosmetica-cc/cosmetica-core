@@ -77,7 +77,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 			this.upload(image, false);
 			this.onFirstUpload.accept(image);
 		} catch (IllegalStateException e) {
-			Logging.getInstance().error("Error while uploading Cosmeitca texture (url: {})", e, this.url);
+			Logging.getInstance().error("Error while uploading Cosmetica texture (url: {})", e, this.url);
 		}
 	}
 

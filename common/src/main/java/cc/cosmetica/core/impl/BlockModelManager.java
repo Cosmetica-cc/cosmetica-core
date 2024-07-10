@@ -160,18 +160,24 @@ public class BlockModelManager {
 					.onLoad(image -> {
 						// don't store a reference to the CosmeticaModel or it will prevent GC
 						CosmeticaModel _model = MODEL_CACHE.get(id);
+
 						if (_model != null) {
+							Logging.getInstance().debug("Texture loaded for {}", id);
 							_model.setTextureLoaded();
+						} else {
+							Logging.getInstance().debug("Texture failed to load for {}", id);
 						}
 					})
 					.build();
 
 			// upload texture
 			if (RenderSystem.isOnRenderThreadOrInit()) {
+				Logging.getInstance().debug("Registering texture for cosmetic {}", id);
 				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 			}
 			else {
 				RenderSystem.recordRenderCall(() -> {
+					Logging.getInstance().debug("Registering texture for cosmetic {}", id);
 					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 				});
 			}
@@ -235,18 +241,24 @@ public class BlockModelManager {
 					.onLoad(nativeImage -> {
 						// don't store a reference to the CachedImage or it will prevent GC
 						CachedImage _image = IMAGE_CACHE.get(id);
+
 						if (_image != null) {
+							Logging.getInstance().debug("Texture loaded for {}", id);
 							_image.setLoaded(nativeImage.getWidth(), nativeImage.getHeight());
+						} else {
+							Logging.getInstance().debug("Texture failed to load for {}", id);
 						}
 					})
 					.build();
 
 			// upload texture
 			if (RenderSystem.isOnRenderThreadOrInit()) {
+				Logging.getInstance().debug("Registering texture for cosmetic {}", id);
 				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 			}
 			else {
 				RenderSystem.recordRenderCall(() -> {
+					Logging.getInstance().debug("Registering texture for cosmetic {}", id);
 					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 				});
 			}
