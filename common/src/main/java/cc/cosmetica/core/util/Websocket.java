@@ -111,7 +111,7 @@ public abstract class Websocket {
 					@Override
 					protected void initChannel(SocketChannel ch) {
 						if (sslCtx != null) {
-							ch.pipeline().addLast(sslCtx.newHandler(ch.alloc()));
+							ch.pipeline().addLast(sslCtx.newHandler(ch.alloc(), host, port));
 						}
 
 						ch.pipeline().addLast(
