@@ -25,6 +25,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -32,6 +33,7 @@ import io.netty.handler.codec.http.websocketx.*;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
@@ -85,19 +87,22 @@ public abstract class Websocket {
 		final int port;
 		final String path = uri.getPath();
 
-		SslContext sslCtx = null;
+		SslContext sslCtx;
 
 		System.out.println(uri);
 		if ("wss".equalsIgnoreCase(protocol)) {
-			sslCtx = SslContextBuilder.forClient().build();
+			sslCtx = SslContextBuilder.forClient()
+					.trustManager(InsecureTrustManagerFactory.INSTANCE)
+					.build();
 			port = uri.getPort() == -1 ? 443 : uri.getPort();
 		} else {
+			sslCtx = null;
 			port = uri.getPort() == -1 ? 80 : uri.getPort();
 		}
 
 		final WebSocketClientHandler handler = new WebSocketClientHandler(
 				WebSocketClientHandshakerFactory.newHandshaker(
-						uri, WebSocketVersion.V13, null, false, null));
+						uri, WebSocketVersion.V13, null, true, new DefaultHttpHeaders()));
 
 		Bootstrap b = new Bootstrap();
 		b.group(group)
@@ -105,6 +110,10 @@ public abstract class Websocket {
 				.handler(new ChannelInitializer<SocketChannel>() {
 					@Override
 					protected void initChannel(SocketChannel ch) {
+						if (sslCtx != null) {
+							ch.pipeline().addLast(sslCtx.newHandler(ch.alloc()));
+						}
+
 						ch.pipeline().addLast(
 								new HttpClientCodec(),
 								new HttpObjectAggregator(8192),

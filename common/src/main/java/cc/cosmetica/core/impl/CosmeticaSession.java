@@ -102,7 +102,7 @@ public final class CosmeticaSession {
 				})
 				.exceptionally(ex -> {
 					if (ex instanceof ApiException) {
-						if (((ApiException) ex).getCode() == 412) {
+						if (((ApiException) ex).getCode() == 424) {
 							Logging.getInstance().error("Africa servers are full or offline!");
 						} else {
 							Logging.getInstance().error("Error connecting to Africa", ex);
