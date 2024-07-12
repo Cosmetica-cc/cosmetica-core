@@ -116,7 +116,7 @@ public final class CosmeticaAPI {
 	 * @param accessToken the minecraft access token to use to sign in.
 	 * @return whether login was successful.
 	 */
-	public static boolean authenticate(UUID uuid, String username, String accessToken) throws IOException {
+	public static boolean login(UUID uuid, String username, String accessToken) throws IOException {
 		return CosmeticaSession.login(uuid, username, accessToken);
 	}
 
@@ -126,5 +126,49 @@ public final class CosmeticaAPI {
 	 */
 	public static void authenticate(String jwt) {
 		CosmeticaSession.authenticate(jwt);
+	}
+
+	/**
+	 * Subscribe to receive updates for this event when connected to the websocket.
+	 * @param eventType the event type.
+	 * @param event the specific event to subscribe to.
+	 */
+	public static <T> void subscribe(SubscriptionEvent<T> eventType, T event) {
+		CosmeticaSession.subscribe(eventType.name + " " + event.toString());
+	}
+
+	/**
+	 * Unsubscribe to this event.
+	 * @param eventType the event type.
+	 * @param event the specific event to subscribe to.
+	 */
+	public static <T> void unsubscribe(SubscriptionEvent<T> eventType, T event) {
+		CosmeticaSession.unsubscribe(eventType.name + " " + event.toString());
+	}
+
+	/**
+	 * Event types for subscriptions.
+	 */
+	public static class SubscriptionEvent<T> {
+		private SubscriptionEvent(String name) {
+			this.name = name;
+		}
+
+		public final String name;
+
+		/**
+		 * Subscribe to players updates by their uuid.
+		 */
+		public static final SubscriptionEvent<UUID> PLAYER = new SubscriptionEvent<>("player");
+
+		/**
+		 * Subscribe to player updates by their usernames. Intended for when the player is craked.
+		 */
+		public static final SubscriptionEvent<String> PLAYER_CREAKED = new SubscriptionEvent<>("player");
+
+		/**
+		 * Subscribe to outfit updates.
+		 */
+		public static final SubscriptionEvent<UUID> OUTFIT = new SubscriptionEvent<>("outfit");
 	}
 }

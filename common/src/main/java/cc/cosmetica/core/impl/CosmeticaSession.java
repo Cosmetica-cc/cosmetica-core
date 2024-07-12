@@ -37,7 +37,9 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -120,6 +122,12 @@ public final class CosmeticaSession {
 				});
 	}
 
+	private synchronized void sendEvent(String event, JsonElement data) {
+		if (websocket != null) {
+			sendEvent(websocket, event, data);
+		}
+	}
+
 	// synchronised, because it would be pretty bad if it became null before it closed the socket
 	private synchronized void closeSocket() {
 		if (websocket != null) {
@@ -133,6 +141,9 @@ public final class CosmeticaSession {
 	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, "Cosmetica Reconnector"));
 	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
 
+	/* Keep track of subscriptions so we can re-subscribe on reconnect / making a new session */
+	private static final List<String> SUBSCRIPTION_EVENT_IDS = new ArrayList<>();
+
 	/* Singleton */
 	private static CosmeticaSession authenticationInstance;
 	private static int reconnectTimeout = 0;
@@ -145,9 +156,39 @@ public final class CosmeticaSession {
 		authenticationInstance = new CosmeticaSession(defaultClient, null);
 	}
 
+	/* Session */
 	public static CosmeticaSession getCurrentSession() {
 		return authenticationInstance;
 	}
+
+	/* Events */
+	public static void subscribe(String eventId) {
+		JsonArray eventIds = new JsonArray();
+		eventIds.add(eventId);
+
+		JsonObject data = new JsonObject();
+		data.add("subscriptions", eventIds);
+
+		synchronized (SUBSCRIPTION_EVENT_IDS) { // TODO synchronise on this on reconnect too.
+			SUBSCRIPTION_EVENT_IDS.add(eventId);
+			getCurrentSession().sendEvent("subscribe", data);
+		}
+	}
+
+	public static void unsubscribe(String eventId) {
+		JsonArray eventIds = new JsonArray();
+		eventIds.add(eventId);
+
+		JsonObject data = new JsonObject();
+		data.add("subscriptions", eventIds);
+
+		synchronized (SUBSCRIPTION_EVENT_IDS) {
+			SUBSCRIPTION_EVENT_IDS.add(eventId);
+			getCurrentSession().sendEvent("unsubscribe", data);
+		}
+	}
+
+	/* Authenticating and Deauthenticating */
 
 	public static void deauthenticate() {
 		authenticationInstance.closeSocket(); // close existing auth websocket
