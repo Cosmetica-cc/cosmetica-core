@@ -20,10 +20,8 @@ import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.util.Response;
 import cc.cosmetica.core.util.Websocket;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
+import com.google.gson.stream.JsonReader;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.Configuration;
@@ -32,7 +30,9 @@ import gg.cloaks.javaclient.model.CosmeticaUser;
 
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -155,13 +155,25 @@ public final class CosmeticaSession {
 		authenticationInstance = new CosmeticaSession(Configuration.getDefaultApiClient(), null);
 	}
 
-	public static void authenticate(String jwt, UUID uuid) {
+	public static void authenticate(String jwt) {
 		ApiClient newClient = new ApiClient()
 				.setBasePath(BASE_PATH)
 				.addDefaultHeader("Authorization", "Bearer " + jwt);
 
 		// ensure old websocket is disconnected
 		authenticationInstance.closeSocket();
+
+		// find uuid for jwt
+		UUID uuid;
+
+		try {
+			byte[] info = Base64.getDecoder().decode(jwt.split("\\.")[1]);
+			JsonObject object = new JsonParser().parse(new InputStreamReader(new ByteArrayInputStream(info))).getAsJsonObject();
+			uuid = UUID.fromString(object.get("sub").getAsString());
+		} catch (JsonParseException | IndexOutOfBoundsException e) {
+			throw new RuntimeException("Malformed JWT", e);
+		}
+
 		authenticationInstance = new CosmeticaSession(newClient, uuid);
 
 		// log in to africa
@@ -291,7 +303,7 @@ public final class CosmeticaSession {
 		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {
 				JsonObject jo = response.readEntityJson().getAsJsonObject();
-				authenticate(jo.get("jwt").getAsString(), uuid);
+				authenticate(jo.get("jwt").getAsString());
 				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
 
 				// set user

@@ -30,7 +30,7 @@ public class CosmeticaCoreFabric implements ClientModInitializer {
         String devAuth = System.getProperty("cosmetica.token");
 
         if (devAuth != null) {
-            CosmeticaAPI.authenticate(devAuth, Minecraft.getInstance().getUser().getGameProfile().getId());
+            CosmeticaAPI.authenticate(devAuth);
         }
     }
 }

@@ -18,7 +18,6 @@ package cc.cosmetica.core.forge;
 
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.builtin.BuiltinManagers;
-import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -36,7 +35,7 @@ public class CosmeticaCoreForge {
 		String devAuth = System.getProperty("cosmetica.token");
 
 		if (devAuth != null) {
-			CosmeticaAPI.authenticate(devAuth, Minecraft.getInstance().getUser().getGameProfile().getId());
+			CosmeticaAPI.authenticate(devAuth);
 		}
 	}
 }
