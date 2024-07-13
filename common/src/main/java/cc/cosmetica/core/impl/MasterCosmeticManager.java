@@ -110,7 +110,7 @@ public final class MasterCosmeticManager {
 		}
 	}
 
-	// update all listeners to a change. called by mixin/LivingEntityMixin.
+	// update all listeners to a cosmetics change. called by mixin/LivingEntityMixin.
 	public static void post(LivingEntity entity, @Nullable Cosmetics newCosmetics) {
 		for (BiConsumer<LivingEntity, Cosmetics> consumer : CALLBACKS) {
 			consumer.accept(entity, newCosmetics);

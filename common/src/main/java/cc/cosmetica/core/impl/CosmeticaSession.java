@@ -117,14 +117,17 @@ public final class CosmeticaSession {
 
 					// Resubscribe to events
 					synchronized (WEBSOCKET_SUBSCRIPTIONS) {
-						JsonArray eventIds = new JsonArray();
+						// don't bother re-subscribing if nothing to resubscribe to
+						if (!WEBSOCKET_SUBSCRIPTIONS.isEmpty()) {
+							JsonArray eventIds = new JsonArray();
 
-						WEBSOCKET_SUBSCRIPTIONS.forEach((eventId, listeners) -> eventIds.add(eventId));
+							WEBSOCKET_SUBSCRIPTIONS.forEach((eventId, listeners) -> eventIds.add(eventId));
 
-						JsonObject data = new JsonObject();
-						data.add("subscriptions", eventIds);
+							JsonObject data = new JsonObject();
+							data.add("subscriptions", eventIds);
 
-						sendEvent(websocket1, "subscribe", data);
+							sendEvent(websocket1, "subscribe", data);
+						}
 					}
 
 					return websocket1;
@@ -181,6 +184,9 @@ public final class CosmeticaSession {
 
 		ApiClient defaultClient = Configuration.getDefaultApiClient().setBasePath(BASE_PATH);
 		authenticationInstance = new CosmeticaSession(defaultClient, null);
+
+		// close socket before shutdown
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> getCurrentSession().closeSocket()));
 	}
 
 	/* Session */

@@ -70,6 +70,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 			} else {
 				// push a new cosmetics
 				Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
+				System.out.println("Next cosmetics " + next);
 
 				synchronized (this.cosmeticacore$cosmetics) {
 					this.cosmeticacore$cosmetics.add(next);
@@ -86,6 +87,8 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 							while (this.cosmeticacore$cosmetics.peek() != next)
 								this.cosmeticacore$cosmetics.remove();
 						}
+
+						System.out.println("Cosmetics " + this.cosmeticacore$cosmetics);
 					}
 
 					if (updated) {
