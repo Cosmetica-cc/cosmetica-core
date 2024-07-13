@@ -414,7 +414,7 @@ public final class CosmeticaSession {
 			return new BigInteger(MessageDigest.getInstance("SHA-1").digest(theBigMan)).toString(16);
 		}
 		catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("For some reason your computer's java install thinks SHA-1 is not a hashing algorithm.", e);
+			throw new RuntimeException("Your computer's java install is missing an SHA-1 implementation.", e);
 		}
 	}
 }
