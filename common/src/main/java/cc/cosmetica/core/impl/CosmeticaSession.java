@@ -20,7 +20,6 @@ import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.util.Response;
 import cc.cosmetica.core.util.Websocket;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import gg.cloaks.javaclient.ApiClient;
@@ -39,7 +38,10 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -105,11 +107,25 @@ public final class CosmeticaSession {
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
+					// connected. set websocket
+					this.websocket = websocket1;
 
 					JsonObject authData = new JsonObject();
 					authData.add("uuid", new JsonPrimitive(this.user.toString()));
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
 					sendEvent(websocket1, "auth", authData);
+
+					// Resubscribe to events
+					synchronized (WEBSOCKET_SUBSCRIPTIONS) {
+						JsonArray eventIds = new JsonArray();
+
+						WEBSOCKET_SUBSCRIPTIONS.forEach((eventId, listeners) -> eventIds.add(eventId));
+
+						JsonObject data = new JsonObject();
+						data.add("subscriptions", eventIds);
+
+						sendEvent(websocket1, "subscribe", data);
+					}
 
 					return websocket1;
 				})
