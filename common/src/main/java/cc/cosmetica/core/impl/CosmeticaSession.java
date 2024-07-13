@@ -20,13 +20,15 @@ import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.util.Response;
 import cc.cosmetica.core.util.Websocket;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
-import com.google.gson.stream.JsonReader;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
 import gg.cloaks.javaclient.model.CosmeticaUser;
+import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
@@ -37,10 +39,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +84,19 @@ public final class CosmeticaSession {
 
 						@Override
 						protected void receive(JsonElement data) {
-							Logging.getInstance().info("{}", data);
+							Logging.getInstance().debug("Received {}", data);
+							JsonObject obj = data.getAsJsonObject();
+
+							if ("event".equals(obj.get("event").getAsString())) {
+								String eventId = obj.get("data").getAsString();
+
+								// run callbacks
+								synchronized (WEBSOCKET_SUBSCRIPTIONS) {
+									WEBSOCKET_SUBSCRIPTIONS.getOrDefault(eventId, ImmutableMap.of()).forEach((rl, run) -> {
+										run.run();
+									});
+								}
+							}
 						}
 					};
 
@@ -142,7 +153,7 @@ public final class CosmeticaSession {
 	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
 
 	/* Keep track of subscriptions so we can re-subscribe on reconnect / making a new session */
-	private static final List<String> SUBSCRIPTION_EVENT_IDS = new ArrayList<>();
+	private static final Map<String, Map<ResourceLocation, Runnable>> WEBSOCKET_SUBSCRIPTIONS = new HashMap<>();
 
 	/* Singleton */
 	private static CosmeticaSession authenticationInstance;
@@ -162,29 +173,43 @@ public final class CosmeticaSession {
 	}
 
 	/* Events */
-	public static void subscribe(String eventId) {
+	public static void subscribe(String eventId, ResourceLocation key, Runnable callback) {
 		JsonArray eventIds = new JsonArray();
 		eventIds.add(eventId);
 
 		JsonObject data = new JsonObject();
 		data.add("subscriptions", eventIds);
 
-		synchronized (SUBSCRIPTION_EVENT_IDS) { // TODO synchronise on this on reconnect too.
-			SUBSCRIPTION_EVENT_IDS.add(eventId);
-			getCurrentSession().sendEvent("subscribe", data);
+		synchronized (WEBSOCKET_SUBSCRIPTIONS) { // TODO synchronise on this on reconnect too.
+			boolean hasExistingEvent = WEBSOCKET_SUBSCRIPTIONS.containsKey(eventId);
+			WEBSOCKET_SUBSCRIPTIONS.computeIfAbsent(eventId, k -> new HashMap<>()).put(key, callback);
+
+			if (!hasExistingEvent) {
+				getCurrentSession().sendEvent("subscribe", data);
+			}
 		}
 	}
 
-	public static void unsubscribe(String eventId) {
+	public static void unsubscribe(String eventId, ResourceLocation key) {
 		JsonArray eventIds = new JsonArray();
 		eventIds.add(eventId);
 
 		JsonObject data = new JsonObject();
 		data.add("subscriptions", eventIds);
 
-		synchronized (SUBSCRIPTION_EVENT_IDS) {
-			SUBSCRIPTION_EVENT_IDS.add(eventId);
-			getCurrentSession().sendEvent("unsubscribe", data);
+		synchronized (WEBSOCKET_SUBSCRIPTIONS) {
+			Map<ResourceLocation, Runnable> rr = WEBSOCKET_SUBSCRIPTIONS.get(eventId);
+
+			// do we actually have subscriptions
+			if (rr != null) {
+				rr.remove(key);
+
+				// clear memory and unsubscribe on the websocket if nothing more needed.
+				if (rr.isEmpty()) {
+					WEBSOCKET_SUBSCRIPTIONS.remove(eventId);
+					getCurrentSession().sendEvent("unsubscribe", data);
+				}
+			}
 		}
 	}
 

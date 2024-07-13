@@ -97,12 +97,13 @@ public final class MasterCosmeticManager {
 		if (currentManager.checkAndSet(selectedManager)) {
 			CosmeticEquipper equipper = (CosmeticEquipper) entity;
 
-			// inform old cosmetic manager the player has been revoked
-			if (old != null) old.onRevoke(entity);
-
+			// assign -> revoke, so we don't unsubscribe from event updates on the webhook if they use the same one
 			if (selectedManager != null) {
 				selectedManager.onAssign(entity);
 			}
+
+			// inform old cosmetic manager the player has been revoked
+			if (old != null) old.onRevoke(entity);
 
 			// equip or clear
 			equipper.cosmeticacore$updateCosmetics(selectedManager);

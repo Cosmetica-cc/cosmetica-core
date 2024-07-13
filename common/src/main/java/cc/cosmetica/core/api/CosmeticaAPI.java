@@ -24,6 +24,7 @@ import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.api.DefaultApi;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -129,21 +130,26 @@ public final class CosmeticaAPI {
 	}
 
 	/**
-	 * Subscribe to receive updates for this event when connected to the websocket.
+	 * Subscribe to receive updates for this event when connected to the websocket. This is a synchronous call.
+	 * Each owner can only have one callback for a specific event active at a time. Therefore, design your owner keys
+	 * carefully based on requirements for your use.
 	 * @param eventType the event type.
 	 * @param event the specific event to subscribe to.
+	 * @param owner identifier for the owner of the subscription.
+	 * @param callback the callback to run when the subscription is received.
 	 */
-	public static <T> void subscribe(SubscriptionEvent<T> eventType, T event) {
-		CosmeticaSession.subscribe(eventType.name + " " + event.toString());
+	public static <T> void subscribe(SubscriptionEvent<T> eventType, T event, ResourceLocation owner, Runnable callback) {
+		CosmeticaSession.subscribe(eventType.name + " " + event.toString(), owner, callback);
 	}
 
 	/**
-	 * Unsubscribe to this event.
+	 * Unsubscribe all event callbacks for this event belonging to the owner. This is a synchronous call.
 	 * @param eventType the event type.
 	 * @param event the specific event to subscribe to.
+	 * @param owner the identifier for the owner of the subscription.
 	 */
-	public static <T> void unsubscribe(SubscriptionEvent<T> eventType, T event) {
-		CosmeticaSession.unsubscribe(eventType.name + " " + event.toString());
+	public static <T> void unsubscribe(SubscriptionEvent<T> eventType, T event, ResourceLocation owner) {
+		CosmeticaSession.unsubscribe(eventType.name + " " + event.toString(), owner);
 	}
 
 	/**
