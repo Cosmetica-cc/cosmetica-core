@@ -146,6 +146,21 @@ public abstract class Websocket {
 	}
 
 	/**
+	 * Ping the websocket to maintain connection. Does not error if the websocket connection is null or inactive but
+	 * indicates in return value.
+	 * @return whether the ping could be sent.
+	 */
+	public boolean ping() {
+		if (this.channel == null || !this.channel.isActive()) {
+			return false;
+		}
+
+		WebSocketFrame frame = new PingWebSocketFrame();
+		this.channel.writeAndFlush(frame);
+		return true;
+	}
+
+	/**
 	 * Close the websocket.
 	 * @return the future. Null if there was no channel.
 	 */

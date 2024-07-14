@@ -161,6 +161,7 @@ public final class CosmeticaSession {
 	// synchronised, because it would be pretty bad if it became null before it closed the socket
 	private synchronized void closeSocket() {
 		if (websocket != null) {
+			Logging.getInstance().debug("Closing africa websocket");
 			websocket.closeFuture();
 			websocket = null;
 		}
@@ -187,6 +188,19 @@ public final class CosmeticaSession {
 
 		// close socket before shutdown
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> getCurrentSession().closeSocket()));
+
+		// start ping for websockets
+		pingAfrica();
+	}
+
+	/* Called every 30 seconds to maintain connection */
+	private static void pingAfrica() {
+		// ping current socket
+		Websocket socket = getCurrentSession().websocket;
+		if (socket != null) socket.ping();
+
+		// schedule new ping
+		SCHEDULER.schedule(CosmeticaSession::pingAfrica, 30, TimeUnit.SECONDS);
 	}
 
 	/* Session */
