@@ -225,6 +225,9 @@ public abstract class Websocket {
 				ctx.close();
 			}
 			// PongWebSocketFrame also exists
+//			else if (msg instanceof PongWebSocketFrame) {
+//				System.out.println("pong!");
+//			}
 		}
 
 		@Override
