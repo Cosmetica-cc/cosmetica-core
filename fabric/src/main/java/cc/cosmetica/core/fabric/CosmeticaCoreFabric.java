@@ -31,6 +31,11 @@ public class CosmeticaCoreFabric implements ClientModInitializer {
 
         if (devAuth != null) {
             CosmeticaAPI.authenticate(devAuth);
+//            new Thread(() -> {try {
+//                CosmeticaAPI.login();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }});
         }
     }
 }
