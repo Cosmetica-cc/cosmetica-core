@@ -50,12 +50,14 @@ import java.util.concurrent.TimeUnit;
  * Handles authentication and websocket for Cosmetica.
  */
 public final class CosmeticaSession {
-	private CosmeticaSession(ApiClient client, @Nullable UUID user) {
+	private CosmeticaSession(ApiClient client, String token, @Nullable UUID user) {
 		this.api = new DefaultApi(client);
+		this.sessionToken = token;
 		this.user = user;
 	}
 
 	public final DefaultApi api;
+	public final String sessionToken;
 	private final @Nullable UUID user;
 	private Websocket websocket;
 
@@ -184,7 +186,7 @@ public final class CosmeticaSession {
 		Logging.getInstance().debug("Using API url: {}", BASE_PATH);
 
 		ApiClient defaultClient = Configuration.getDefaultApiClient().setBasePath(BASE_PATH);
-		authenticationInstance = new CosmeticaSession(defaultClient, null);
+		authenticationInstance = new CosmeticaSession(defaultClient, "",null);
 
 		// close socket before shutdown
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> getCurrentSession().closeSocket()));
@@ -254,7 +256,7 @@ public final class CosmeticaSession {
 	public static void deauthenticate() {
 		authenticationInstance.closeSocket(); // close existing auth websocket
 		/* Default client already has base path set */
-		authenticationInstance = new CosmeticaSession(Configuration.getDefaultApiClient(), null);
+		authenticationInstance = new CosmeticaSession(Configuration.getDefaultApiClient(), "", null);
 	}
 
 	public static void authenticate(String jwt) {
@@ -276,7 +278,7 @@ public final class CosmeticaSession {
 			throw new RuntimeException("Malformed JWT", e);
 		}
 
-		authenticationInstance = new CosmeticaSession(newClient, uuid);
+		authenticationInstance = new CosmeticaSession(newClient, jwt, uuid);
 
 		// log in to africa
 		authenticationInstance.logInToAfrica();

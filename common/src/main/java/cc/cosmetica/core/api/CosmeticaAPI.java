@@ -20,6 +20,7 @@ import cc.cosmetica.core.impl.CosmeticaSession;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.util.Response;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.api.DefaultApi;
 import net.minecraft.client.Minecraft;
@@ -127,6 +128,21 @@ public final class CosmeticaAPI {
 	 */
 	public static void authenticate(String jwt) {
 		CosmeticaSession.authenticate(jwt);
+	}
+
+	/**
+	 * Get the current session token as a string. This can be used for caching.
+	 * @return the session token. If not authenticated, returns an empty string.
+	 */
+	public static String getSessionToken() {
+		return CosmeticaSession.getCurrentSession().sessionToken;
+	}
+
+	/**
+	 * Immediately deauthenticate the API.
+	 */
+	public static void deauthenticate() {
+		CosmeticaSession.deauthenticate();
 	}
 
 	/**
