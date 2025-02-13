@@ -173,6 +173,6 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @implNote via the built-in manager SelfCosmeticManager.
 	 */
 	public static void setOwnCosmetics(PlayerCosmetics cosmetics) {
-		SelfCosmeticManager.cosmetics = cosmetics;
+		SelfCosmeticManager.set(cosmetics);
 	}
 }

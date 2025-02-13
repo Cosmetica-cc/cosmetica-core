@@ -19,6 +19,7 @@ package cc.cosmetica.core.impl;
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import gg.cloaks.javaclient.model.Cosmetic;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +112,7 @@ public final class MasterCosmeticManager {
 	}
 
 	// update all listeners to a cosmetics change. called by mixin/LivingEntityMixin.
-	public static void post(LivingEntity entity, @Nullable Cosmetics newCosmetics) {
+	public static void post(@Nullable LivingEntity entity, @Nullable Cosmetics newCosmetics) {
 		for (BiConsumer<LivingEntity, Cosmetics> consumer : CALLBACKS) {
 			consumer.accept(entity, newCosmetics);
 		}

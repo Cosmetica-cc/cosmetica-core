@@ -108,7 +108,8 @@ public interface Cosmetics {
 	/**
 	 * Register the cosmetics change callback.
 	 * @param onChange a consumer that takes the entity, and new cosmetics whenever the cosmetics on an entity changes.
-	 *                 The cosmetics parameter may be null.
+	 *                 <ul><li>The LivingEntity parameter may be null to indicate the client's player.</li>
+	 *                 <li>The cosmetics parameter may be null.</li></ul>
 	 */
 	static void registerCosmeticsChangeCallback(BiConsumer<LivingEntity, Cosmetics> onChange) {
 		MasterCosmeticManager.addCallback(onChange);

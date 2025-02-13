@@ -162,7 +162,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 			if (player == Minecraft.getInstance().player) {
 				// configure own cosmetics
-				SelfCosmeticManager.cosmetics = cosmetics;
+				SelfCosmeticManager.set(cosmetics);
 			} else {
 				// store on the player
 				ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);

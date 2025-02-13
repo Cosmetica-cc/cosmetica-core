@@ -19,6 +19,8 @@ package cc.cosmetica.core.builtin.manager;
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.PlayerCosmetics;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -26,7 +28,7 @@ import net.minecraft.world.entity.LivingEntity;
  * Cosmetics received from the API for yourself. Will use cached cosmetics if none can be obtained from the API.
  */
 public class SelfCosmeticManager implements CosmeticManager {
-	public static PlayerCosmetics cosmetics;
+	private static PlayerCosmetics cosmetics;
 
 	@Override
 	public boolean canManage(LivingEntity entity) {
@@ -38,5 +40,9 @@ public class SelfCosmeticManager implements CosmeticManager {
 		return cosmetics;
 	}
 
+	public static void set(PlayerCosmetics newCosmetics) {
+		cosmetics = newCosmetics;
+		MasterCosmeticManager.post(null, newCosmetics);
+	}
 	// todo detect account switching to change cosmetics
 }
