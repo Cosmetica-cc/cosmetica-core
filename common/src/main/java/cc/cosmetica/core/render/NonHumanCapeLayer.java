@@ -17,6 +17,7 @@
 package cc.cosmetica.core.render;
 
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.ImageCosmetic;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Vector3f;
@@ -60,12 +61,13 @@ public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 			return;
 		}
 
-		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(livingEntity);
+		Optional<Cosmetics> optionalCosmetics = Cosmetics.getCosmetics(livingEntity);
 
-		if (!cosmetics.isPresent()) {
+		if (!optionalCosmetics.isPresent()) {
 			return;
 		}
-		if (!cosmetics.get().getCloak().isLoaded()) {
+		Cosmetics cosmetics = optionalCosmetics.get();
+		if (!cosmetics.getCloak().isPresent() || cosmetics.getCloak().get().getImage().isLoaded()) {
 			return;
 		}
 
@@ -106,7 +108,7 @@ public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 		poseStack.mulPose(Vector3f.ZP.rotationDegrees(s / 2.0f));
 		poseStack.mulPose(Vector3f.YP.rotationDegrees(180.0f - s / 2.0f));
 		// cosmetica start
-		ResourceLocation cloakLocation = cosmetics.get().getCloak().location;
+		ResourceLocation cloakLocation = cosmetics.getCloak().get().getImage().location;
 		RenderType type = RenderType.entityTranslucent(cloakLocation);
 		// cosmetica end
 		VertexConsumer vertexConsumer = multiBufferSource.getBuffer(type);

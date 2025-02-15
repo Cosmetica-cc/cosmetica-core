@@ -16,21 +16,28 @@
 
 package cc.cosmetica.core.api;
 
+import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import gg.cloaks.javaclient.model.OutfitAccessory;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents an Accessory equipped on a user.
  */
-public final class Accessory {
-	public Accessory(String name, AttachmentEnum attachment, boolean mirrored, CosmeticaModel model, Vec3 offset) {
+public final class Accessory implements Cosmetic {
+	public Accessory(String name, String id, @Nullable GameProfile creator, String thumbnail,
+					 AttachmentEnum attachment, boolean mirrored, CosmeticaModel model, Vec3 offset) {
 		this.name = name;
+		this.id = id;
+		this.creator = creator;
+		this.thumbnail = thumbnail;
 		this.attachment = attachment;
 		this.mirrored = mirrored;
 		this.model = model;
@@ -39,14 +46,34 @@ public final class Accessory {
 	}
 
 	private final String name;
+	private final String id;
+	@Nullable
+	private final GameProfile creator;
+	private final String thumbnail;
 	private final AttachmentEnum attachment;
 	private final CosmeticaModel model;
 	private final Vec3 offset;
 	private final boolean mirrored;
 	private final Collection<Flag> flags;
 
+	@Override
 	public String getName() {
 		return this.name;
+	}
+
+	@Override
+	public String getId() {
+		return this.id;
+	}
+
+	@Override
+	public Optional<GameProfile> getCreator() {
+		return Optional.ofNullable(this.creator);
+	}
+
+	@Override
+	public String getThumbnail() {
+		return this.thumbnail;
 	}
 
 	public AttachmentEnum getAttachment() {
@@ -93,6 +120,9 @@ public final class Accessory {
 
 		return new Accessory(
 				accessory.getAccessory().getName(),
+				accessory.getAccessory().getId(),
+				Cosmetic.gameProfileOf(accessory.getAccessory().getCreator()),
+				accessory.getAccessory().getThumbnail(),
 				accessory.getAccessory().getAttachment(),
 				accessory.isMirrored(),
 				model,

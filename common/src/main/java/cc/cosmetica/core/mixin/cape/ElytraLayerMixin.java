@@ -18,6 +18,7 @@ package cc.cosmetica.core.mixin.cape;
 
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.ImageCosmetic;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexMultiConsumer;
@@ -51,7 +52,7 @@ public abstract class ElytraLayerMixin {
 
 		if (cosmetics.isPresent()) {
 			// set the return value to our elytra
-			CachedImage image = cosmetics.get().getElytra();
+			CachedImage image = cosmetics.get().getElytra().map(ImageCosmetic::getImage).orElse(CachedImage.NO_TEXTURE);
 			resourceLocation = image.isLoaded() ? image.location : WINGS_LOCATION;
 
 			// use translucent for cosmetica wings

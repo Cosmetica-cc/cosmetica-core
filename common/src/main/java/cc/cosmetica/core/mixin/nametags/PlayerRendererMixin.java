@@ -54,7 +54,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 
 		// add nametag icons
 		Cosmetics.getCosmetics(entity).ifPresent(c -> {
-			CachedImage icon = c.getNametag().getIcon();
+			CachedImage icon = c.getNametag().getIcon().getImage();
 
 			if (icon.isLoaded()) {
 				NametagRenderer.prepareIcon(icon, entity.isDiscrete() ? 1 : 2, true);

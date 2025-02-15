@@ -16,10 +16,6 @@
 
 package cc.cosmetica.core.api;
 
-import gg.cloaks.javaclient.model.Icon;
-
-import javax.annotation.Nullable;
-
 /**
  * How cosmetica should decorate a nametag.
  */
@@ -31,7 +27,7 @@ public class NametagConfig {
 	 * @param icon the icon image to display before the nametag.
 	 * @param transparentIcon whether to show transparent icon.
 	 */
-	public NametagConfig(String prefix, String suffix, CachedImage icon, boolean transparentIcon) {
+	public NametagConfig(String prefix, String suffix, ImageCosmetic icon, boolean transparentIcon) {
 		// icon
 		this.icon = icon;
 		this.transparentIcon = transparentIcon;
@@ -41,15 +37,15 @@ public class NametagConfig {
 		this.suffix = suffix;
 	}
 
-	private final CachedImage icon;
+	private final ImageCosmetic icon;
 	private final boolean transparentIcon;
 	private final String prefix, suffix;
 
 	/**
-	 * Get the nametag icon to use. {@link CachedImage#NO_TEXTURE} if no texture.
+	 * Get the nametag icon to use. An ImageCosmetic for {@link CachedImage#NO_TEXTURE} if no texture.
 	 * @return the nametag icon to use.
 	 */
-	public CachedImage getIcon() {
+	public ImageCosmetic getIcon() {
 		return this.icon;
 	}
 
@@ -69,5 +65,7 @@ public class NametagConfig {
 		return this.suffix;
 	}
 
-	public static final NametagConfig EMPTY = new NametagConfig("", "", CachedImage.NO_TEXTURE, false);
+	// NOTE: this might change to an Optional or @Nullable field in the future.
+	public static final ImageCosmetic NO_ICON = new ImageCosmetic(CachedImage.NO_TEXTURE, "", "", null, "");
+	public static final NametagConfig EMPTY = new NametagConfig("", "", NO_ICON, false);
 }

@@ -18,6 +18,7 @@ package cc.cosmetica.core.mixin.cape;
 
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.ImageCosmetic;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.BlockPos;
@@ -46,7 +47,7 @@ public abstract class AbstractClientPlayerMixin extends Player {
 	@Inject(at = @At("HEAD"), method = "isCapeLoaded", cancellable = true)
 	private void isCosmeticaCloakLoaded(CallbackInfoReturnable<Boolean> info) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
-		info.setReturnValue(cosmetics.isPresent() && cosmetics.get().getCloak().isLoaded());
+		info.setReturnValue(cosmetics.isPresent() && cosmetics.get().getCloak().isPresent() && cosmetics.get().getCloak().get().getImage().isLoaded());
 	}
 
 	@Inject(at = @At("HEAD"), method = "getCloakTextureLocation", cancellable = true)
@@ -54,7 +55,11 @@ public abstract class AbstractClientPlayerMixin extends Player {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
 
 		if (cosmetics.isPresent()) {
-			info.setReturnValue(cosmetics.get().getCloak().location); // set the return value to our one
+			Optional<ImageCosmetic> cloak = cosmetics.get().getCloak();
+
+			if (cloak.isPresent()) {
+				info.setReturnValue(cloak.get().getImage().location); // set the return value to our one
+			}
 		}
 	}
 }

@@ -207,7 +207,7 @@ public final class NametagRenderer {
 		// render lore
 		if (lore != null) {
 			Component component = new TextComponent(lore.getPrefix() /* Prefix doubles as main text */);
-			CachedImage loreIcon = lore.getIcon();
+			CachedImage loreIcon = lore.getIcon().getImage();
 			boolean showLoreIcon = loreIcon.isLoaded();
 
 			boolean fullyRender = !discrete;

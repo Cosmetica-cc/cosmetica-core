@@ -18,11 +18,14 @@ package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.impl.UUIDs;
+import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import gg.cloaks.javaclient.model.Outfit;
 import gg.cloaks.javaclient.model.OutfitAccessory;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,6 +39,7 @@ public class OutfitCosmetics implements Cosmetics {
 	public OutfitCosmetics(Outfit outfit) {
 		this.name = outfit.getName();
 		this.id = outfit.getId();
+		this.creator = Cosmetic.gameProfileOf(outfit.getCreator());
 		this.accessories = new ArrayList<>();
 
 		// read accessories
@@ -47,15 +51,26 @@ public class OutfitCosmetics implements Cosmetics {
 		AnimatedTextureCosmetic cloak = outfit.getCloak();
 		AnimatedTextureCosmetic elytra = outfit.getElytra();
 
-		this.cloak = cloak == null ? CachedImage.NO_TEXTURE : CosmeticaModel.getOrCreateImage("cape", cloak);
-		this.elytra = elytra == null ? CachedImage.NO_TEXTURE : CosmeticaModel.getOrCreateImage("cape", elytra);
+		this.cloak = cloak == null ? Optional.empty() : Optional.of(new ImageCosmetic(
+                CosmeticaModel.getOrCreateImage("cape", cloak),
+                cloak.getName(),
+                cloak.getId(),
+                Cosmetic.gameProfileOf(cloak.getCreator()),
+                cloak.getThumbnail()));
+		this.elytra = elytra == null ? Optional.empty() : Optional.of(new ImageCosmetic(
+				CosmeticaModel.getOrCreateImage("cape", elytra),
+				elytra.getName(),
+				elytra.getId(),
+				Cosmetic.gameProfileOf(elytra.getCreator()),
+				elytra.getThumbnail()));
 	}
 
 	private final String name;
 	private final String id;
+	private final @Nullable GameProfile creator;
 	private final List<Accessory> accessories;
-	private final CachedImage cloak;
-	private final CachedImage elytra;
+	private final Optional<ImageCosmetic> cloak;
+	private final Optional<ImageCosmetic> elytra;
 
 	@Override
 	public Optional<String> getOutfitName() {
@@ -67,13 +82,15 @@ public class OutfitCosmetics implements Cosmetics {
 		return Optional.of(this.id);
 	}
 
+	public Optional<GameProfile> getOutfitCreator() { return Optional.ofNullable(this.creator); }
+
 	@Override
-	public CachedImage getCloak() {
+	public Optional<ImageCosmetic> getCloak() {
 		return this.cloak;
 	}
 
 	@Override
-	public CachedImage getElytra() {
+	public Optional<ImageCosmetic> getElytra() {
 		return this.elytra;
 	}
 

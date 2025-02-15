@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static cc.cosmetica.core.api.NametagConfig.NO_ICON;
+
 /**
  * Cosmetics stored on the player from the API.
  */
@@ -37,9 +39,14 @@ public final class PlayerCosmetics implements Cosmetics {
 	 */
 	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon) {
 		// nametag
-		CachedImage iconImage = icon == null ? CachedImage.NO_TEXTURE :
-				CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
-						icon.getFrames().intValue(), icon.getTicksPerFrame().intValue());
+		ImageCosmetic iconImage = icon == null ? NO_ICON :
+				new ImageCosmetic(
+						CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
+								icon.getFrames().intValue(), icon.getTicksPerFrame().intValue()),
+						icon.getName(),
+						icon.getId(),
+						Cosmetic.gameProfileOf(icon.getCreator()),
+						icon.getThumbnail());
 		this.nametag = new NametagConfig("", "", iconImage, false);
 
 		// lore
@@ -48,8 +55,12 @@ public final class PlayerCosmetics implements Cosmetics {
 		} else {
 			this.lore = new NametagConfig(
 					lore.getFormatted().replaceAll("&", "§"), "",
-					lore.getIconUrl() == null ? CachedImage.NO_TEXTURE :
+					lore.getIconUrl() == null ? NO_ICON : new ImageCosmetic(
 							CosmeticaModel.getOrCreateImage("lore", lore.getService(), lore.getIconUrl(), 1, 1),
+							lore.getService(),
+							lore.getService(), // use service as id as well
+							null,
+							lore.getIconUrl()),
 					false);
 		}
 
@@ -65,8 +76,8 @@ public final class PlayerCosmetics implements Cosmetics {
 			@Nullable AnimatedTextureCosmetic cloak = outfit.getCloak();
 			@Nullable AnimatedTextureCosmetic elytra = outfit.getElytra();
 
-			if (cloak != null) this.cloak = CosmeticaModel.getOrCreateImage("cape", cloak); else this.cloak = CachedImage.NO_TEXTURE;
-			if (elytra != null) this.elytra = CosmeticaModel.getOrCreateImage("cape", elytra); else this.elytra = CachedImage.NO_TEXTURE;
+			if (cloak != null) this.cloak = Optional.of(ImageCosmetic.fromAPI(cloak, "cape")); else this.cloak = Optional.empty();
+			if (elytra != null) this.elytra = Optional.of(ImageCosmetic.fromAPI(elytra, "cape")); else this.elytra = Optional.empty();
 
 			// equip acessories
 			for (OutfitAccessory accessory : outfit.getAccessories()) {
@@ -76,13 +87,13 @@ public final class PlayerCosmetics implements Cosmetics {
 			// no outfit
 			this.outfitName = null;
 			this.outfitId = null;
-			this.cloak = CachedImage.NO_TEXTURE;
-			this.elytra = CachedImage.NO_TEXTURE;
+			this.cloak = Optional.empty();
+			this.elytra = Optional.empty();
 		}
 	}
 
-	private final CachedImage cloak;
-	private final CachedImage elytra;
+	private final Optional<ImageCosmetic> cloak;
+	private final Optional<ImageCosmetic> elytra;
 	private final List<Accessory> accessories;
 	private final @Nullable String outfitName, outfitId;
 	private final NametagConfig nametag;
@@ -100,12 +111,12 @@ public final class PlayerCosmetics implements Cosmetics {
 	}
 
 	@Override
-	public CachedImage getCloak() {
+	public Optional<ImageCosmetic> getCloak() {
 		return this.cloak;
 	}
 
 	@Override
-	public CachedImage getElytra() {
+	public Optional<ImageCosmetic> getElytra() {
 		return this.elytra;
 	}
 

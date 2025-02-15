@@ -47,13 +47,13 @@ public interface Cosmetics {
 	 * Get the cloak texture. {@link CachedImage#NO_TEXTURE} if no texture.
 	 * @return the cloak texture.
 	 */
-	CachedImage getCloak();
+	Optional<ImageCosmetic> getCloak();
 
 	/**
 	 * Get the elytra texture. {@link CachedImage#NO_TEXTURE} if no texture.
 	 * @return the elytra texture.
 	 */
-	CachedImage getElytra();
+	Optional<ImageCosmetic> getElytra();
 
 	/**
 	 * Get the accessories equipped on this entity.

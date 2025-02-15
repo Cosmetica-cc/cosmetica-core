@@ -26,9 +26,11 @@ import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
+import gg.cloaks.javaclient.model.AfricaSession;
 import gg.cloaks.javaclient.model.CosmeticaUser;
 import net.minecraft.resources.ResourceLocation;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
 import java.io.ByteArrayInputStream;
@@ -72,43 +74,14 @@ public final class CosmeticaSession {
 					Logging.getInstance().info("Connecting to {}", africaSession.getName());
 					Logging.getInstance().info(africaSession.getMessage());
 
-					Websocket websocket1 = new Websocket("Cosmetica Websocket", africaSession.getUrl()) {
-						@Override
-						protected void onConnected() {
-							reconnectTimeout = 0;
-						}
-
-						@Override
-						protected void connectionDropped() {
-							// upon drop only reconnect if still authenticated the same.
-							if (CosmeticaSession.this == getCurrentSession()) {
-								reconnectSocket();
-							}
-						}
-
-						@Override
-						protected void receive(JsonElement data) {
-							Logging.getInstance().debug("Received {}", data);
-							JsonObject obj = data.getAsJsonObject();
-
-							if ("event".equals(obj.get("event").getAsString())) {
-								String eventId = obj.get("data").getAsString();
-
-								// run callbacks
-								synchronized (WEBSOCKET_SUBSCRIPTIONS) {
-									WEBSOCKET_SUBSCRIPTIONS.getOrDefault(eventId, ImmutableMap.of()).forEach((rl, run) -> {
-										run.run();
-									});
-								}
-							}
-						}
-					};
+					Websocket websocket1 = createWebsocket(africaSession);
 
 					try {
 						websocket1.connect();
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
+
 					// connected. set websocket
 					this.websocket = websocket1;
 
@@ -152,6 +125,48 @@ public final class CosmeticaSession {
 
 					return null;
 				});
+	}
+
+	/**
+	 * Create a new websocket for an africa session. Does not start the connection.
+	 * @param africaSession the session to create the websocket for.
+	 * @return the new websocket.
+	 */
+	private @Nonnull Websocket createWebsocket(AfricaSession africaSession) {
+		return new Websocket("Cosmetica Websocket", africaSession.getUrl()) {
+			@Override
+			protected void onConnected() {
+				reconnectTimeout = 0;
+			}
+
+			@Override
+			protected void connectionDropped() {
+				// upon drop only reconnect if still authenticated the same.
+				if (CosmeticaSession.this == getCurrentSession()) {
+					reconnectSocket();
+				}
+			}
+
+			@Override
+			protected void receive(JsonElement data) {
+				if (DEBUG_WEBSOCKET) {
+					Logging.getInstance().debug("Websocket Received {}", data);
+				}
+
+				JsonObject obj = data.getAsJsonObject();
+
+				if ("event".equals(obj.get("event").getAsString())) {
+					String eventId = obj.get("data").getAsString();
+
+					// run callbacks
+					synchronized (WEBSOCKET_SUBSCRIPTIONS) {
+						WEBSOCKET_SUBSCRIPTIONS.getOrDefault(eventId, ImmutableMap.of()).forEach((rl, run) -> {
+							run.run();
+						});
+					}
+				}
+			}
+		};
 	}
 
 	private synchronized void sendEvent(String event, JsonElement data) {
@@ -321,11 +336,15 @@ public final class CosmeticaSession {
 		}, timeout, TimeUnit.SECONDS);
 	}
 
+	private static final boolean DEBUG_WEBSOCKET = Boolean.getBoolean("cosmetica.websocketdebug");
+
 	private static void sendEvent(Websocket websocket, String event, JsonElement data) {
 		JsonObject packet = new JsonObject();
 		packet.add("event", new JsonPrimitive(event));
 		packet.add("data", data);
-		System.out.println(new Gson().toJson(packet));
+		if (DEBUG_WEBSOCKET) {
+			Logging.getInstance().debug("Websocket.Send {}", new Gson().toJson(packet));
+		}
 		websocket.send(packet);
 	}
 
