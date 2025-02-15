@@ -270,7 +270,8 @@ public class BlockModelManager {
 		return image;
 	}
 
-	private static Path getCacheFile(ResourceLocation textureLocation) {
+	// public: Internally exposed for Cosmetica 2
+	public static Path getCacheFile(ResourceLocation textureLocation) {
 		Path basePath = CACHE_DIRECTORY;
 
 		// default namespace
