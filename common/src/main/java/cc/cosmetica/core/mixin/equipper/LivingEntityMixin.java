@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.mixin;
+package cc.cosmetica.core.mixin.equipper;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.CosmeticEquipper;
 import cc.cosmetica.core.impl.IdentityCache;
+import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -70,7 +71,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 			} else {
 				// push a new cosmetics
 				Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
-				System.out.println("Next cosmetics " + next);
+				Logging.getInstance().debug("Next cosmetics " + next);
 
 				synchronized (this.cosmeticacore$cosmetics) {
 					this.cosmeticacore$cosmetics.add(next);
@@ -88,7 +89,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 								this.cosmeticacore$cosmetics.remove();
 						}
 
-						System.out.println("Cosmetics " + this.cosmeticacore$cosmetics);
+						Logging.getInstance().debug("Loaded Cosmetics {}", this.cosmeticacore$cosmetics);
 					}
 
 					if (updated) {

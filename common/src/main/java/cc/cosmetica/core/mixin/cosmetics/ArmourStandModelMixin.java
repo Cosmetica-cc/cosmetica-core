@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.mixin;
+package cc.cosmetica.core.mixin.cosmetics;
 
 import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.Cosmetics;

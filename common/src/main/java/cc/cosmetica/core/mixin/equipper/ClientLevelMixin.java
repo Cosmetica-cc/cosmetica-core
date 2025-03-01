@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.mixin;
+package cc.cosmetica.core.mixin.equipper;
 
 import cc.cosmetica.core.impl.CosmeticEquipper;
 import net.minecraft.client.multiplayer.ClientLevel;

@@ -4,9 +4,9 @@
   "compatibilityLevel": "JAVA_8",
   "minVersion": "0.8",
   "client": [
-    "ArmourStandModelMixin",
-    "ClientLevelMixin",
-    "LivingEntityRendererMixin",
+    "cosmetics.ArmourStandModelMixin",
+    "equipper.ClientLevelMixin",
+    "cosmetics.LivingEntityRendererMixin",
     "PlayerModelAccessor",
     "cape.AbstractClientPlayerMixin",
     "cape.ArmourStandRendererMixin",
@@ -24,7 +24,7 @@
     "texture.NativeImageAccessorMixin"
   ],
   "mixins": [
-    "LivingEntityMixin",
+    "equipper.LivingEntityMixin",
     "MinecraftMixin",
     "network.ArmourStandMixin"
   ],
