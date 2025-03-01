@@ -33,6 +33,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Optional;
 import java.util.Queue;
 
@@ -56,6 +57,19 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 	@Override
 	public Optional<Cosmetics> cosmeticacore$getCosmetics() {
 		return Optional.ofNullable(this.cosmeticacore$cosmetics.peek());
+	}
+
+	@Override
+	public void cosmeticacore$refreshCosmetics(CosmeticManager manager) {
+		if (cosmeticacore$manager.getValue() == manager) {
+			// test if cosmetics are different from the most recently added (other end of the queue)
+			Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
+			if (next != ((Deque<Cosmetics>)this.cosmeticacore$cosmetics).peekLast()) {
+				Logging.getInstance().debug("New cosmetics detected. Refreshing for {}", this.getUUID());
+				// load new cosmetics
+				cosmeticacore$updateCosmetics(manager);
+			}
+		}
 	}
 
 	@Override

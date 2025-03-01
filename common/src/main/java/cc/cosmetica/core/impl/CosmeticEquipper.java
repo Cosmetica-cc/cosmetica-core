@@ -40,6 +40,12 @@ public interface CosmeticEquipper {
 	void cosmeticacore$updateCosmetics(@Nullable CosmeticManager manager);
 
 	/**
+	 * Get the equipper to test if it needs to update its cosmetics, if this manager is managing the entity.
+	 * @param manager the manager to refresh for.
+	 */
+	void cosmeticacore$refreshCosmetics(CosmeticManager manager);
+
+	/**
 	 * Called internally when the entity is removed from the client level.
 	 */
 	void cosmeticacore$onEntityRemoved();

@@ -104,8 +104,8 @@ public final class MasterCosmeticManager {
 
 			// equip or clear
 			equipper.cosmeticacore$updateCosmetics(selectedManager);
-		} else {
-			//TODO replace cosmetics
+		} else if (selectedManager != null) {
+			equipper.cosmeticacore$refreshCosmetics(selectedManager);
 		}
 	}
 
