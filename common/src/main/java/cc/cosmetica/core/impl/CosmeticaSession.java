@@ -18,6 +18,8 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.PlayerCosmetics;
+import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
+import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.util.Response;
 import cc.cosmetica.core.util.Websocket;
 import com.google.common.collect.ImmutableMap;
@@ -28,7 +30,9 @@ import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
 import gg.cloaks.javaclient.model.AfricaSession;
 import gg.cloaks.javaclient.model.CosmeticaUser;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -52,6 +56,12 @@ import java.util.concurrent.TimeUnit;
  * Handles authentication and websocket for Cosmetica.
  */
 public final class CosmeticaSession {
+	/**
+	 * Create a new Cosmetica Session.
+	 * @param client the API controller.
+	 * @param token the user's token. Leave blank if not signed in.
+	 * @param user the user's uuid. Set to null if not signed in.
+	 */
 	private CosmeticaSession(ApiClient client, String token, @Nullable UUID user) {
 		this.api = new DefaultApi(client);
 		this.sessionToken = token;
@@ -294,6 +304,26 @@ public final class CosmeticaSession {
 		}
 
 		authenticationInstance = new CosmeticaSession(newClient, jwt, uuid);
+
+		// Fetch own cosmetics
+		Logging.getInstance().debug("Logged in to {}, fetching own cosmetics.", uuid);
+		CosmeticaAPI.performAsync(DefaultApi::usersControllerGetSelf)
+				.thenApply(PlayerCosmetics::fromUser)
+				.thenAccept(cosmetics -> {
+					Logging.getInstance().debug("Received Login Cosmetics");
+					// set self cosmetics
+					SelfCosmeticManager.set(cosmetics);
+
+					// update player if it's already been created (we are in-game)
+					@Nullable Player player = Minecraft.getInstance().player;
+					if (player instanceof ApiCosmeticsHolder) {
+						((ApiCosmeticsHolder)player).cosmeticacore$setApiCosmetics(cosmetics);
+					}
+				})
+				.exceptionally(t -> {
+					Logging.getInstance().error("Error loading own cosmetics", t);
+					return null;
+				});
 
 		// log in to africa
 		authenticationInstance.logInToAfrica();
