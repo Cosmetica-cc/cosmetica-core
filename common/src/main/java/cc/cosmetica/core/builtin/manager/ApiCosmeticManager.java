@@ -150,7 +150,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 		// check if game profile id matches user's id
 		if (profile.equals(Minecraft.getInstance().getUser().getGameProfile())) {
 			// configure own cosmetics
-			Logging.getInstance().debug("Updating cosmetics for self", profile);
+			Logging.getInstance().debug("Updating cosmetics for self, {}", profile);
 			PlayerCosmetics cosmetics = PlayerCosmetics.fromResponse(response);
 			SelfCosmeticManager.set(cosmetics);
 			return;
