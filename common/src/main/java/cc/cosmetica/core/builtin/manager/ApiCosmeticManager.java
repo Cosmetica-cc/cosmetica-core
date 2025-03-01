@@ -147,6 +147,16 @@ public class ApiCosmeticManager implements CosmeticManager {
 			return;
 		}
 
+		// check if game profile id matches user's id
+		if (profile.equals(Minecraft.getInstance().getUser().getGameProfile())) {
+			// configure own cosmetics
+			Logging.getInstance().debug("Updating cosmetics for self", profile);
+			PlayerCosmetics cosmetics = PlayerCosmetics.fromResponse(response);
+			SelfCosmeticManager.set(cosmetics);
+			return;
+		}
+
+		// Logic for players in world
 		Level level = Minecraft.getInstance().level;
 		if (level == null) {
 			Logging.getInstance().debug("Skipping update for {} (no level)", profile);
@@ -162,6 +172,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 			// create a new ApiCosmetics
 			PlayerCosmetics cosmetics = PlayerCosmetics.fromResponse(response);
 
+			// catch a case where the game profile is not quite the same, but it's still our player
 			if (player == Minecraft.getInstance().player) {
 				// configure own cosmetics
 				SelfCosmeticManager.set(cosmetics);
