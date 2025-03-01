@@ -313,12 +313,7 @@ public final class CosmeticaSession {
 					Logging.getInstance().debug("Received Login Cosmetics");
 					// set self cosmetics
 					SelfCosmeticManager.set(cosmetics);
-
-					// update player if it's already been created (we are in-game)
-					@Nullable Player player = Minecraft.getInstance().player;
-					if (player instanceof ApiCosmeticsHolder) {
-						((ApiCosmeticsHolder)player).cosmeticacore$setApiCosmetics(cosmetics);
-					}
+					// Don't set ApiCosmeticsHolder cosmetics. That is only for other players.
 				})
 				.exceptionally(t -> {
 					Logging.getInstance().error("Error loading own cosmetics", t);

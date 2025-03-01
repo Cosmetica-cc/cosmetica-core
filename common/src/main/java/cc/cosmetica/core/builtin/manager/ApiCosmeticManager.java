@@ -30,6 +30,7 @@ import gg.cloaks.javaclient.model.PlayerResponse;
 import gg.cloaks.javaclient.model.TexturePacketDto;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -54,6 +55,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 	@Override
 	public void onRevoke(LivingEntity entity) {
+		CosmeticaAPI.unsubscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, entity.getUUID(), API_MANAGER);
 		// TODO clear built models to store minimal data when not owning a player (in case switch to another manager)
 	}
 
@@ -167,7 +169,11 @@ public class ApiCosmeticManager implements CosmeticManager {
 				// store on the player
 				ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);
 				holder.cosmeticacore$setApiCosmetics(cosmetics);
+
+				CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, player.getUUID(), API_MANAGER, () -> lookUpGameProfile(profile));
 			}
 		}
 	}
+
+	private static ResourceLocation API_MANAGER = new ResourceLocation("cosmetica", "api");
 }

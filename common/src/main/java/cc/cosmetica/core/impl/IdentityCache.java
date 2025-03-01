@@ -29,7 +29,7 @@ public class IdentityCache<T> {
 	 * @param newValue the new value to set.
 	 * @return whether the cache was updated (it did not contain the given value).
 	 */
-	public boolean checkAndSet(T newValue) {
+	public boolean replace(T newValue) {
 		if (newValue == value) {
 			return false; // Value is the same, no update needed
 		} else {

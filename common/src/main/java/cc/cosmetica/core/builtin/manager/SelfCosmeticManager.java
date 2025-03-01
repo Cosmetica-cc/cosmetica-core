@@ -17,17 +17,27 @@
 package cc.cosmetica.core.builtin.manager;
 
 import cc.cosmetica.core.api.CosmeticManager;
+import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
+import cc.cosmetica.core.impl.UUIDs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Cosmetics received from the API for yourself. Will use cached cosmetics if none can be obtained from the API.
  */
 public class SelfCosmeticManager implements CosmeticManager {
+	public SelfCosmeticManager() {
+		CosmeticaAPI.subscribe(
+				CosmeticaAPI.SubscriptionEvent.PLAYER,
+				UUIDs.fromString(Minecraft.getInstance().getUser().getUuid()),
+				SELF_MANAGER, () -> ApiCosmeticManager.lookUpGameProfile(Minecraft.getInstance().getUser().getGameProfile()));
+	}
+
 	private static PlayerCosmetics cosmetics;
 
 	@Override
@@ -45,4 +55,6 @@ public class SelfCosmeticManager implements CosmeticManager {
 		MasterCosmeticManager.post(null, newCosmetics);
 	}
 	// todo detect account switching to change cosmetics
+
+	private static final ResourceLocation SELF_MANAGER = new ResourceLocation("cosmetica", "self");
 }

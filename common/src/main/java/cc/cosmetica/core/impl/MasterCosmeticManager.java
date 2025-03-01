@@ -18,19 +18,15 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
-import gg.cloaks.javaclient.model.Cosmetic;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
@@ -94,10 +90,10 @@ public final class MasterCosmeticManager {
 		// we need to get the old cosmetic manager BEFORE we set
 		CosmeticManager old = currentManager.getValue();
 
-		// if the manager was updated, perform the update procedure
-		if (currentManager.checkAndSet(selectedManager)) {
-			CosmeticEquipper equipper = (CosmeticEquipper) entity;
+		CosmeticEquipper equipper = (CosmeticEquipper) entity;
 
+		// if the manager was updated, perform the update procedure
+		if (currentManager.replace(selectedManager)) {
 			// assign -> revoke, so we don't unsubscribe from event updates on the webhook if they use the same one
 			if (selectedManager != null) {
 				selectedManager.onAssign(entity);
@@ -108,6 +104,8 @@ public final class MasterCosmeticManager {
 
 			// equip or clear
 			equipper.cosmeticacore$updateCosmetics(selectedManager);
+		} else {
+			//TODO replace cosmetics
 		}
 	}
 
