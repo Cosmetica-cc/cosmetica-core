@@ -17,8 +17,6 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.CosmeticaAPI;
-import cc.cosmetica.core.api.PlayerCosmetics;
-import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.util.Response;
 import cc.cosmetica.core.util.Websocket;
@@ -30,9 +28,8 @@ import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.DefaultApi;
 import gg.cloaks.javaclient.model.AfricaSession;
 import gg.cloaks.javaclient.model.CosmeticaUser;
-import net.minecraft.client.Minecraft;
+import gg.cloaks.javaclient.model.PlayerResponse;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -307,12 +304,12 @@ public final class CosmeticaSession {
 
 		// Fetch own cosmetics
 		Logging.getInstance().debug("Logged in to {}, fetching own cosmetics.", uuid);
+		// TODO make texture packet request and submit that instead.
 		CosmeticaAPI.performAsync(DefaultApi::usersControllerGetSelf)
-				.thenApply(PlayerCosmetics::fromUser)
-				.thenAccept(cosmetics -> {
+				.thenAccept(user -> {
 					Logging.getInstance().debug("Received Login Cosmetics");
 					// set self cosmetics
-					SelfCosmeticManager.set(cosmetics);
+					SelfCosmeticManager.update(new PlayerResponse().user(user));
 					// Don't set ApiCosmeticsHolder cosmetics. That is only for other players.
 				})
 				.exceptionally(t -> {
@@ -459,7 +456,9 @@ public final class CosmeticaSession {
 						new Gson().toJson(jo.get("user")),
 						CosmeticaUser.class
 				);
-				PlayerCosmetics.setOwnCosmetics(PlayerCosmetics.fromUser(user));
+				SelfCosmeticManager.update(
+						new PlayerResponse().user(user)
+				);
 				return true;
 			} else {
 				logBadResponse("Cosmetica authentication failed", response);

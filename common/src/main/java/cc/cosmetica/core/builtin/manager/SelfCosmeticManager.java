@@ -22,6 +22,7 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.UUIDs;
+import gg.cloaks.javaclient.model.PlayerResponse;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -50,9 +51,14 @@ public class SelfCosmeticManager implements CosmeticManager {
 		return cosmetics;
 	}
 
-	public static void set(PlayerCosmetics newCosmetics) {
-		cosmetics = newCosmetics;
-		MasterCosmeticManager.post(null, newCosmetics);
+	/**
+	 * Set the cosmetics to be used by the local player.
+	 * @param user the user data containing cosmetics to be used by the local player.
+	 * @implNote via the built-in manager SelfCosmeticManager.
+	 */
+	public static void update(PlayerResponse user) {
+		cosmetics = PlayerCosmetics.fromResponse(user);
+		MasterCosmeticManager.post(user, cosmetics);
 	}
 	// todo detect account switching to change cosmetics
 

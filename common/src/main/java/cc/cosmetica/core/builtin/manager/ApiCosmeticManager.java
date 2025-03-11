@@ -151,8 +151,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 		if (profile.equals(Minecraft.getInstance().getUser().getGameProfile())) {
 			// configure own cosmetics
 			Logging.getInstance().debug("Updating cosmetics for self, {}", profile);
-			PlayerCosmetics cosmetics = PlayerCosmetics.fromResponse(response);
-			SelfCosmeticManager.set(cosmetics);
+			SelfCosmeticManager.update(response);
 			return;
 		}
 
@@ -169,14 +168,14 @@ public class ApiCosmeticManager implements CosmeticManager {
 		if (player == null) {
 			Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.getName(), profile.getId());
 		} else {
-			// create a new ApiCosmetics
-			PlayerCosmetics cosmetics = PlayerCosmetics.fromResponse(response);
-
 			// catch a case where the game profile is not quite the same, but it's still our player
 			if (player == Minecraft.getInstance().player) {
 				// configure own cosmetics
-				SelfCosmeticManager.set(cosmetics);
+				SelfCosmeticManager.update(response);
 			} else {
+				// create a new ApiCosmetics
+				PlayerCosmetics cosmetics = PlayerCosmetics.fromResponse(response);
+
 				// store on the player
 				ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);
 				holder.cosmeticacore$setApiCosmetics(cosmetics);

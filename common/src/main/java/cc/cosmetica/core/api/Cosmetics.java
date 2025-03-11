@@ -19,7 +19,9 @@ package cc.cosmetica.core.api;
 import cc.cosmetica.core.impl.CosmeticEquipper;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.NametagRenderer;
+import gg.cloaks.javaclient.model.PlayerResponse;
 import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -106,14 +108,20 @@ public interface Cosmetics {
 	}
 
 	/**
-	 * Register the cosmetics change callback.
+	 * Register the cosmetics change callback. This will only run in the world!
 	 * @param onChange a consumer that takes the entity, and new cosmetics whenever the cosmetics on an entity changes.
-	 *                 <ul><li>The LivingEntity parameter may be null to indicate the client's player.</li>
+	 *                 <ul><li>The LivingEntity parameter will never be null.</li>
 	 *                 <li>The cosmetics parameter may be null.</li></ul>
-	 * @apiNote this can fire twice in game for client cosmetic changes: once for the player entity, once for null to indicate local.
 	 */
-	static void registerCosmeticsChangeCallback(BiConsumer<LivingEntity, Cosmetics> onChange) {
+	static void registerCosmeticsChangeCallback(BiConsumer<LivingEntity, @Nullable Cosmetics> onChange) {
 		MasterCosmeticManager.addCallback(onChange);
+	}
+
+	/**
+	 * Register a callback for fetching new data for self.
+	 */
+	static void registerUserDataFetchCallback(BiConsumer<PlayerResponse, Cosmetics> onFetch) {
+		MasterCosmeticManager.addSelfCallback(onFetch);
 	}
 
 	/**

@@ -18,6 +18,8 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.PlayerCosmetics;
+import gg.cloaks.javaclient.model.PlayerResponse;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,7 @@ public final class MasterCosmeticManager {
 	private static final TreeSet<PrioritisedManager> COSMETIC_MANAGERS = new TreeSet<>();
 	// callbacks
 	private static final Collection<BiConsumer<LivingEntity, Cosmetics>> CALLBACKS = new ArrayList<>();
+	private static final Collection<BiConsumer<PlayerResponse, Cosmetics>> SELF_CALLBACKS = new ArrayList<>();
 
 	public static void registerCosmeticManager(int priority, CosmeticManager manager) {
 		if (!COSMETIC_MANAGERS.add(new PrioritisedManager(priority, manager))) {
@@ -62,6 +65,9 @@ public final class MasterCosmeticManager {
 
 	public static void addCallback(BiConsumer<LivingEntity, Cosmetics> callback) {
 		CALLBACKS.add(callback);
+	}
+	public static void addSelfCallback(BiConsumer<PlayerResponse, Cosmetics> callback) {
+		SELF_CALLBACKS.add(callback);
 	}
 
 	/**
@@ -109,10 +115,21 @@ public final class MasterCosmeticManager {
 		}
 	}
 
-	// update all listeners to a cosmetics change. called by mixin/LivingEntityMixin.
-	public static void post(@Nullable LivingEntity entity, @Nullable Cosmetics newCosmetics) {
+	/**
+	 * Update all listeners to an entity's cosmetics change. called by mixin/LivingEntityMixin.
+	 */
+	public static void post(LivingEntity entity, @Nullable Cosmetics newCosmetics) {
 		for (BiConsumer<LivingEntity, Cosmetics> consumer : CALLBACKS) {
 			consumer.accept(entity, newCosmetics);
+		}
+	}
+
+	/**
+	 * Update all listeners to new data received for the self. The cosmetics may not be loaded yet.
+	 */
+	public static void post(PlayerResponse user, @Nullable Cosmetics newCosmetics) {
+		for (BiConsumer<PlayerResponse, Cosmetics> consumer : SELF_CALLBACKS) {
+			consumer.accept(user, newCosmetics);
 		}
 	}
 
