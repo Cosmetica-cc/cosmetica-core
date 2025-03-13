@@ -309,7 +309,7 @@ public final class CosmeticaSession {
 				.thenAccept(user -> {
 					Logging.getInstance().debug("Received Login Cosmetics");
 					// set self cosmetics
-					SelfCosmeticManager.update(new PlayerResponse().user(user));
+					SelfCosmeticManager.update(new PlayerResponse().isUser(true).user(user));
 					// Don't set ApiCosmeticsHolder cosmetics. That is only for other players.
 				})
 				.exceptionally(t -> {
@@ -457,7 +457,7 @@ public final class CosmeticaSession {
 						CosmeticaUser.class
 				);
 				SelfCosmeticManager.update(
-						new PlayerResponse().user(user)
+						new PlayerResponse().isUser(true).user(user)
 				);
 				return true;
 			} else {
