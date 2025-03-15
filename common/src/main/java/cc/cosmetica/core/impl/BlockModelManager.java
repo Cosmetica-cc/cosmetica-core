@@ -252,6 +252,9 @@ public class BlockModelManager {
 					})
 					.build();
 
+			// store in cache (do now!)
+			IMAGE_CACHE.cacheWeakly(id, image);
+
 			// upload texture
 			// don't use isOnRenderThreadOrInit because we spawn other threads on init.
 			if (RenderSystem.isOnRenderThread()) {
@@ -264,9 +267,6 @@ public class BlockModelManager {
 					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 				});
 			}
-
-			// store in cache
-			IMAGE_CACHE.cacheWeakly(id, image);
 		}
 
 		return image;
