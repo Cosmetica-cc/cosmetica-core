@@ -343,7 +343,7 @@ public class BlockModelManager {
 		synchronized void cacheWeakly(String id, T t) {
 			if (id == null)
 				throw new IllegalStateException("Cannot store ID null");
-
+			// TODO handle duplicate entries
 			cache.put(id, new WeakReference<>(t));
 			cachedIds.add(id);
 		}
