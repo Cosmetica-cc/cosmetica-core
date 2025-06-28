@@ -340,12 +340,17 @@ public class BlockModelManager {
 			return ref == null ? null : ref.get();
 		}
 
-		synchronized void cacheWeakly(String id, T t) {
+		synchronized boolean cacheWeakly(String id, T t) {
 			if (id == null)
 				throw new IllegalStateException("Cannot store ID null");
-			// TODO handle duplicate entries
+			if (t == null)
+				throw new IllegalStateException("Cannot store a value of null");
+			if (cache.containsKey(id))
+				throw new IllegalStateException("Tried to cache for id " + id + ", but it's already in the cache as " + cache.get(id));
+
 			cache.put(id, new WeakReference<>(t));
 			cachedIds.add(id);
+			return true;
 		}
 
 		/**
