@@ -341,6 +341,9 @@ public class BlockModelManager {
 		}
 
 		synchronized void cacheWeakly(String id, T t) {
+			if (id == null)
+				throw new IllegalStateException("Cannot store ID null");
+
 			cache.put(id, new WeakReference<>(t));
 			cachedIds.add(id);
 		}
@@ -353,6 +356,9 @@ public class BlockModelManager {
 			if (cachedIds.isEmpty()) return;
 
 			String id = cachedIds.get(gcIndex);
+
+			if (id == null)
+				throw new IllegalStateException("Fetched cached ID but it was null");
 
 			// if object is no longer held in memory
 			if (cache.get(id).get() == null) {
