@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.impl;
 
-import cc.cosmetica.core.render.texture.OldCosmeticaHttpTexture;
+import cc.cosmetica.core.render.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -64,8 +64,8 @@ public final class CosmeticaModelBakery {
 		Logging.getInstance().debug("Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
-		if (modelTexture instanceof OldCosmeticaHttpTexture) {
-			OldCosmeticaHttpTexture texture = (OldCosmeticaHttpTexture) modelTexture;
+		if (modelTexture instanceof CosmeticaTexture) {
+			CosmeticaTexture texture = (CosmeticaTexture) modelTexture;
 			ModelSprite sprite = new ModelSprite(location, texture.getCurrentImage(),
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});
@@ -77,7 +77,7 @@ public final class CosmeticaModelBakery {
 					location /*this resource location in bake is just used for debugging in the case of errors*/);
 		}
 
-		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be an AnimatedTexture.");
+		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
 	}
 
 	// render

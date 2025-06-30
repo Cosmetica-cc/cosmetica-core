@@ -20,7 +20,7 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.CosmeticaModel;
-import cc.cosmetica.core.render.texture.OldCosmeticaHttpTexture;
+import cc.cosmetica.core.render.texture.CosmeticaTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -154,7 +154,7 @@ public class BlockModelManager {
 			model = new CosmeticaModel(textureLocation);
 
 			// create texture
-			AbstractTexture texture = new OldCosmeticaHttpTexture.Builder(textureUrl, LOADING_TEXTURE)
+			AbstractTexture texture = new CosmeticaTexture.Builder(textureUrl, LOADING_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
 					.onLoad(image -> {
@@ -236,7 +236,7 @@ public class BlockModelManager {
 			image = new CachedImage(textureLocation);
 
 			// create texture
-			AbstractTexture texture = new OldCosmeticaHttpTexture.Builder(imageURL, LOADING_TEXTURE)
+			AbstractTexture texture = new CosmeticaTexture.Builder(imageURL, LOADING_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
 					.onLoad(nativeImage -> {
