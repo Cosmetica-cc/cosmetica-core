@@ -33,7 +33,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 /**
- * Provides access to the authenticated instance of the Cosmetica API.
+ * Provides access to the authenticated instance of the Cosmetica web API.
  */
 public final class CosmeticaAPI {
 	private CosmeticaAPI() {

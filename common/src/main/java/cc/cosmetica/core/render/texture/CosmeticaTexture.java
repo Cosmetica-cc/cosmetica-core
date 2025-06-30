@@ -16,12 +16,14 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -78,9 +80,56 @@ public class CosmeticaTexture extends AbstractTexture {
                     httpURLConnection.setDoOutput(false);
                     httpURLConnection.connect();
                     if (httpURLConnection.getResponseCode() / 100 == 2) {
+                        InputStream rawInputStream = httpURLConnection.getInputStream();
+
+                        // get url file extension
+                        String extension;
+                        {
+                            String[] parts = this.url.split("/");
+                            parts = parts[parts.length - 1].split("\\.");
+                            if (parts.length == 0)
+                                extension = null;
+                            else
+                                extension = parts[parts.length - 1];
+                        }
+
                         InputStream inputStream;
+
+                        // determine if not png
+                        if (extension != null && !"png".equals(extension)) {
+                            Logging.getInstance().debug("(Cosmetica Texture) Image is not a PNG (ext {}). Applying transformation", extension);
+                            // Transform other formats to png (especially webp, used by Cosmetica for thumbnails)
+                            // https://github.com/haraldk/TwelveMonkeys?tab=readme-ov-file#advanced-usage
+                            BufferedImage image;
+
+                            try (ImageInputStream input = ImageIO.createImageInputStream(rawInputStream)) {
+                                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+                                if (!readers.hasNext()) {
+                                    throw new IllegalArgumentException("No reader for input");
+                                }
+
+                                ImageReader reader = readers.next();
+
+                                try {
+                                    reader.setInput(input);
+                                    image = reader.read(0);
+                                } finally {
+                                    // avoid memory leaks
+                                    reader.dispose();
+                                }
+                            }
+
+                            // write image PNG to byte array and read to get png
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
+                            ImageIO.write(image, "png", os);
+                            inputStream = new ByteArrayInputStream(os.toByteArray());
+                        } else {
+                            // already png
+                            inputStream = rawInputStream;
+                        }
+
                         if (this.cacheFile == null) {
-                            inputStream = httpURLConnection.getInputStream();
                             Minecraft.getInstance().execute(() -> {
                                 try {
                                     NativeImage directRead = NativeImage.read(inputStream);
@@ -90,7 +139,7 @@ public class CosmeticaTexture extends AbstractTexture {
                                 }
                             });
                         } else {
-                            FileUtils.copyInputStreamToFile(httpURLConnection.getInputStream(), this.cacheFile);
+                            FileUtils.copyInputStreamToFile(inputStream, this.cacheFile);
                             this.loadFromDisk(resourceManager);
                         }
                     }
@@ -298,8 +347,8 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         /**
-         * Constructs and returns an {@link OldCosmeticaHttpTexture} instance with the configured parameters.
-         * @return An {@link OldCosmeticaHttpTexture} instance.
+         * Constructs and returns an {@link CosmeticaTexture} instance with the configured parameters.
+         * @return An {@link CosmeticaTexture} instance.
          */
         public CosmeticaTexture build() {
             // Create and return AnimatedHttpTexture instance
