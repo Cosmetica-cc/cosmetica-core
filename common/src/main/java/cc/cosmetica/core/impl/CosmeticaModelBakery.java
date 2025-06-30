@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.impl;
 
-import cc.cosmetica.core.render.texture.CosmeticaHttpTexture;
+import cc.cosmetica.core.render.texture.OldCosmeticaHttpTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -57,15 +57,15 @@ public final class CosmeticaModelBakery {
 	/**
 	 * Bake the given block model with the texture at the given location.
 	 * @param location the location to get the texture for. Also used in debug messages.
-	 *                 Must refer to an {@link cc.cosmetica.core.render.texture.CosmeticaHttpTexture}.
+	 *                 Must refer to an {@link OldCosmeticaHttpTexture}.
 	 * @param model the model to bake.
 	 */
 	public static BakedModel bakeModel(ResourceLocation location, BlockModel model) {
 		Logging.getInstance().debug("Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
-		if (modelTexture instanceof CosmeticaHttpTexture) {
-			CosmeticaHttpTexture texture = (CosmeticaHttpTexture) modelTexture;
+		if (modelTexture instanceof OldCosmeticaHttpTexture) {
+			OldCosmeticaHttpTexture texture = (OldCosmeticaHttpTexture) modelTexture;
 			ModelSprite sprite = new ModelSprite(location, texture.getCurrentImage(),
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});

@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.mixin.texture;
 
-import cc.cosmetica.core.render.texture.CosmeticaHttpTexture;
+import cc.cosmetica.core.render.texture.OldCosmeticaHttpTexture;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.HttpTexture;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,8 +31,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class HttpTextureMixin {
 	@Inject(at = @At("HEAD"), method = "upload", cancellable = true)
 	private void onUpload(NativeImage nativeImage, CallbackInfo ci) {
-		if ((Object) this instanceof CosmeticaHttpTexture) {
-			((CosmeticaHttpTexture) (Object) this).onDownload(nativeImage);
+		if ((Object) this instanceof OldCosmeticaHttpTexture) {
+			((OldCosmeticaHttpTexture) (Object) this).onDownload(nativeImage);
 			ci.cancel();
 		}
 	}

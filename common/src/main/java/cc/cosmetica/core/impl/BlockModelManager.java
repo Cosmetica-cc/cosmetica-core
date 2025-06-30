@@ -20,7 +20,7 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.CosmeticaModel;
-import cc.cosmetica.core.render.texture.CosmeticaHttpTexture;
+import cc.cosmetica.core.render.texture.OldCosmeticaHttpTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -154,7 +154,7 @@ public class BlockModelManager {
 			model = new CosmeticaModel(textureLocation);
 
 			// create texture
-			AbstractTexture texture = new CosmeticaHttpTexture.Builder(textureUrl, LOADING_TEXTURE)
+			AbstractTexture texture = new OldCosmeticaHttpTexture.Builder(textureUrl, LOADING_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
 					.onLoad(image -> {
@@ -236,7 +236,7 @@ public class BlockModelManager {
 			image = new CachedImage(textureLocation);
 
 			// create texture
-			AbstractTexture texture = new CosmeticaHttpTexture.Builder(imageURL, LOADING_TEXTURE)
+			AbstractTexture texture = new OldCosmeticaHttpTexture.Builder(imageURL, LOADING_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
 					.onLoad(nativeImage -> {
@@ -340,17 +340,17 @@ public class BlockModelManager {
 			return ref == null ? null : ref.get();
 		}
 
-		synchronized boolean cacheWeakly(String id, T t) {
+		synchronized void cacheWeakly(String id, T t) {
 			if (id == null)
 				throw new IllegalStateException("Cannot store ID null");
 			if (t == null)
 				throw new IllegalStateException("Cannot store a value of null");
-			if (cache.containsKey(id))
-				throw new IllegalStateException("Tried to cache for id " + id + ", but it's already in the cache as " + cache.get(id));
+
+			// in case overriding
+			if (!cache.containsKey(id))
+				cachedIds.add(id);
 
 			cache.put(id, new WeakReference<>(t));
-			cachedIds.add(id);
-			return true;
 		}
 
 		/**

@@ -31,9 +31,9 @@ import java.util.function.Consumer;
  * An animated texture that is used by Cosmetica. Adapted from CosmeticIconTexture in Cosmetica 1.
  * Requires the mixins texture/NativeImageAccessorMixin and texture/HttpTextureMixin
  */
-public class CosmeticaHttpTexture extends HttpTexture {
-	private CosmeticaHttpTexture(File file, String url, ResourceLocation loadingTexture,
-								 int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload)
+public class OldCosmeticaHttpTexture extends HttpTexture {
+	private OldCosmeticaHttpTexture(File file, String url, ResourceLocation loadingTexture,
+									int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload)
 			throws IllegalArgumentException {
 		super(file, url, loadingTexture, false, null);
 
@@ -127,7 +127,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 	 * Exists so we can use all the utilities that CosmeticaHttpTexture adds to HttpTexture for static textures, without
 	 * adding the unnecessary overhead of ticking every static texture (which will be most textures).
 	 */
-	private static class Animated extends CosmeticaHttpTexture implements Tickable {
+	private static class Animated extends OldCosmeticaHttpTexture implements Tickable {
 		private Animated(File file, String url, ResourceLocation loadingTexture, int frames, int ticksPerFrame, Consumer<NativeImage>  onLoad) throws IllegalArgumentException {
 			super(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
 		}
@@ -139,7 +139,7 @@ public class CosmeticaHttpTexture extends HttpTexture {
 	}
 
 	/**
-	 * Builder class for creating an {@link CosmeticaHttpTexture} instance.
+	 * Builder class for creating an {@link OldCosmeticaHttpTexture} instance.
 	 */
 	public static class Builder {
 		// Required
@@ -204,15 +204,15 @@ public class CosmeticaHttpTexture extends HttpTexture {
 		}
 
 		/**
-		 * Constructs and returns an {@link CosmeticaHttpTexture} instance with the configured parameters.
-		 * @return An {@link CosmeticaHttpTexture} instance.
+		 * Constructs and returns an {@link OldCosmeticaHttpTexture} instance with the configured parameters.
+		 * @return An {@link OldCosmeticaHttpTexture} instance.
 		 */
-		public CosmeticaHttpTexture build() {
+		public OldCosmeticaHttpTexture build() {
 			// Create and return AnimatedHttpTexture instance
 			if (this.frames > 1) {
 				return new Animated(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
 			} else {
-				return new CosmeticaHttpTexture(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
+				return new OldCosmeticaHttpTexture(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
 			}
 		}
 	}
