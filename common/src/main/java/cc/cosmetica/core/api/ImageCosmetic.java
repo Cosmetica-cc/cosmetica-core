@@ -18,6 +18,7 @@ package cc.cosmetica.core.api;
 
 import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
+import gg.cloaks.javaclient.model.Icon;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -83,5 +84,20 @@ public final class ImageCosmetic implements Cosmetic {
                 cosmetic.getId(),
                 Cosmetic.gameProfileOf(cosmetic.getCreator()),
                 cosmetic.getThumbnail());
+    }
+
+    /**
+     * Create an ImageCosmetic from an API Icon.
+     * @param icon the icon.
+     * @return a new {@link ImageCosmetic}.
+     */
+    public static ImageCosmetic fromIcon(Icon icon) {
+        return new ImageCosmetic(
+                CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
+                        icon.getFrames().intValue(), icon.getTicksPerFrame().intValue()),
+                icon.getName(),
+                icon.getId(),
+                Cosmetic.gameProfileOf(icon.getCreator()),
+                icon.getThumbnail());
     }
 }

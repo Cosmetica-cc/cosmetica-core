@@ -39,14 +39,7 @@ public final class PlayerCosmetics implements Cosmetics {
 	 */
 	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon) {
 		// nametag
-		ImageCosmetic iconImage = icon == null ? NO_ICON :
-				new ImageCosmetic(
-						CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
-								icon.getFrames().intValue(), icon.getTicksPerFrame().intValue()),
-						icon.getName(),
-						icon.getId(),
-						Cosmetic.gameProfileOf(icon.getCreator()),
-						icon.getThumbnail());
+		ImageCosmetic iconImage = icon == null ? NO_ICON : ImageCosmetic.fromIcon(icon);
 		this.nametag = new NametagConfig("", "", iconImage, false);
 
 		// lore
