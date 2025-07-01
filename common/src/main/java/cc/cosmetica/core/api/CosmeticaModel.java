@@ -156,6 +156,7 @@ public final class CosmeticaModel {
 	 * @param textureURL the url for the texture to download, if the model has not been created yet.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Set to a negative number to have multiple frames, but not auto-animate.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
 	 * @implNote a weak reference to the BakedModel is stored in cache.
 	 * @return a {@link CosmeticaModel} with the model and texture location for this model.
@@ -187,6 +188,7 @@ public final class CosmeticaModel {
 	 *           {@link ResourceLocation} pathnames.
 	 * @param imageURL the URL to download the image from if it's not already in memory.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Set to a negative number to have multiple frames, but not auto-animate.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @implNote a weak reference to the CachedImage is stored in cache.

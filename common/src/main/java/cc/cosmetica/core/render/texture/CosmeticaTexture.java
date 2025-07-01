@@ -39,8 +39,9 @@ public class CosmeticaTexture extends AbstractTexture {
         this.cacheFile = file;
         this.url = url;
         this.realFrames = frames;
+        this.realTicksPerFrame = ticksPerFrame;
         this.currentFrames = 0;
-        this.ticksPerFrame = ticksPerFrame;
+        this.currentTicksPerFrame = 2;
         this.onFirstUpload = onFirstUpload;
         this.loadingTexture = loadingTexture;
     }
@@ -49,13 +50,13 @@ public class CosmeticaTexture extends AbstractTexture {
     private final String url;
     private final ResourceLocation loadingTexture;
     private final int realFrames;
-    private final int ticksPerFrame;
+    private final int realTicksPerFrame;
     private final Consumer<NativeImage> onFirstUpload;
     @Nullable private CompletableFuture<?> future;
 
     private int frameHeight;
     private int frame;
-    private int currentFrames;
+    private int currentFrames, currentTicksPerFrame;
     private int tick;
     private NativeImage image;
 
@@ -187,6 +188,7 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     private void firstUpload(NativeImage image, boolean trueImage, int nextFrames) {
+        this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
         this.currentFrames = nextFrames;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
@@ -204,7 +206,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
     void doTick() {
         if (this.currentFrames > 1 && this.image != null && ((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
-            this.tick = (this.tick + 1) % ticksPerFrame;
+            this.tick = (this.tick + 1) % this.currentTicksPerFrame;
 
             if (this.tick == 0) {
                 this.frame = (this.frame + 1) % this.currentFrames;
@@ -304,7 +306,8 @@ public class CosmeticaTexture extends AbstractTexture {
         private File file;
         private int frames = 1;
         private int ticksPerFrame = 1;
-        private Consumer<NativeImage>  onLoad;
+        private Consumer<NativeImage> onLoad;
+        private boolean autoAnimate = true;
 
         /**
          * Constructs a new Builder instance.
@@ -336,6 +339,15 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         /**
+         * Set whether this texture should automatically animate with multiple frames. On by default.
+         * @return This Builder instance.
+         */
+        public Builder autoAnimate(boolean auto) {
+            this.autoAnimate = auto;
+            return this;
+        }
+
+        /**
          * Sets the file to cache the texture in.
          *
          * @param file The file to cache the texture in.
@@ -363,7 +375,7 @@ public class CosmeticaTexture extends AbstractTexture {
          */
         public CosmeticaTexture build() {
             // Create and return AnimatedHttpTexture instance
-            if (this.frames > 1) {
+            if (this.frames > 1 && this.autoAnimate) {
                 return new Animated(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
             } else {
                 return new CosmeticaTexture(file, url, loadingTexture, frames, ticksPerFrame, onLoad);

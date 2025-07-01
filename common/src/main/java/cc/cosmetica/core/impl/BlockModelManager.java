@@ -219,6 +219,7 @@ public class BlockModelManager {
 	 * @param id the id of the image.
 	 * @param imageURL the URL to download the image from if it's not already in memory.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Set to a negative number to have multiple frames, but not auto-animate.
 	 *               Image frames are to be stored as a tilesheet, top to bottom.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @implNote a weak reference to the CachedImage is stored in cache.
@@ -234,11 +235,12 @@ public class BlockModelManager {
 			File cacheFile = getCacheFile(textureLocation).toFile();
 
 			image = new CachedImage(textureLocation);
+			int frameCount = frames < 0 ? -frames : frames;
 
 			// create texture
-			// TODO some kind of method to have control over frames
 			AbstractTexture texture = new CosmeticaTexture.Builder(imageURL, LOADING_TEXTURE)
-					.frames(frames, ticksPerFrame)
+					.frames(frameCount, ticksPerFrame)
+					.autoAnimate(frames > 1)
 					.cached(cacheFile)
 					.onLoad(nativeImage -> {
 						// don't store a reference to the CachedImage or it will prevent GC
