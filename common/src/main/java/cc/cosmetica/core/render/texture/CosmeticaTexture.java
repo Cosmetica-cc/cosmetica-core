@@ -214,6 +214,15 @@ public class CosmeticaTexture extends AbstractTexture {
         }
     }
 
+    public void loadFrame(int frame) {
+        if (frame < 0 || frame >= this.currentFrames)
+            throw new IllegalArgumentException("Frame out of bounds for " + this.currentFrames + ": " + frame);
+        if (!RenderSystem.isOnRenderThreadOrInit())
+            throw new IllegalStateException("Not on render thread or init!");
+        this.frame = frame;
+        this.upload(this.image, false);
+    }
+
     @Override
     public void close() {
         //Debug.info("Closing image on thread {} due to dispose. Are we allowed? {}", Thread.currentThread(), RenderSystem.isOnRenderThreadOrInit());

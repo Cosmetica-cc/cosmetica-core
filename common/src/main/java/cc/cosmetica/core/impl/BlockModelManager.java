@@ -236,6 +236,7 @@ public class BlockModelManager {
 			image = new CachedImage(textureLocation);
 
 			// create texture
+			// TODO some kind of method to have control over frames
 			AbstractTexture texture = new CosmeticaTexture.Builder(imageURL, LOADING_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
