@@ -39,7 +39,7 @@ public class CosmeticaTexture extends AbstractTexture {
         this.cacheFile = file;
         this.url = url;
         this.realFrames = frames;
-        this.currentFrames = frames;
+        this.currentFrames = 0;
         this.ticksPerFrame = ticksPerFrame;
         this.onFirstUpload = onFirstUpload;
         this.loadingTexture = loadingTexture;
@@ -133,7 +133,7 @@ public class CosmeticaTexture extends AbstractTexture {
                             Minecraft.getInstance().execute(() -> {
                                 try {
                                     NativeImage directRead = NativeImage.read(inputStream);
-                                    this.firstUpload(this.image = directRead, true);
+                                    this.firstUpload(this.image = directRead, true, realFrames);
                                 } catch (IOException e) {
                                     Logging.getInstance().error("Couldn't download cosmetica texture", e);
                                 }
@@ -157,11 +157,12 @@ public class CosmeticaTexture extends AbstractTexture {
     private boolean loadFromDisk(ResourceManager resourceManager) throws IOException {
         boolean usedCache;
         NativeImage nativeImage;
+        int nextFrames;
 
         if (this.cacheFile != null && this.cacheFile.isFile()) {
             Logging.getInstance().debug("Loading cosmetica texture from local cache ({})", this.cacheFile);
 
-            this.currentFrames = realFrames;
+            nextFrames = realFrames;
             FileInputStream fileInputStream = new FileInputStream(this.cacheFile);
             nativeImage = NativeImage.read(fileInputStream);
             usedCache = true;
@@ -169,7 +170,7 @@ public class CosmeticaTexture extends AbstractTexture {
             // we use SimpleTexture-based code to upload the loading texture
             TextureImage defaultImage = load(resourceManager, this.loadingTexture);
             nativeImage = defaultImage.image;
-            this.currentFrames = defaultImage.frames;
+            nextFrames = defaultImage.frames;
             usedCache = false;
         }
 
@@ -177,15 +178,16 @@ public class CosmeticaTexture extends AbstractTexture {
 
         // upload call
         if (!RenderSystem.isOnRenderThreadOrInit()) {
-            RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, usedCache));
+            RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, usedCache, nextFrames));
         } else {
-            this.firstUpload(nativeImage, usedCache);
+            this.firstUpload(nativeImage, usedCache, nextFrames);
         }
 
         return usedCache;
     }
 
-    private void firstUpload(NativeImage image, boolean trueImage) {
+    private void firstUpload(NativeImage image, boolean trueImage, int nextFrames) {
+        this.currentFrames = nextFrames;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
         this.upload(image, false);
