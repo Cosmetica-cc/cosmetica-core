@@ -57,7 +57,7 @@ public class CosmeticaTexture extends AbstractTexture {
         // properties
         this.cacheFile = file;
         this.url = url;
-        this.realFrames = frames;
+        this.tilesheetFrames = frames;
         this.realTicksPerFrame = ticksPerFrame;
         this.currentFrames = 0;
         this.currentTicksPerFrame = 2;
@@ -69,14 +69,14 @@ public class CosmeticaTexture extends AbstractTexture {
     private final File cacheFile;
     private final String url;
     private final ResourceLocation loadingTexture, errorTexture;
-    private final int realFrames;
+    private final int tilesheetFrames;
     private final int realTicksPerFrame;
     private final Consumer<NativeImage> onFirstUpload;
     @Nullable private CompletableFuture<?> future;
 
     private int frameHeight;
     private int frame;
-    private int currentFrames, currentTicksPerFrame;
+    private int currentFrames, currentTicksPerFrame, autoFrameInc;
     private int tick;
     private NativeImage image;
 
@@ -106,8 +106,9 @@ public class CosmeticaTexture extends AbstractTexture {
                         if (this.cacheFile == null) {
                             Minecraft.getInstance().execute(() -> {
                                 try {
-                                    NativeImage directRead = NativeImage.read(readAnyImage(rawInputStream));
-                                    this.firstUpload(this.image = directRead, true, realFrames);
+                                    AnimatedInputStream ais = readToPNG(rawInputStream);
+                                    NativeImage directRead = NativeImage.read(ais.stream);
+                                    this.firstUpload(this.image = directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? 1 : tilesheetFrames);
                                 } catch (IOException e) {
                                     Logging.getInstance().error("Couldn't download cosmetica texture", e);
                                 }
@@ -134,6 +135,7 @@ public class CosmeticaTexture extends AbstractTexture {
         final boolean usedCache;
         final NativeImage nativeImage;
         final int nextFrames;
+        final int nextFrameInc;
 
         if (this.cacheFile != null && this.cacheFile.isFile()) {
             Logging.getInstance().debug("Loading cosmetica texture from local cache ({})", this.cacheFile);
@@ -141,8 +143,11 @@ public class CosmeticaTexture extends AbstractTexture {
             FileInputStream fileInputStream = new FileInputStream(this.cacheFile);
 
             NativeImage nativeImage1 = null;
+            int trueFrames = 1;
             try {
-                nativeImage1 = NativeImage.read(readAnyImage(fileInputStream));
+                AnimatedInputStream inputStream = readToPNG(fileInputStream);
+                nativeImage1 = NativeImage.read(inputStream.stream);
+                trueFrames = inputStream.frames;
             } catch (IOException e) {
                 Logging.getInstance().error("Error reading cached texture at {}", e, this.cacheFile);
             }
@@ -152,11 +157,14 @@ public class CosmeticaTexture extends AbstractTexture {
                 TextureImage defaultImage = load(resourceManager, fallback);
                 nativeImage = defaultImage.image;
                 nextFrames = defaultImage.frames;
+                nextFrameInc = 1;
                 usedCache = false;
             } else {
                 // success
                 nativeImage = nativeImage1;
-                nextFrames = realFrames;
+                nextFrames = tilesheetFrames * trueFrames;
+                // prioritise the 'true' animation for auto-animation
+                nextFrameInc = trueFrames == 1 ? 1 : tilesheetFrames;
                 usedCache = true;
             }
         } else {
@@ -164,6 +172,7 @@ public class CosmeticaTexture extends AbstractTexture {
             TextureImage defaultImage = load(resourceManager, fallback);
             nativeImage = defaultImage.image;
             nextFrames = defaultImage.frames;
+            nextFrameInc = 1;
             usedCache = false;
         }
 
@@ -172,17 +181,18 @@ public class CosmeticaTexture extends AbstractTexture {
 
         // upload call
         if (!RenderSystem.isOnRenderThreadOrInit()) {
-            RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, usedCache, nextFrames));
+            RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc));
         } else {
-            this.firstUpload(nativeImage, usedCache, nextFrames);
+            this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc);
         }
 
         return usedCache;
     }
 
-    private void firstUpload(NativeImage image, boolean trueImage, int nextFrames) {
+    private void firstUpload(NativeImage image, boolean trueImage, int nextFrames, int nextFrameInc) {
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
         this.currentFrames = nextFrames;
+        this.autoFrameInc = nextFrameInc;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
         this.upload(image, false);
@@ -202,7 +212,7 @@ public class CosmeticaTexture extends AbstractTexture {
             this.tick = (this.tick + 1) % this.currentTicksPerFrame;
 
             if (this.tick == 0) {
-                this.frame = (this.frame + 1) % this.currentFrames;
+                this.frame = (this.frame + this.autoFrameInc) % this.currentFrames;
                 //Debug.info("Uploading frame {}", this.frame);
                 this.upload(this.image, false);
             }
@@ -210,7 +220,7 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     /**
-     * Load the current animation frame.
+     * Load and upload the given animation frame.
      * @param frame the frame index to load.
      */
     public void loadFrame(int frame) {
@@ -245,7 +255,17 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     public int getFrameCount() {
-        return this.realFrames;
+        return this.tilesheetFrames;
+    }
+
+    private static class AnimatedInputStream {
+        AnimatedInputStream(InputStream stream, int frames) {
+            this.stream = stream;
+            this.frames = frames;
+        }
+
+        final InputStream stream;
+        final int frames;
     }
 
     /**
@@ -253,7 +273,7 @@ public class CosmeticaTexture extends AbstractTexture {
      * @param imageSource the image source.
      * @return an input stream for a PNG image.
      */
-    private static InputStream readAnyImage(InputStream imageSource) throws IOException {
+    private static AnimatedInputStream readToPNG(InputStream imageSource) throws IOException {
         if (!imageSource.markSupported()) {
             // make mark supported by wrapping in buffered input stream
             imageSource = new BufferedInputStream(imageSource);
@@ -282,13 +302,14 @@ public class CosmeticaTexture extends AbstractTexture {
 
         if (png) {
             // NativeImage can read a png
-            return imageSource;
+            return new AnimatedInputStream(imageSource, 1);
         } else {
             Logging.getInstance().debug("(Cosmetica Texture) Image is not a PNG. Applying transformation.");
             // Transform other formats to png and flatten animations (especially webp, used by Cosmetica for thumbnails)
             // https://github.com/haraldk/TwelveMonkeys?tab=readme-ov-file#advanced-usage
             // https://codingtechroom.com/question/convert-anime-gif-frames-to-bufferedimage-java
             BufferedImage flattened;
+            final int frames;
 
             try (ImageInputStream input = ImageIO.createImageInputStream(imageSource)) {
                 Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
@@ -299,7 +320,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
                 ImageReader reader = readers.next();
                 reader.setInput(input);
-                final int frames = reader.getNumImages(true);
+                frames = reader.getNumImages(true);
                 BufferedImage image0 = reader.read(0);
 
                 if (frames < 2) {
@@ -324,7 +345,7 @@ public class CosmeticaTexture extends AbstractTexture {
             // write image PNG to byte array and read to get png
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(flattened, "png", os);
-            return new ByteArrayInputStream(os.toByteArray());
+            return new AnimatedInputStream(new ByteArrayInputStream(os.toByteArray()), frames);
         }
     }
 
@@ -414,7 +435,9 @@ public class CosmeticaTexture extends AbstractTexture {
          * Sets the number of frames and ticks per frame for the animated texture.
          * Both frames and ticksPerFrame must be positive.
          *
-         * @param frames        Number of frames in the animated texture.
+         * @param frames        Number of frames in the animated texture's tilesheet. This excludes frames
+         *                      from a truly animated image. For a truly animated texture, the final frame
+         *                      count is {@code frames * animationFrames}.
          * @param ticksPerFrame Game ticks per frame to show. Unused if there is only one frame.
          * @return This Builder instance.
          * @throws IllegalArgumentException if frames or ticksPerFrame are not positive.
@@ -431,6 +454,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
         /**
          * Set whether this texture should automatically animate with multiple frames. On by default.
+         * Automatic animations will prioritise true animations over tilesheet animations.
          * @return This Builder instance.
          */
         public Builder autoAnimate(boolean auto) {
