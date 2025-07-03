@@ -41,8 +41,7 @@ allprojects {
         // for more information about repositories.
         maven {
             name "cloaks.gg"
-//            url "https://maven.cloaks.gg/releases"
-            url "https://maven.valoeghese.nz/releases"
+            url "https://maven.cloaks.gg/releases"
         }
     }
 
