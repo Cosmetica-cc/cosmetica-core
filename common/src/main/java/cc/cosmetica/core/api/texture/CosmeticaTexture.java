@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -102,64 +103,17 @@ public class CosmeticaTexture extends AbstractTexture {
                     if (httpURLConnection.getResponseCode() / 100 == 2) {
                         InputStream rawInputStream = httpURLConnection.getInputStream();
 
-                        // get url file extension
-                        String extension;
-                        {
-                            String[] parts = this.url.split("/");
-                            parts = parts[parts.length - 1].split("\\.");
-                            if (parts.length == 0)
-                                extension = null;
-                            else
-                                extension = parts[parts.length - 1];
-                        }
-
-                        InputStream inputStream;
-
-                        // determine if not png
-                        if (extension != null && !"png".equals(extension)) {
-                            Logging.getInstance().debug("(Cosmetica Texture) Image is not a PNG (ext {}). Applying transformation", extension);
-                            // Transform other formats to png (especially webp, used by Cosmetica for thumbnails)
-                            // https://github.com/haraldk/TwelveMonkeys?tab=readme-ov-file#advanced-usage
-                            BufferedImage image;
-
-                            try (ImageInputStream input = ImageIO.createImageInputStream(rawInputStream)) {
-                                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
-
-                                if (!readers.hasNext()) {
-                                    throw new IllegalArgumentException("No reader for input");
-                                }
-
-                                ImageReader reader = readers.next();
-
-                                try {
-                                    reader.setInput(input);
-                                    image = reader.read(0);
-                                } finally {
-                                    // avoid memory leaks
-                                    reader.dispose();
-                                }
-                            }
-
-                            // write image PNG to byte array and read to get png
-                            ByteArrayOutputStream os = new ByteArrayOutputStream();
-                            ImageIO.write(image, "png", os);
-                            inputStream = new ByteArrayInputStream(os.toByteArray());
-                        } else {
-                            // already png
-                            inputStream = rawInputStream;
-                        }
-
                         if (this.cacheFile == null) {
                             Minecraft.getInstance().execute(() -> {
                                 try {
-                                    NativeImage directRead = NativeImage.read(inputStream);
+                                    NativeImage directRead = NativeImage.read(readAnyImage(rawInputStream));
                                     this.firstUpload(this.image = directRead, true, realFrames);
                                 } catch (IOException e) {
                                     Logging.getInstance().error("Couldn't download cosmetica texture", e);
                                 }
                             });
                         } else {
-                            FileUtils.copyInputStreamToFile(inputStream, this.cacheFile);
+                            FileUtils.copyInputStreamToFile(rawInputStream, this.cacheFile);
                             this.loadFromDisk(resourceManager, true);
                         }
                     }
@@ -188,7 +142,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
             NativeImage nativeImage1 = null;
             try {
-                nativeImage1 = NativeImage.read(fileInputStream);
+                nativeImage1 = NativeImage.read(readAnyImage(fileInputStream));
             } catch (IOException e) {
                 Logging.getInstance().error("Error reading cached texture at {}", e, this.cacheFile);
             }
@@ -292,6 +246,86 @@ public class CosmeticaTexture extends AbstractTexture {
 
     public int getFrameCount() {
         return this.realFrames;
+    }
+
+    /**
+     * Convert any input source to PNG.
+     * @param imageSource the image source.
+     * @return an input stream for a PNG image.
+     */
+    private static InputStream readAnyImage(InputStream imageSource) throws IOException {
+        if (!imageSource.markSupported()) {
+            // make mark supported by wrapping in buffered input stream
+            imageSource = new BufferedInputStream(imageSource);
+        }
+
+        // if ^ this ever throws, wrap unsupported streams in buffered input stream
+        // as it stands, the method should always be passed a buffered input stream anyway
+
+        imageSource.mark(8);
+        byte[] magic = new byte[8];
+        boolean png = imageSource.read(magic) == magic.length;
+
+        if (png) {
+            png = magic[0] == (byte)0x89
+                    && magic[1] == (byte)0x50
+                    && magic[2] == (byte)0x4e
+                    && magic[3] == (byte)0x47
+                    && magic[4] == (byte)0x0d
+                    && magic[5] == (byte)0x0a
+                    && magic[6] == (byte)0x1a
+                    && magic[7] == (byte)0x0a;
+        }
+
+        // yaahh rewind time
+        imageSource.reset();
+
+        if (png) {
+            // NativeImage can read a png
+            return imageSource;
+        } else {
+            Logging.getInstance().debug("(Cosmetica Texture) Image is not a PNG. Applying transformation.");
+            // Transform other formats to png and flatten animations (especially webp, used by Cosmetica for thumbnails)
+            // https://github.com/haraldk/TwelveMonkeys?tab=readme-ov-file#advanced-usage
+            // https://codingtechroom.com/question/convert-anime-gif-frames-to-bufferedimage-java
+            BufferedImage flattened;
+
+            try (ImageInputStream input = ImageIO.createImageInputStream(imageSource)) {
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+                if (!readers.hasNext()) {
+                    throw new IllegalArgumentException("No reader for input");
+                }
+
+                ImageReader reader = readers.next();
+                reader.setInput(input);
+                final int frames = reader.getNumImages(true);
+                BufferedImage image0 = reader.read(0);
+
+                if (frames < 2) {
+                    flattened = image0;
+                } else {
+                    final int w = image0.getWidth();
+                    final int h = image0.getHeight();
+                    // flatten
+                    flattened = new BufferedImage(w, h * frames, BufferedImage.TYPE_INT_ARGB);
+                    // Yes, this is the fastest method. It's hardware accelerated!
+                    // https://stackoverflow.com/questions/3175820/fastest-way-to-draw-bufferedimages-to-another-bufferedimage
+                    Graphics g = flattened.getGraphics();
+                    g.drawImage(image0, 0, 0, w, h, null);
+
+                    // draw remaining frames
+                    for (int frame = 1; frame < frames; frame++) {
+                        g.drawImage(reader.read(frame), 0, frame * h, w, h, null);
+                    }
+                }
+            }
+
+            // write image PNG to byte array and read to get png
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(flattened, "png", os);
+            return new ByteArrayInputStream(os.toByteArray());
+        }
     }
 
     // Based on SimpleTexture.TextureImage.load
