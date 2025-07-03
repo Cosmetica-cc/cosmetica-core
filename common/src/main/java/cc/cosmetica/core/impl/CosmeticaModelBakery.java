@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.impl;
 
-import cc.cosmetica.core.render.texture.CosmeticaTexture;
+import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

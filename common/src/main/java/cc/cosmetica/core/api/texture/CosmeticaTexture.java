@@ -1,4 +1,20 @@
-package cc.cosmetica.core.render.texture;
+/*
+ * Copyright 2024, 2025 Cosmetica
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package cc.cosmetica.core.api.texture;
 
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
@@ -14,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -24,11 +41,12 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class CosmeticaTexture extends AbstractTexture {
-    private CosmeticaTexture(File file, String url, ResourceLocation loadingTexture,
+    private CosmeticaTexture(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture,
                                     int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload)
             throws IllegalArgumentException {
         if (frames > 1 && ticksPerFrame == 0) {
@@ -44,11 +62,12 @@ public class CosmeticaTexture extends AbstractTexture {
         this.currentTicksPerFrame = 2;
         this.onFirstUpload = onFirstUpload;
         this.loadingTexture = loadingTexture;
+        this.errorTexture = errorTexture;
     }
 
     private final File cacheFile;
     private final String url;
-    private final ResourceLocation loadingTexture;
+    private final ResourceLocation loadingTexture, errorTexture;
     private final int realFrames;
     private final int realTicksPerFrame;
     private final Consumer<NativeImage> onFirstUpload;
@@ -67,7 +86,7 @@ public class CosmeticaTexture extends AbstractTexture {
             return;
 
         // first, load from local cache
-        boolean loadedCache = this.loadFromDisk(resourceManager);
+        boolean loadedCache = this.loadFromDisk(resourceManager, false);
 
         if (!loadedCache) {
             // HTTP request (based on HttpTexture.load)
@@ -141,7 +160,7 @@ public class CosmeticaTexture extends AbstractTexture {
                             });
                         } else {
                             FileUtils.copyInputStreamToFile(inputStream, this.cacheFile);
-                            this.loadFromDisk(resourceManager);
+                            this.loadFromDisk(resourceManager, true);
                         }
                     }
                 } catch (Exception var6) {
@@ -155,26 +174,46 @@ public class CosmeticaTexture extends AbstractTexture {
         }
     }
 
-    private boolean loadFromDisk(ResourceManager resourceManager) throws IOException {
-        boolean usedCache;
-        NativeImage nativeImage;
-        int nextFrames;
+    private boolean loadFromDisk(ResourceManager resourceManager, boolean done) throws IOException {
+        ResourceLocation fallback = done && this.errorTexture != null ? this.errorTexture : this.loadingTexture;
+
+        final boolean usedCache;
+        final NativeImage nativeImage;
+        final int nextFrames;
 
         if (this.cacheFile != null && this.cacheFile.isFile()) {
             Logging.getInstance().debug("Loading cosmetica texture from local cache ({})", this.cacheFile);
 
-            nextFrames = realFrames;
             FileInputStream fileInputStream = new FileInputStream(this.cacheFile);
-            nativeImage = NativeImage.read(fileInputStream);
-            usedCache = true;
+
+            NativeImage nativeImage1 = null;
+            try {
+                nativeImage1 = NativeImage.read(fileInputStream);
+            } catch (IOException e) {
+                Logging.getInstance().error("Error reading cached texture at {}", e, this.cacheFile);
+            }
+
+            if (nativeImage1 == null) {
+                // we use SimpleTexture-based code to upload the fallback texture
+                TextureImage defaultImage = load(resourceManager, fallback);
+                nativeImage = defaultImage.image;
+                nextFrames = defaultImage.frames;
+                usedCache = false;
+            } else {
+                // success
+                nativeImage = nativeImage1;
+                nextFrames = realFrames;
+                usedCache = true;
+            }
         } else {
             // we use SimpleTexture-based code to upload the loading texture
-            TextureImage defaultImage = load(resourceManager, this.loadingTexture);
+            TextureImage defaultImage = load(resourceManager, fallback);
             nativeImage = defaultImage.image;
             nextFrames = defaultImage.frames;
             usedCache = false;
         }
 
+        Objects.requireNonNull(nativeImage, "NativeImage null? ('impossible' data flow)");
         this.image = nativeImage;
 
         // upload call
@@ -216,6 +255,10 @@ public class CosmeticaTexture extends AbstractTexture {
         }
     }
 
+    /**
+     * Load the current animation frame.
+     * @param frame the frame index to load.
+     */
     public void loadFrame(int frame) {
         if (frame < 0 || frame >= this.currentFrames)
             throw new IllegalArgumentException("Frame out of bounds for " + this.currentFrames + ": " + frame);
@@ -284,8 +327,8 @@ public class CosmeticaTexture extends AbstractTexture {
      * adding the unnecessary overhead of ticking every static texture (which will be most textures).
      */
     private static class Animated extends CosmeticaTexture implements Tickable {
-        private Animated(File file, String url, ResourceLocation loadingTexture, int frames, int ticksPerFrame, Consumer<NativeImage>  onLoad) throws IllegalArgumentException {
-            super(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
+        private Animated(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture, int frames, int ticksPerFrame, Consumer<NativeImage>  onLoad) throws IllegalArgumentException {
+            super(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad);
         }
 
         @Override
@@ -299,8 +342,8 @@ public class CosmeticaTexture extends AbstractTexture {
      */
     public static class Builder {
         // Required
-        private final String url;
-        private final ResourceLocation loadingTexture;
+        private final @NotNull String url;
+        private final @NotNull ResourceLocation loadingTexture;
 
         // Optional fields with default values
         private File file;
@@ -308,29 +351,43 @@ public class CosmeticaTexture extends AbstractTexture {
         private int ticksPerFrame = 1;
         private Consumer<NativeImage> onLoad;
         private boolean autoAnimate = true;
+        private @Nullable ResourceLocation errorTexture;
 
         /**
          * Constructs a new Builder instance.
          *
          * @param url The URL to retrieve the texture from.
          */
-        public Builder(String url, ResourceLocation loadingTexture) {
+        public Builder(@NotNull String url, @NotNull ResourceLocation loadingTexture) {
+            Objects.requireNonNull(url, "URL cannot be null");
+            Objects.requireNonNull(loadingTexture, "Loading texture cannot be null");
             this.url = url;
             this.loadingTexture = loadingTexture;
+            this.errorTexture = null;
+        }
+
+        /**
+         * Set the error texture, should the texture fail to load.
+         * @param errorTexture the error texture.
+         * @return This Builder instance.
+         */
+        public Builder failToLoadTexture(@Nullable ResourceLocation errorTexture) {
+            this.errorTexture = errorTexture;
+            return this;
         }
 
         /**
          * Sets the number of frames and ticks per frame for the animated texture.
-         * Both frames and ticksPerFrame must be positive integers.
+         * Both frames and ticksPerFrame must be positive.
          *
-         * @param frames       Number of frames in the animated texture.
-         * @param ticksPerFrame Game ticks per frame to show.
+         * @param frames        Number of frames in the animated texture.
+         * @param ticksPerFrame Game ticks per frame to show. Unused if there is only one frame.
          * @return This Builder instance.
-         * @throws IllegalArgumentException if frames or ticksPerFrame is not positive.
+         * @throws IllegalArgumentException if frames or ticksPerFrame are not positive.
          */
         public Builder frames(int frames, int ticksPerFrame) {
             if (frames <= 0 || ticksPerFrame <= 0) {
-                throw new IllegalArgumentException("frames and ticksPerFrame must be positive integers");
+                throw new IllegalArgumentException("frames and ticksPerFrame must be positive");
             }
 
             this.frames = frames;
@@ -376,9 +433,9 @@ public class CosmeticaTexture extends AbstractTexture {
         public CosmeticaTexture build() {
             // Create and return AnimatedHttpTexture instance
             if (this.frames > 1 && this.autoAnimate) {
-                return new Animated(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
+                return new Animated(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad);
             } else {
-                return new CosmeticaTexture(file, url, loadingTexture, frames, ticksPerFrame, onLoad);
+                return new CosmeticaTexture(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad);
             }
         }
     }

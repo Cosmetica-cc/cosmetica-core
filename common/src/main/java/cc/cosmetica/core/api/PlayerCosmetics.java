@@ -16,7 +16,9 @@
 
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
+import cc.cosmetica.core.impl.BlockModelManager;
 import gg.cloaks.javaclient.model.*;
 
 import javax.annotation.Nullable;
@@ -49,7 +51,7 @@ public final class PlayerCosmetics implements Cosmetics {
 			this.lore = new NametagConfig(
 					lore.getFormatted().replaceAll("&", "§"), "",
 					lore.getIconUrl() == null ? NO_ICON : new ImageCosmetic(
-							CosmeticaModel.getOrCreateImage("lore", lore.getService(), lore.getIconUrl(), 1, 1),
+							CosmeticaModel.getOrCreateImage("lore", lore.getService(), new CosmeticaTexture.Builder(lore.getIconUrl(), BlockModelManager.FALLBACK_TEXTURE)),
 							lore.getService(),
 							lore.getService(), // use service as id as well
 							null,

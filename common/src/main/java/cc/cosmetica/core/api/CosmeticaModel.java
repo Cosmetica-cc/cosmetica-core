@@ -19,6 +19,7 @@ package cc.cosmetica.core.api;
 import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Quaternion;
@@ -176,7 +177,8 @@ public final class CosmeticaModel {
 	 */
 	public static CachedImage getOrCreateImage(String category, AnimatedTextureCosmetic cosmetic) {
 		return BlockModelManager.getOrCreateImage(category + "/" + cosmetic.getId(),
-				cosmetic.getTexture(), cosmetic.getFrames().intValue(), cosmetic.getTicksPerFrame().intValue());
+				new CosmeticaTexture.Builder(cosmetic.getTexture(), BlockModelManager.FALLBACK_TEXTURE)
+						.frames(cosmetic.getFrames().intValue(), cosmetic.getTicksPerFrame().intValue()));
 	}
 
 	/**
@@ -186,16 +188,11 @@ public final class CosmeticaModel {
 	 * @param id the id of the image. Should be unique per-image, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
-	 * @param imageURL the URL to download the image from if it's not already in memory.
-	 * @param frames the number of frames in the image. Set to 0 for a static texture.
-	 *               Set to a negative number to have multiple frames, but not auto-animate.
-	 *               Image frames are to be stored as a tilesheet, top to bottom.
-	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param texture The builder from which to set up the texture. Note! {@code cached} and {@code onLoad} will be overridden.
 	 * @implNote a weak reference to the CachedImage is stored in cache.
 	 * @return a {@link CachedImage}.
 	 */
-	public static CachedImage getOrCreateImage(String category, String id,
-											   String imageURL, int frames, int ticksPerFrame) {
-		return BlockModelManager.getOrCreateImage(category + "/" + id, imageURL, frames, ticksPerFrame);
+	public static CachedImage getOrCreateImage(String category, String id, CosmeticaTexture.Builder texture) {
+		return BlockModelManager.getOrCreateImage(category + "/" + id, texture);
 	}
 }

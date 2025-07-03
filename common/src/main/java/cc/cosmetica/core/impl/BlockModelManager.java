@@ -20,7 +20,7 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.CosmeticaModel;
-import cc.cosmetica.core.render.texture.CosmeticaTexture;
+import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -46,7 +46,7 @@ public class BlockModelManager {
 	private static final WeakCache<CachedImage> IMAGE_CACHE = new WeakCache<>();
 
 	private static final Path CACHE_DIRECTORY;
-	private static final ResourceLocation LOADING_TEXTURE = new ResourceLocation("cosmetica-core", "icon.png");
+	public static final ResourceLocation FALLBACK_TEXTURE = new ResourceLocation("cosmetica-core", "icon.png");
 
 	static {
 		// find cache directory location
@@ -154,7 +154,7 @@ public class BlockModelManager {
 			model = new CosmeticaModel(textureLocation);
 
 			// create texture
-			AbstractTexture texture = new CosmeticaTexture.Builder(textureUrl, LOADING_TEXTURE)
+			AbstractTexture texture = new CosmeticaTexture.Builder(textureUrl, FALLBACK_TEXTURE)
 					.frames(frames, ticksPerFrame)
 					.cached(cacheFile)
 					.onLoad(image -> {
@@ -217,15 +217,11 @@ public class BlockModelManager {
 	 * Get or download an image for the given id. This ensures a given image is only in memory once and is removed when
 	 * all references are gone.
 	 * @param id the id of the image.
-	 * @param imageURL the URL to download the image from if it's not already in memory.
-	 * @param frames the number of frames in the image. Set to 0 for a static texture.
-	 *               Set to a negative number to have multiple frames, but not auto-animate.
-	 *               Image frames are to be stored as a tilesheet, top to bottom.
-	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param textureBuilder the builder to set up the texture. Note! OnLoad and Cache will be overridden.
 	 * @implNote a weak reference to the CachedImage is stored in cache.
 	 * @return a {@link CachedImage}.
 	 */
-	public static CachedImage getOrCreateImage(String id, String imageURL, int frames, int ticksPerFrame) {
+	public static CachedImage getOrCreateImage(String id, CosmeticaTexture.Builder textureBuilder) {
 		CachedImage image = IMAGE_CACHE.get(id);
 
 		// if the image doesn't exist or has expired, generate a new one
@@ -235,12 +231,9 @@ public class BlockModelManager {
 			File cacheFile = getCacheFile(textureLocation).toFile();
 
 			image = new CachedImage(textureLocation);
-			int frameCount = frames < 0 ? -frames : frames;
 
 			// create texture
-			AbstractTexture texture = new CosmeticaTexture.Builder(imageURL, LOADING_TEXTURE)
-					.frames(frameCount, ticksPerFrame)
-					.autoAnimate(frames > 1)
+			AbstractTexture texture = textureBuilder
 					.cached(cacheFile)
 					.onLoad(nativeImage -> {
 						// don't store a reference to the CachedImage or it will prevent GC

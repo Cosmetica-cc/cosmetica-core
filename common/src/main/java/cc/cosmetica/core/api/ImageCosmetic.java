@@ -16,6 +16,8 @@
 
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import cc.cosmetica.core.impl.BlockModelManager;
 import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import gg.cloaks.javaclient.model.Icon;
@@ -93,8 +95,9 @@ public final class ImageCosmetic implements Cosmetic {
      */
     public static ImageCosmetic fromIcon(Icon icon) {
         return new ImageCosmetic(
-                CosmeticaModel.getOrCreateImage("icon", icon.getId(), icon.getTexture(),
-                        icon.getFrames().intValue(), icon.getTicksPerFrame().intValue()),
+                CosmeticaModel.getOrCreateImage("icon", icon.getId(),
+                        new CosmeticaTexture.Builder(icon.getTexture(), BlockModelManager.FALLBACK_TEXTURE)
+                                .frames(icon.getFrames().intValue(), icon.getTicksPerFrame().intValue())),
                 icon.getName(),
                 icon.getId(),
                 Cosmetic.gameProfileOf(icon.getCreator()),
