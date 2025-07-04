@@ -425,7 +425,7 @@ public class CosmeticaTexture extends AbstractTexture {
         /**
          * Always animate, but only if tilesheet frames given is > 1.
          */
-        AUTO,
+        AUTO, // TODO maybe this shouldn't exist. Could cause too much confusion?
         /**
          * Always animate true animations but never tilesheets.
          */

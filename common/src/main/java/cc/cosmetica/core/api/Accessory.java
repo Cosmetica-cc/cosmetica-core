@@ -23,47 +23,47 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Represents an Accessory equipped on a user.
  */
 public final class Accessory implements Cosmetic {
-	public Accessory(String name, String id, @Nullable GameProfile creator, String thumbnail,
-					 AttachmentEnum attachment, boolean mirrored, CosmeticaModel model, Vec3 offset) {
-		this.name = name;
-		this.id = id;
+	public Accessory(gg.cloaks.javaclient.model.Accessory accessory, @Nullable GameProfile creator,
+					 boolean mirrored, CosmeticaModel model, Vec3 offset) {
+		Objects.requireNonNull(accessory, "Accessory json object cannot be null.");
+		this.jsonObject = accessory;
 		this.creator = creator;
-		this.thumbnail = thumbnail;
-		this.attachment = attachment;
 		this.mirrored = mirrored;
 		this.model = model;
 		this.offset = offset;
 		this.flags = new HashSet<>();
 	}
 
-	private final String name;
-	private final String id;
+	private final gg.cloaks.javaclient.model.Accessory jsonObject;
 	@Nullable
 	private final GameProfile creator;
-	private final String thumbnail;
-	private final AttachmentEnum attachment;
 	private final CosmeticaModel model;
 	private final Vec3 offset;
 	private final boolean mirrored;
 	private final Collection<Flag> flags;
 
+	/**
+	 * Get the underlying API Accessory object for this core accessory.
+	 * @return the {@link gg.cloaks.javaclient.model.Accessory} for this accessory.
+	 */
+	public gg.cloaks.javaclient.model.Accessory getJsonObject() {
+		return this.jsonObject;
+	}
+
 	@Override
 	public String getName() {
-		return this.name;
+		return this.jsonObject.getName();
 	}
 
 	@Override
 	public String getId() {
-		return this.id;
+		return this.jsonObject.getId();
 	}
 
 	@Override
@@ -73,11 +73,11 @@ public final class Accessory implements Cosmetic {
 
 	@Override
 	public String getThumbnail() {
-		return this.thumbnail;
+		return this.jsonObject.getThumbnail();
 	}
 
 	public AttachmentEnum getAttachment() {
-		return this.attachment;
+		return this.jsonObject.getAttachment();
 	}
 
 	public CosmeticaModel getModel() {
@@ -119,11 +119,8 @@ public final class Accessory implements Cosmetic {
 		List<BigDecimal> offset = accessory.getOffset();
 
 		return new Accessory(
-				accessory.getAccessory().getName(),
-				accessory.getAccessory().getId(),
+				accessory.getAccessory(),
 				Cosmetic.gameProfileOf(accessory.getAccessory().getCreator()),
-				accessory.getAccessory().getThumbnail(),
-				accessory.getAccessory().getAttachment(),
 				accessory.isMirrored(),
 				model,
 				attachmentTransform(
