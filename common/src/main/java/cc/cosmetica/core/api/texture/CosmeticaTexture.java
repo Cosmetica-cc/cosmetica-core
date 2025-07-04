@@ -74,6 +74,7 @@ public class CosmeticaTexture extends AbstractTexture {
     private final int tilesheetFrames;
     private final int realTicksPerFrame;
     private final Consumer<NativeImage> onFirstUpload;
+    int tilesheetIncrement = 1;
     @Nullable private CompletableFuture<?> future;
 
     private int frameHeight;
@@ -121,7 +122,7 @@ public class CosmeticaTexture extends AbstractTexture {
                         Minecraft.getInstance().execute(() -> {
                             try {
                                 NativeImage directRead = NativeImage.read(ais.stream);
-                                this.firstUpload(directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? 1 : tilesheetFrames);
+                                this.firstUpload(directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? this.tilesheetIncrement : tilesheetFrames);
                             } catch (IOException e) {
                                 Logging.getInstance().error("Couldn't download cosmetica texture", e);
                                 if (this.errorTexture != null) {
@@ -199,7 +200,7 @@ public class CosmeticaTexture extends AbstractTexture {
                 final NativeImage nativeImage = nativeImage1;
                 final int nextFrames = tilesheetFrames * trueFrames;
                 // prioritise the 'true' animation for auto-animation
-                final int nextFrameInc = trueFrames == 1 ? 1 : tilesheetFrames;
+                final int nextFrameInc = trueFrames == 1 ? this.tilesheetIncrement : tilesheetFrames;
 
                 // upload
                 RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, true, nextFrames, nextFrameInc));
@@ -231,7 +232,7 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     void doTick() {
-        if (this.currentFrames > 1 && this.image != null && ((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
+        if (this.currentFrames > 1 && this.autoFrameInc > 1 && this.image != null && ((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
             this.tick = (this.tick + 1) % this.currentTicksPerFrame;
 
             if (this.tick == 0) {
@@ -405,14 +406,34 @@ public class CosmeticaTexture extends AbstractTexture {
      * adding the unnecessary overhead of ticking every static texture (which will be most textures).
      */
     private static class Animated extends CosmeticaTexture implements Tickable {
-        private Animated(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture, int frames, int ticksPerFrame, Consumer<NativeImage>  onLoad) throws IllegalArgumentException {
+        private Animated(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture, int frames, int ticksPerFrame, Consumer<NativeImage> onLoad, int tilesheetAnimInc) throws IllegalArgumentException {
             super(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad);
+            this.tilesheetIncrement = tilesheetAnimInc;
         }
 
         @Override
         public void tick() {
             this.doTick();
         }
+    }
+
+    public enum AutoAnimate {
+        /**
+         * Always animate anything. True animations are prioritised as primary animations over tilesheets.
+         */
+        ALWAYS,
+        /**
+         * Always animate, but only if tilesheet frames given is > 1.
+         */
+        AUTO,
+        /**
+         * Always animate true animations but never tilesheets.
+         */
+        NEVER_TILESHEETS,
+        /**
+         * Never animate automatically.
+         */
+        NEVER
     }
 
     /**
@@ -428,7 +449,7 @@ public class CosmeticaTexture extends AbstractTexture {
         private int frames = 1;
         private int ticksPerFrame = 1;
         private Consumer<NativeImage> onLoad;
-        private boolean autoAnimate = true;
+        private AutoAnimate autoAnimate = AutoAnimate.AUTO;
         private @Nullable ResourceLocation errorTexture;
 
         /**
@@ -455,7 +476,7 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         /**
-         * Sets the number of frames and ticks per frame for the animated texture.
+         * Sets the number of tilesheet frames and ticks per frame for the animated texture.
          * Both frames and ticksPerFrame must be positive.
          *
          * @param frames        Number of frames in the animated texture's tilesheet. This excludes frames
@@ -476,11 +497,11 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         /**
-         * Set whether this texture should automatically animate with multiple frames. On by default.
+         * Set whether this texture should automatically animate with multiple frames. AUTO by default.
          * Automatic animations will prioritise true animations over tilesheet animations.
          * @return This Builder instance.
          */
-        public Builder autoAnimate(boolean auto) {
+        public Builder autoAnimate(AutoAnimate auto) {
             this.autoAnimate = auto;
             return this;
         }
@@ -513,10 +534,10 @@ public class CosmeticaTexture extends AbstractTexture {
          */
         public CosmeticaTexture build() {
             // Create and return AnimatedHttpTexture instance
-            if (this.frames > 1 && this.autoAnimate) {
-                return new Animated(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad);
-            } else {
+            if ((this.frames < 2 && this.autoAnimate == AutoAnimate.AUTO) || this.autoAnimate == AutoAnimate.NEVER) {
                 return new CosmeticaTexture(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad);
+            } else {
+                return new Animated(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, this.autoAnimate == AutoAnimate.NEVER_TILESHEETS ? 0 : 1);
             }
         }
     }
