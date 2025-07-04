@@ -57,7 +57,7 @@ public final class CosmeticaModelBakery {
 	/**
 	 * Bake the given block model with the texture at the given location.
 	 * @param location the location to get the texture for. Also used in debug messages.
-	 *                 Must refer to an {@link OldCosmeticaHttpTexture}.
+	 *                 Must refer to an {@link CosmeticaTexture}.
 	 * @param model the model to bake.
 	 */
 	public static BakedModel bakeModel(ResourceLocation location, BlockModel model) {

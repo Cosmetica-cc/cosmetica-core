@@ -30,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.client.HttpResponseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,8 @@ public class CosmeticaTexture extends AbstractTexture {
 
     private final File cacheFile;
     private final String url;
-    private final ResourceLocation loadingTexture, errorTexture;
+    private final ResourceLocation loadingTexture;
+    private final @Nullable ResourceLocation errorTexture;
     private final int tilesheetFrames;
     private final int realTicksPerFrame;
     private final Consumer<NativeImage> onFirstUpload;
@@ -86,56 +88,96 @@ public class CosmeticaTexture extends AbstractTexture {
         if (this.future != null)
             return;
 
-        // first, load from local cache
-        boolean loadedCache = this.loadFromDisk(resourceManager, false);
+        // first, load loading texture
+        this.loadFromPack(resourceManager, this.loadingTexture);
 
-        if (!loadedCache) {
-            // HTTP request (based on HttpTexture.load)
-            this.future = CompletableFuture.runAsync(() -> {
-                HttpURLConnection httpURLConnection = null;
-                Logging.getInstance().debug("Downloading cosmetica texture from {} to {}", this.url, this.cacheFile);
+        // HTTP request (based on HttpTexture.load)
+        this.future = CompletableFuture.runAsync(() -> {
+            // Check cache
+            boolean loadedCache = false;
+            try {
+                loadedCache = this.loadCacheFile();
+            } catch (IOException e) {
+                Logging.getInstance().error("Failed to load cosmetica texture cache", e);
+            }
+            if (loadedCache)
+                return;
 
-                try {
-                    httpURLConnection = (HttpURLConnection)new URL(this.url).openConnection(Minecraft.getInstance().getProxy());
-                    httpURLConnection.setDoInput(true);
-                    httpURLConnection.setDoOutput(false);
-                    httpURLConnection.connect();
-                    if (httpURLConnection.getResponseCode() / 100 == 2) {
-                        InputStream rawInputStream = httpURLConnection.getInputStream();
+            // failed to load cache - use internet
+            HttpURLConnection httpURLConnection = null;
+            Logging.getInstance().debug("Downloading cosmetica texture from {} to {}", this.url, this.cacheFile);
 
-                        if (this.cacheFile == null) {
-                            Minecraft.getInstance().execute(() -> {
-                                try {
-                                    AnimatedInputStream ais = readToPNG(rawInputStream);
-                                    NativeImage directRead = NativeImage.read(ais.stream);
-                                    this.firstUpload(this.image = directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? 1 : tilesheetFrames);
-                                } catch (IOException e) {
-                                    Logging.getInstance().error("Couldn't download cosmetica texture", e);
+            try {
+                httpURLConnection = (HttpURLConnection)new URL(this.url).openConnection(Minecraft.getInstance().getProxy());
+                httpURLConnection.setDoInput(true);
+                httpURLConnection.setDoOutput(false);
+                httpURLConnection.connect();
+                if (httpURLConnection.getResponseCode() / 100 == 2) {
+                    InputStream rawInputStream = httpURLConnection.getInputStream();
+
+                    if (this.cacheFile == null) {
+                        AnimatedInputStream ais = readToPNG(rawInputStream);
+
+                        Minecraft.getInstance().execute(() -> {
+                            try {
+                                NativeImage directRead = NativeImage.read(ais.stream);
+                                this.firstUpload(directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? 1 : tilesheetFrames);
+                            } catch (IOException e) {
+                                Logging.getInstance().error("Couldn't download cosmetica texture", e);
+                                if (this.errorTexture != null) {
+                                    try {
+                                        this.loadFromPack(resourceManager, this.errorTexture);
+                                    } catch (IOException ex) {
+                                        Logging.getInstance().error("Couldn't load fallback texture", ex);
+                                    }
                                 }
-                            });
-                        } else {
-                            FileUtils.copyInputStreamToFile(rawInputStream, this.cacheFile);
-                            this.loadFromDisk(resourceManager, true);
-                        }
+                            }
+                        });
+                    } else {
+                        FileUtils.copyInputStreamToFile(rawInputStream, this.cacheFile);
+                        this.loadCacheFile();
                     }
-                } catch (Exception var6) {
-                    Logging.getInstance().error("Couldn't download cosmetica texture", var6);
-                } finally {
-                    if (httpURLConnection != null) {
-                        httpURLConnection.disconnect();
-                    }
+                } else {
+                    throw new HttpResponseException(httpURLConnection.getResponseCode(), "Reading texture from " + this.url);
                 }
-            }, Util.backgroundExecutor());
+            } catch (Exception var6) {
+                Logging.getInstance().error("Couldn't download cosmetica texture", var6);
+                try {
+                    if (this.errorTexture != null) {
+                        this.loadFromPack(resourceManager, this.errorTexture);
+                    }
+                } catch (IOException ex) {
+                    Logging.getInstance().error("Couldn't load fallback texture", ex);
+                }
+            } finally {
+                if (httpURLConnection != null) {
+                    httpURLConnection.disconnect();
+                }
+            }
+        }, Util.backgroundExecutor());
+    }
+
+    private void loadFromPack(ResourceManager resourceManager, ResourceLocation location) throws IOException {
+        // we use SimpleTexture-based code to upload the loading/fallback texture
+        TextureImage defaultImage = load(resourceManager, location);
+        final NativeImage nativeImage = defaultImage.image;
+        final int nextFrames = defaultImage.frames;
+        final int nextFrameInc = 1;
+        final boolean usedCache = false;
+
+        // upload call
+        if (!RenderSystem.isOnRenderThreadOrInit()) {
+            if (this.image == null) this.image = nativeImage; // just in case
+            RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc));
+        } else {
+            this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc);
         }
     }
 
-    private boolean loadFromDisk(ResourceManager resourceManager, boolean done) throws IOException {
-        ResourceLocation fallback = done && this.errorTexture != null ? this.errorTexture : this.loadingTexture;
-
-        final boolean usedCache;
-        final NativeImage nativeImage;
-        final int nextFrames;
-        final int nextFrameInc;
+    private boolean loadCacheFile() throws IOException {
+        if (RenderSystem.isOnRenderThread()) {
+            Logging.getInstance().warn("(Cosmetica) loadFromDisk called from render thread! May cause lag!");
+        }
 
         if (this.cacheFile != null && this.cacheFile.isFile()) {
             Logging.getInstance().debug("Loading cosmetica texture from local cache ({})", this.cacheFile);
@@ -152,44 +194,25 @@ public class CosmeticaTexture extends AbstractTexture {
                 Logging.getInstance().error("Error reading cached texture at {}", e, this.cacheFile);
             }
 
-            if (nativeImage1 == null) {
-                // we use SimpleTexture-based code to upload the fallback texture
-                TextureImage defaultImage = load(resourceManager, fallback);
-                nativeImage = defaultImage.image;
-                nextFrames = defaultImage.frames;
-                nextFrameInc = 1;
-                usedCache = false;
-            } else {
+            if (nativeImage1 != null) {
                 // success
-                nativeImage = nativeImage1;
-                nextFrames = tilesheetFrames * trueFrames;
+                final NativeImage nativeImage = nativeImage1;
+                final int nextFrames = tilesheetFrames * trueFrames;
                 // prioritise the 'true' animation for auto-animation
-                nextFrameInc = trueFrames == 1 ? 1 : tilesheetFrames;
-                usedCache = true;
+                final int nextFrameInc = trueFrames == 1 ? 1 : tilesheetFrames;
+
+                // upload
+                RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, true, nextFrames, nextFrameInc));
+                return true;
             }
-        } else {
-            // we use SimpleTexture-based code to upload the loading texture
-            TextureImage defaultImage = load(resourceManager, fallback);
-            nativeImage = defaultImage.image;
-            nextFrames = defaultImage.frames;
-            nextFrameInc = 1;
-            usedCache = false;
         }
 
-        Objects.requireNonNull(nativeImage, "NativeImage null? ('impossible' data flow)");
-        this.image = nativeImage;
-
-        // upload call
-        if (!RenderSystem.isOnRenderThreadOrInit()) {
-            RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc));
-        } else {
-            this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc);
-        }
-
-        return usedCache;
+        // failed to load or no cache
+        return false;
     }
 
     private void firstUpload(NativeImage image, boolean trueImage, int nextFrames, int nextFrameInc) {
+        this.image = image;
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
         this.currentFrames = nextFrames;
         this.autoFrameInc = nextFrameInc;
