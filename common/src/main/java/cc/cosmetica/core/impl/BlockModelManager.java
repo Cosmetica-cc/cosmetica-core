@@ -82,7 +82,7 @@ public class BlockModelManager {
 		}
 
 		try {
-			IMAGE_CACHE_MANAGER = new ImageCacheManager(CACHE_DIRECTORY.resolve("imagecachemanager"));
+			IMAGE_CACHE_MANAGER = new ImageCacheManager(CACHE_DIRECTORY);
 		} catch (IOException e) {
 			throw new Unc(e);
 		}
@@ -157,7 +157,7 @@ public class BlockModelManager {
 		if (model == null) {
 			// model id. Primarily used for texture location.
 			ResourceLocation textureLocation = getLocation(id);
-			File cacheFile = getCacheFile(textureLocation, CosmeticaCore).toFile();
+			File cacheFile = getCacheFile(textureLocation, IMAGE_CACHE_MANAGER).toFile();
 
 			model = new CosmeticaModel(textureLocation);
 

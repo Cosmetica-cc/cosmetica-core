@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,13 +20,23 @@ public class ImageCacheManager {
      * Create and load a new cache manager.
      * @throws IOException if an IO exception occurs setting up.
      */
-    public ImageCacheManager(Path file) throws IOException {
-        this.file = file;
+    public ImageCacheManager(Path root) throws IOException {
+        this.root = root;
+        this.file = root.resolve("imagecachemanager");
     }
 
-    private final Path file;
+    private final Path root, file;
     private List<ResourceLocation> keep = new ArrayList<>(); // max size 256
-    private final Map<String, List<CacheMeta>> entries = new HashMap<>();
+    private final Map<String, CacheMeta> entries = new HashMap<>();
+
+    /**
+     * Mark and track the given entry for disk management.
+     * @param group the path group to track.
+     */
+    public void mark(Path group, String subfolder) {
+        this.entries.computeIfAbsent(this.root.relativize(group).toString(), g -> new CacheMeta())
+                .timestamps.put(subfolder, Instant.now().toEpochMilli());
+    }
 
     public void saveSync() throws IOException {
         Logging.getInstance().debug("Saving cosmetica image cache metadata (sync)");
@@ -37,16 +48,12 @@ public class ImageCacheManager {
         Logging.getInstance().debug("Saving cosmetica image cache metadata (async)");
         long timestamp = System.nanoTime();
 
-        final Map<String, List<CacheMeta>> saveEntries = new HashMap<>();
-        entries.forEach((s,e)->{
-            List<CacheMeta> entries1 = new ArrayList<>();
-            for (CacheMeta meta : entries1) {
-                CacheMeta cloneMeta = new CacheMeta();
-                cloneMeta.subfolder = meta.subfolder;
-                cloneMeta.timestamps.putAll(meta.timestamps);
-                entries1.add(cloneMeta);
-            }
-            saveEntries.put(s, entries1);
+        // deep copy
+        final Map<String, CacheMeta> saveEntries = new HashMap<>();
+        entries.forEach((s,meta)->{
+            CacheMeta cloneMeta = new CacheMeta();
+            cloneMeta.timestamps.putAll(meta.timestamps);
+            saveEntries.put(s, cloneMeta);
         });
 
         long dt = (System.nanoTime() - timestamp) / 1_000_000;
@@ -59,7 +66,7 @@ public class ImageCacheManager {
         CompletableFuture.runAsync(() -> this.save(keep, saveEntries), Util.backgroundExecutor());
     }
 
-    private void save(List<ResourceLocation> keep, Map<String, List<CacheMeta>> entries) {
+    private void save(List<ResourceLocation> keep, Map<String, CacheMeta> entries) {
         try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(this.file)))) {
             // write magic and version
             dos.writeInt(0xC053E71C);
@@ -71,25 +78,16 @@ public class ImageCacheManager {
             }
             // write entries
             dos.writeInt(entries.size());
-            for (Map.Entry<String, List<CacheMeta>> entry : entries.entrySet()) {
-                dos.writeUTF(entry.getKey());
-                dos.writeShort(entry.getValue().size());
-                for (CacheMeta meta : entry.getValue()) {
-                    dos.writeUTF(meta.subfolder);
-                    // if we go over 16 bits there's a bigger problem, but let's support it anyway
-                    dos.writeInt(meta.timestamps.size());
-                    for (Object2LongMap.Entry<String> timestamp : meta.timestamps.object2LongEntrySet()) {
-                        dos.writeUTF(timestamp.getKey());
-                        dos.writeLong(timestamp.getLongValue());
-                    }
-                }
+            for (Map.Entry<String, CacheMeta> entry : entries.entrySet()) {
+                dos.writeUTF(entry.getKey()); // group
+                entry.getValue().store(dos);  // meta
             }
         } catch (IOException e) {
             Logging.getInstance().warn("(Cosmetica Core) Failed to save image cache metadata", e);
         }
     }
 
-    private void read(List<ResourceLocation> keep, Map<String, List<CacheMeta>> entries) throws IOException {
+    private void read(List<ResourceLocation> keep, Map<String, CacheMeta> entries) throws IOException {
         try (DataInputStream is = new DataInputStream(new BufferedInputStream(Files.newInputStream(this.file)))) {
             // read magic and version
             if (is.readInt() != 0xC053E71C) {
@@ -108,24 +106,11 @@ public class ImageCacheManager {
             size = is.readInt();
             for (int i = 0; i < size; i++) {
                 String group = is.readUTF();
-                List<CacheMeta> metas = new ArrayList<>();
 
-                int cacheMetas = is.readUnsignedShort();
-                for (int j = 0; j < cacheMetas; j++) {
-                    CacheMeta meta = new CacheMeta();
-                    meta.subfolder = is.readUTF();
+                CacheMeta meta = new CacheMeta();
+                meta.load(is);
 
-                    int timestamps = is.readInt();
-                    for (int k = 0; k < timestamps; k++) {
-                        String subfolder = is.readUTF();
-                        long timestamp = is.readLong();
-                        meta.timestamps.put(subfolder, timestamp);
-                    }
-
-                    metas.add(meta);
-                }
-
-                entries.put(group, metas);
+                entries.put(group, meta);
             }
         }
     }
@@ -134,7 +119,25 @@ public class ImageCacheManager {
     }
 
     private static class CacheMeta {
-        String subfolder;
         final Object2LongMap<String> timestamps = new Object2LongArrayMap<>();
+
+        void load(DataInputStream is) throws IOException {
+            int timestamps = is.readInt();
+            for (int k = 0; k < timestamps; k++) {
+                String subfolder = is.readUTF();
+                long timestamp = is.readLong();
+                this.timestamps.put(subfolder, timestamp);
+            }
+        }
+
+        void store(DataOutputStream dos) throws IOException {
+            // if we go over 16 bits there's a bigger problem, but let's support it anyway
+            dos.writeInt(this.timestamps.size());
+
+            for (Object2LongMap.Entry<String> timestamp : this.timestamps.object2LongEntrySet()) {
+                dos.writeUTF(timestamp.getKey());        // subfolder
+                dos.writeLong(timestamp.getLongValue()); // timestamp
+            }
+        }
     }
 }
