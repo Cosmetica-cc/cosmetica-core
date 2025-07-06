@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.ref.WeakReference;
@@ -47,6 +48,7 @@ public class BlockModelManager {
 
 	private static final Path CACHE_DIRECTORY;
 	public static final ResourceLocation FALLBACK_TEXTURE = new ResourceLocation("cosmetica-core", "icon.png");
+	private static final ImageCacheManager IMAGE_CACHE_MANAGER;
 
 	static {
 		// find cache directory location
@@ -77,6 +79,12 @@ public class BlockModelManager {
 			} catch (Exception e) {
 				throw new RuntimeException("Error creating Cosmetica cache directory", e);
 			}
+		}
+
+		try {
+			IMAGE_CACHE_MANAGER = new ImageCacheManager(CACHE_DIRECTORY.resolve("imagecachemanager"));
+		} catch (IOException e) {
+			throw new Unc(e);
 		}
 	}
 
@@ -149,7 +157,7 @@ public class BlockModelManager {
 		if (model == null) {
 			// model id. Primarily used for texture location.
 			ResourceLocation textureLocation = getLocation(id);
-			File cacheFile = getCacheFile(textureLocation).toFile();
+			File cacheFile = getCacheFile(textureLocation, CosmeticaCore).toFile();
 
 			model = new CosmeticaModel(textureLocation);
 
@@ -269,7 +277,7 @@ public class BlockModelManager {
 	}
 
 	// public: Internally exposed for Cosmetica 2
-	public static Path getCacheFile(ResourceLocation textureLocation) {
+	public static Path getCacheFile(ResourceLocation textureLocation, @Nullable ImageCacheManager manager) {
 		Path basePath = CACHE_DIRECTORY;
 
 		// default namespace
