@@ -32,14 +32,17 @@ import java.util.concurrent.CompletableFuture;
 public class ImageCacheManager {
     /**
      * Create and load a new cache manager.
-     * @throws IOException if an IO exception occurs setting up.
      */
-    public ImageCacheManager(Path root) throws IOException {
+    public ImageCacheManager(Path root) {
         this.root = root;
         this.file = root.resolve("imagecachemanager");
 
         if (Files.exists(this.file)) {
-            this.read(this.keep, this.entries);
+            try {
+                this.read(this.keep, this.entries);
+            } catch (IOException e) {
+                Logging.getInstance().error("Failed to load image cache metadata!", e);
+            }
         }
     }
 
@@ -48,12 +51,13 @@ public class ImageCacheManager {
     private final Map<String, CacheMeta> entries = new HashMap<>();
 
     /**
-     * Mark and track the given entry for disk management.
+     * Mark and track the given entry for disk management. Sets last accessed to now.
      * @param group the path group to track.
+     * @param subdirectory the subdirectory to track.
      */
-    public void mark(Path group, String subfolder) {
+    public void mark(Path group, String subdirectory) {
         this.entries.computeIfAbsent(this.root.relativize(group).toString(), g -> new CacheMeta())
-                .timestamps.put(subfolder, Instant.now().toEpochMilli());
+                .timestamps.put(subdirectory, Instant.now().toEpochMilli());
     }
 
     public void saveSync() throws IOException {
@@ -61,7 +65,7 @@ public class ImageCacheManager {
         this.save(this.keep, this.entries);
     }
 
-    public void saveAsync() throws IOException {
+    public void saveAsync() {
         // gather data on main thread, save off thread
         Logging.getInstance().debug("Saving cosmetica image cache metadata (async)");
         long timestamp = System.nanoTime();
@@ -139,11 +143,15 @@ public class ImageCacheManager {
         }
     }
 
-    public void runCacheGC() {
+    public void clearOldEntries() {
+        Logging.getInstance().debug("Clearing old cache entries");
+
         // 14 day cache
+        long now = System.nanoTime();
         long exp = Instant.now().minus(14, ChronoUnit.DAYS).toEpochMilli();
 
         Iterator<Map.Entry<String, CacheMeta>> it = this.entries.entrySet().iterator();
+        int count = 0;
 
         while (it.hasNext()) {
             Map.Entry<String, CacheMeta> entry = it.next();
@@ -166,12 +174,14 @@ public class ImageCacheManager {
                             try {
                                 FileUtils.deleteDirectory(p.toFile());
                                 subfolderIt.remove();
+                                count++;
                             } catch (IOException e) {
                                 Logging.getInstance().error("Failed to delete {} from cache", e, path);
                             }
                         } else {
                             // file is already gone
                             subfolderIt.remove();
+                            count++;
                         }
                     }
                 }
@@ -182,6 +192,9 @@ public class ImageCacheManager {
                 it.remove();
             }
         }
+
+        long delay = (System.nanoTime() - now) / 1_000_000;
+        Logging.getInstance().debug("Cleared {} old cache entries in {} ms", count, delay);
     }
 
     private static class CacheMeta {

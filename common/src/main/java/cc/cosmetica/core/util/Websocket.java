@@ -89,7 +89,7 @@ public abstract class Websocket {
 
 		SslContext sslCtx;
 
-		System.out.println(uri);
+//		Logging.getInstance().debug("Cosmetica websocket {}", uri);
 		if ("wss".equalsIgnoreCase(protocol)) {
 			sslCtx = SslContextBuilder.forClient()
 					.trustManager(InsecureTrustManagerFactory.INSTANCE)

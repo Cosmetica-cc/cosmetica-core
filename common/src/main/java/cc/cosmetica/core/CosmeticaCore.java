@@ -17,9 +17,20 @@
 package cc.cosmetica.core;
 
 import cc.cosmetica.core.impl.BlockModelManager;
+import cc.cosmetica.core.impl.Logging;
+
+import java.io.IOException;
 
 public class CosmeticaCore {
     public static void onInitialiseClient() {
-        BlockModelManager.IMAGE_CACHE_MANAGER.runCacheGC();
+        BlockModelManager.IMAGE_CACHE_MANAGER.clearOldEntries();
+    }
+
+    public static void onShutdown() {
+        try {
+            BlockModelManager.IMAGE_CACHE_MANAGER.saveSync();
+        } catch (IOException e) {
+            Logging.getInstance().error("Failed to save image cache metadata", e);
+        }
     }
 }

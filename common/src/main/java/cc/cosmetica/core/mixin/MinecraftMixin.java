@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.mixin;
 
+import cc.cosmetica.core.CosmeticaCore;
 import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import net.minecraft.client.Minecraft;
@@ -33,5 +34,14 @@ public class MinecraftMixin {
 	private void onTick(CallbackInfo ci) {
 		MasterCosmeticManager.tickCount++;
 		BlockModelManager.gc();
+
+		if ((MasterCosmeticManager.tickCount & 16383) == 0) { // about every 13.6 minutes
+			BlockModelManager.IMAGE_CACHE_MANAGER.saveAsync();
+		}
+	}
+
+	@Inject(method="close", at = @At(value="INVOKE", target="Lnet/minecraft/server/packs/resources/ReloadableResourceManager;close()V", shift=At.Shift.AFTER))
+	private void onShutdown(CallbackInfo ci) {
+		CosmeticaCore.onShutdown();
 	}
 }

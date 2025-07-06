@@ -81,11 +81,7 @@ public class BlockModelManager {
 			}
 		}
 
-		try {
-			IMAGE_CACHE_MANAGER = new ImageCacheManager(CACHE_DIRECTORY);
-		} catch (IOException e) {
-			throw new Unc(e);
-		}
+		IMAGE_CACHE_MANAGER = new ImageCacheManager(CACHE_DIRECTORY);
 	}
 
 	/*
@@ -236,7 +232,7 @@ public class BlockModelManager {
 		if (image == null) {
 			// image id. Primarily used for texture location.
 			ResourceLocation textureLocation = getLocation(id);
-			File cacheFile = getCacheFile(textureLocation).toFile();
+			File cacheFile = getCacheFile(textureLocation, IMAGE_CACHE_MANAGER).toFile();
 
 			image = new CachedImage(textureLocation);
 
@@ -294,6 +290,10 @@ public class BlockModelManager {
 		// _ character is used in the replacement for capitals so it will appear more often. so split it into more categories
 		if (fileName.length() > 2 && subdirectory.charAt(0) == '_' || subdirectory.charAt(1) == '_') {
 			subdirectory = fileName.substring(0, 3);
+		}
+		// mark accessed
+		if (manager != null) {
+			manager.mark(path.getParent(), subdirectory);
 		}
 		return path.getParent().resolve(subdirectory).resolve(fileName);
 	}
