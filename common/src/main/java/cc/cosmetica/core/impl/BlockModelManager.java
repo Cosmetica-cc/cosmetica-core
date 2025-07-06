@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Renderer and manager for baked block/item models.
@@ -274,6 +275,18 @@ public class BlockModelManager {
 
 	// public: Internally exposed for Cosmetica 2
 	public static Path getCacheFile(ResourceLocation textureLocation, @Nullable ImageCacheManager manager) {
+		Path path = getUngroupedPath(textureLocation);
+		String fileName = path.getFileName().toString();
+		String subdirectory = getSubdirectory(fileName);
+
+		// mark accessed
+		if (manager != null) {
+			manager.mark(path.getParent(), subdirectory);
+		}
+		return path.getParent().resolve(subdirectory).resolve(fileName);
+	}
+
+	private static Path getUngroupedPath(ResourceLocation textureLocation) {
 		Path basePath = CACHE_DIRECTORY;
 
 		// default namespace
@@ -282,20 +295,33 @@ public class BlockModelManager {
 		}
 
 		// add the path location
-		Path path = basePath.resolve(textureLocation.getPath());
-		String fileName = path.getFileName().toString();
+		return basePath.resolve(textureLocation.getPath());
+	}
 
-		// for caching large numbers of files it is easier to have less files in a directory
+	/**
+	 * For caching large numbers of files it is easier to have less files in a directory
+	 */
+	private static String getSubdirectory(String fileName) {
 		String subdirectory = fileName.length() < 2 ? "xx" : fileName.substring(0, 2);
 		// _ character is used in the replacement for capitals so it will appear more often. so split it into more categories
 		if (fileName.length() > 2 && subdirectory.charAt(0) == '_' || subdirectory.charAt(1) == '_') {
 			subdirectory = fileName.substring(0, 3);
 		}
-		// mark accessed
-		if (manager != null) {
-			manager.mark(path.getParent(), subdirectory);
-		}
-		return path.getParent().resolve(subdirectory).resolve(fileName);
+		return subdirectory;
+	}
+
+	/**
+	 * Set the images to preserve. This replaces existing images.
+	 * @param images the images in the image cache to preserve. These won't be deleted even after expiry.
+	 */
+	public static void preserveImages(List<ResourceLocation> images) {
+		IMAGE_CACHE_MANAGER.setKeep(images.stream().map(rl -> {
+			Path path = getUngroupedPath(rl);
+			String fileName = path.getFileName().toString();
+			String subdirectory = getSubdirectory(fileName);
+
+			return path.getParent().toString() + "/" + subdirectory;
+		}).collect(Collectors.toList()));
 	}
 
 	/**

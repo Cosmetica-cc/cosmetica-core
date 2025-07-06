@@ -55,9 +55,17 @@ public class ImageCacheManager {
      * @param group the path group to track.
      * @param subdirectory the subdirectory to track.
      */
-    public void mark(Path group, String subdirectory) {
+    void mark(Path group, String subdirectory) {
         this.entries.computeIfAbsent(this.root.relativize(group).toString(), g -> new CacheMeta())
                 .timestamps.put(subdirectory, Instant.now().toEpochMilli());
+    }
+
+    void setKeep(List<String> toKeep) {
+        if (toKeep.size() > 256) {
+            throw new IllegalArgumentException("Cannot force-preserve more than 256 cosmetics in cache.");
+        }
+
+        this.keep = toKeep;
     }
 
     public void saveSync() throws IOException {

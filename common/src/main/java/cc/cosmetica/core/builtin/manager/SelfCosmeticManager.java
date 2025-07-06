@@ -30,6 +30,7 @@ import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Cosmetics received from the API for yourself. Will use cached cosmetics if none can be obtained from the API.
+ * // TODO should cached cosmetics be a Cosmetica feature, not core?
  */
 public class SelfCosmeticManager implements CosmeticManager {
 	public SelfCosmeticManager() {
