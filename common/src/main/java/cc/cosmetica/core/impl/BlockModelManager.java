@@ -48,7 +48,7 @@ public class BlockModelManager {
 
 	private static final Path CACHE_DIRECTORY;
 	public static final ResourceLocation FALLBACK_TEXTURE = new ResourceLocation("cosmetica-core", "icon.png");
-	private static final ImageCacheManager IMAGE_CACHE_MANAGER;
+	public static final ImageCacheManager IMAGE_CACHE_MANAGER;
 
 	static {
 		// find cache directory location

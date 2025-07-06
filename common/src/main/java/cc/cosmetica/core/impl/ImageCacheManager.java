@@ -2,17 +2,18 @@ package cc.cosmetica.core.impl;
 
 import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import net.minecraft.FileUtil;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class ImageCacheManager {
@@ -30,7 +31,7 @@ public class ImageCacheManager {
     }
 
     private final Path root, file;
-    private List<ResourceLocation> keep = new ArrayList<>(); // max size 256
+    private List<String> keep = new ArrayList<>(); // max size 256. group+/+subfolder
     private final Map<String, CacheMeta> entries = new HashMap<>();
 
     /**
@@ -65,20 +66,20 @@ public class ImageCacheManager {
             Logging.getInstance().warn("(Cosmetica Core) Image cache metadata clone took {} ms!", dt);
         }
 
-        final List<ResourceLocation> keep = new ArrayList<>(this.keep);
+        final List<String> keep = new ArrayList<>(this.keep);
         // launch save async
         CompletableFuture.runAsync(() -> this.save(keep, saveEntries), Util.backgroundExecutor());
     }
 
-    private void save(List<ResourceLocation> keep, Map<String, CacheMeta> entries) {
+    private void save(List<String> keep, Map<String, CacheMeta> entries) {
         try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(this.file)))) {
             // write magic and version
             dos.writeInt(0xC053E71C);
             dos.writeByte(0);
             // write keep
             dos.writeByte(keep.size());
-            for (ResourceLocation rl : keep) {
-                dos.writeUTF(rl.toString());
+            for (String rl : keep) {
+                dos.writeUTF(rl);
             }
             // write entries
             dos.writeInt(entries.size());
@@ -91,7 +92,7 @@ public class ImageCacheManager {
         }
     }
 
-    private void read(List<ResourceLocation> keep, Map<String, CacheMeta> entries) throws IOException {
+    private void read(List<String> keep, Map<String, CacheMeta> entries) throws IOException {
         long time = System.nanoTime();
 
         try (DataInputStream is = new DataInputStream(new BufferedInputStream(Files.newInputStream(this.file)))) {
@@ -106,7 +107,7 @@ public class ImageCacheManager {
             // read keep
             int size = is.readUnsignedByte();
             for (int i = 0; i < size; i++) {
-                keep.add(new ResourceLocation(is.readUTF()));
+                keep.add(is.readUTF());
             }
             // read entries
             size = is.readInt();
@@ -126,6 +127,48 @@ public class ImageCacheManager {
     }
 
     public void runCacheGC() {
+        // 14 day cache
+        long exp = Instant.now().minus(14, ChronoUnit.DAYS).toEpochMilli();
+
+        Iterator<Map.Entry<String, CacheMeta>> it = this.entries.entrySet().iterator();
+
+        while (it.hasNext()) {
+            Map.Entry<String, CacheMeta> entry = it.next();
+            String groupPre = entry.getKey() + "/";
+            CacheMeta meta = entry.getValue();
+
+            Iterator<Object2LongMap.Entry<String>> subfolderIt = meta.timestamps.object2LongEntrySet().iterator();
+
+            while (subfolderIt.hasNext()) {
+                Object2LongMap.Entry<String> timestamp = subfolderIt.next();
+
+                if (timestamp.getLongValue() - exp < 0) { // before the Expiry date
+                    String subfolder = timestamp.getKey();
+                    String path = groupPre + subfolder;
+                    Path p;
+
+                    if (!keep.contains(path)) {
+                        if (Files.exists(p = this.root.resolve(path))) {
+                            // remove file
+                            try {
+                                FileUtils.deleteDirectory(p.toFile());
+                                subfolderIt.remove();
+                            } catch (IOException e) {
+                                Logging.getInstance().error("Failed to delete {} from cache", e, path);
+                            }
+                        } else {
+                            // file is already gone
+                            subfolderIt.remove();
+                        }
+                    }
+                }
+            }
+
+            // remove empty groups from cache manager
+            if (meta.timestamps.isEmpty()) {
+                it.remove();
+            }
+        }
     }
 
     private static class CacheMeta {
