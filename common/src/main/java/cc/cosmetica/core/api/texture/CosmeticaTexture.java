@@ -232,7 +232,7 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     void doTick() {
-        if (this.currentFrames > 1 && this.autoFrameInc > 1 && this.image != null && ((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
+        if (this.currentFrames > 1 && this.autoFrameInc >= 1 && this.image != null && ((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
             this.tick = (this.tick + 1) % this.currentTicksPerFrame;
 
             if (this.tick == 0) {
@@ -427,7 +427,7 @@ public class CosmeticaTexture extends AbstractTexture {
          */
         AUTO, // TODO maybe this shouldn't exist. Could cause too much confusion?
         /**
-         * Always animate true animations but never tilesheets.
+         * Always animate true animations but never tilesheets. Excluding resource pack animations.
          */
         NEVER_TILESHEETS,
         /**
