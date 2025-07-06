@@ -320,6 +320,7 @@ public class BlockModelManager {
 			String fileName = path.getFileName().toString();
 			String subdirectory = getSubdirectory(fileName);
 
+			// same method as keep contains check (yes, forced forward slash and string usage)
 			return path.getParent().toString() + "/" + subdirectory;
 		}).collect(Collectors.toList()));
 	}
