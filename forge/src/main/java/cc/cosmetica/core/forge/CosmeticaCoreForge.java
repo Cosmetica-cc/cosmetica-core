@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.forge;
 
+import cc.cosmetica.core.CosmeticaCore;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.builtin.BuiltinManagers;
 import net.minecraftforge.fml.common.Mod;
@@ -30,6 +31,9 @@ public class CosmeticaCoreForge {
 
 	private void onClientSetup(FMLClientSetupEvent event) {
 		new BuiltinManagers().init();
+
+		// GC
+		CosmeticaCore.onInitialiseClient();
 
 		// Development Testing Auth
 		String devAuth = System.getProperty("cosmetica.token");

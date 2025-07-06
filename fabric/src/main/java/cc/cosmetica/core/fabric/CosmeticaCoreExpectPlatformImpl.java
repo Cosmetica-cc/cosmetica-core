@@ -31,4 +31,8 @@ public class CosmeticaCoreExpectPlatformImpl {
 	public static Path getConfigDirectory() {
 		return FabricLoader.getInstance().getConfigDir();
 	}
+
+	public static boolean isDev() {
+		return FabricLoader.getInstance().isDevelopmentEnvironment();
+	}
 }

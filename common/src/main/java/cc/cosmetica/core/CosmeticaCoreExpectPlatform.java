@@ -39,4 +39,12 @@ public class CosmeticaCoreExpectPlatform {
 	public static Path getConfigDirectory() {
 		throw new AssertionError();
 	}
+
+	/**
+	 * Get if in development.
+	 */
+	@ExpectPlatform
+	public static boolean isDev() {
+		throw new AssertionError();
+	}
 }

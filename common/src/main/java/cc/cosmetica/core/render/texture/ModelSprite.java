@@ -16,6 +16,8 @@
 
 package cc.cosmetica.core.render.texture;
 
+import cc.cosmetica.core.CosmeticaCore;
+import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.impl.Logging;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -82,7 +84,7 @@ public class ModelSprite extends TextureAtlasSprite {
 
 	@Override
 	public TextureAtlas atlas() {
-		if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
+		if (CosmeticaCoreExpectPlatform.isDev()) {
 			throw new UnsupportedOperationException("I am a teapot. Tried to call atlas() on cosmetica ModelSprite.");
 		}
 		else {
