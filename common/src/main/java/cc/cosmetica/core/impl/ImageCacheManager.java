@@ -23,6 +23,10 @@ public class ImageCacheManager {
     public ImageCacheManager(Path root) throws IOException {
         this.root = root;
         this.file = root.resolve("imagecachemanager");
+
+        if (Files.exists(this.file)) {
+            this.read(this.keep, this.entries);
+        }
     }
 
     private final Path root, file;
@@ -88,6 +92,8 @@ public class ImageCacheManager {
     }
 
     private void read(List<ResourceLocation> keep, Map<String, CacheMeta> entries) throws IOException {
+        long time = System.nanoTime();
+
         try (DataInputStream is = new DataInputStream(new BufferedInputStream(Files.newInputStream(this.file)))) {
             // read magic and version
             if (is.readInt() != 0xC053E71C) {
@@ -112,6 +118,10 @@ public class ImageCacheManager {
 
                 entries.put(group, meta);
             }
+        }
+
+        if ((System.nanoTime() - time)/1_000_000 > 100) {
+            Logging.getInstance().warn("(Cosmetica Core) Loading image cache metadata took over 100ms.");
         }
     }
 
