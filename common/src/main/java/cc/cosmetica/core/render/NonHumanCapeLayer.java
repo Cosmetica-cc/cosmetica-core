@@ -67,7 +67,7 @@ public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 			return;
 		}
 		Cosmetics cosmetics = optionalCosmetics.get();
-		if (!cosmetics.getCloak().isPresent() || cosmetics.getCloak().get().getImage().isLoaded()) {
+		if (!cosmetics.getCloak().isPresent() || !cosmetics.getCloak().get().getImage().isLoaded()) {
 			return;
 		}
 
