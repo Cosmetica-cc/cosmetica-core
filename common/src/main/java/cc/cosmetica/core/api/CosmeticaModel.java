@@ -55,7 +55,7 @@ public final class CosmeticaModel {
 	 */
 	public synchronized void setTextureLoaded() {
 		this.textureLoaded = true;
-		Logging.getInstance().debug("Texture loaded for {}", this.texture);
+		Logging.getInstance().debug("Model: texture finished loading for {}", this.texture);
 
 		if (this.unbakedModel != null) {
 			this.startBaking();

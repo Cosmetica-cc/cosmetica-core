@@ -259,12 +259,12 @@ public class BlockModelManager {
 			// upload texture
 			// don't use isOnRenderThreadOrInit because we spawn other threads on init.
 			if (RenderSystem.isOnRenderThread()) {
-				Logging.getInstance().debug("Registering texture for cosmetic {}", id);
+				Logging.getInstance().debug("Registering texture for cosmetic {} at {}", id, textureLocation);
 				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 			}
 			else {
 				RenderSystem.recordRenderCall(() -> {
-					Logging.getInstance().debug("Registering texture for cosmetic {}", id);
+					Logging.getInstance().debug("Registering texture for cosmetic {} at {}", id, textureLocation);
 					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 				});
 			}
