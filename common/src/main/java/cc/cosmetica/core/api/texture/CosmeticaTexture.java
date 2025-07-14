@@ -497,6 +497,14 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         /**
+         * Get the current ticks per frame setting of this builder.
+         * @return the current ticks per frame setting.
+         */
+        public int getTicksPerFrame() {
+            return this.ticksPerFrame;
+        }
+
+        /**
          * Set whether this texture should automatically animate with multiple frames. AUTO by default.
          * Automatic animations will prioritise true animations over tilesheet animations.
          * @return This Builder instance.

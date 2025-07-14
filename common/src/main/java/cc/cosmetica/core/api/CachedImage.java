@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
 
@@ -23,13 +24,21 @@ import net.minecraft.resources.ResourceLocation;
  * A reference to an image that is cached. Once this reference is garbage collected, the image will be removed.
  */
 public final class CachedImage {
-	public CachedImage(ResourceLocation location) {
+	/**
+	 * Create a new CachedImage, given the resource location and frame period.
+	 * You should be using {@link CosmeticaModel#getOrCreateImage(String, String, CosmeticaTexture.Builder)} or similar
+	 * methods to download, cache, and create an instance rather than this direct constructor.
+	 * @param location the location of the cached image.
+	 * @param framePeriod the frame period.
+	 */
+	public CachedImage(ResourceLocation location, int framePeriod) {
 		this.location = location;
+		this.framePeriod = framePeriod;
 	}
 
 	public final ResourceLocation location;
 	private boolean loaded;
-	private int width, height;
+	private int width, height, framePeriod;
 
 	public boolean isLoaded() {
 		return this.loaded;
@@ -51,6 +60,15 @@ public final class CachedImage {
 		return this.height;
 	}
 
+	/**
+	 * Get the frame period, in ticks per frame, of the cosmetic. 0 if static.
+	 * Will give the API frame period even when it has failed to load.
+	 * @return the frame period in ticks.
+	 */
+	public int getFramePeriod() {
+		return this.framePeriod;
+	}
+
 	public void setLoaded(int width, int height) {
 		if (this == NO_TEXTURE) throw new IllegalArgumentException("Cannot set NO_TEXTURE as loaded.");
 		this.width = width;
@@ -58,5 +76,5 @@ public final class CachedImage {
 		this.loaded = true;
 	}
 
-	public static final CachedImage NO_TEXTURE = new CachedImage(TextureManager.INTENTIONAL_MISSING_TEXTURE);
+	public static final CachedImage NO_TEXTURE = new CachedImage(TextureManager.INTENTIONAL_MISSING_TEXTURE, 0);
 }

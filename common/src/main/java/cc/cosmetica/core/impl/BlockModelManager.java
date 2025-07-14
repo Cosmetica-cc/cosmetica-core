@@ -235,7 +235,7 @@ public class BlockModelManager {
 			ResourceLocation textureLocation = getLocation(id);
 			File cacheFile = getCacheFile(textureLocation, IMAGE_CACHE_MANAGER).toFile();
 
-			image = new CachedImage(textureLocation);
+			image = new CachedImage(textureLocation, textureBuilder.getTicksPerFrame());
 
 			// create texture
 			AbstractTexture texture = textureBuilder
