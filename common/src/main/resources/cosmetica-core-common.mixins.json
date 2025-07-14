@@ -10,7 +10,6 @@
     "cape.CapeLayerMixin",
     "cape.ElytraLayerMixin",
     "cosmetics.ArmourStandModelMixin",
-    "cosmetics.BlockEntityWithoutLevelRendererMixin",
     "cosmetics.LivingEntityRendererMixin",
     "equipper.ClientLevelMixin",
     "nametags.FontStringRenderOutputMixin",
