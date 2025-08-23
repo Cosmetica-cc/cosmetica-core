@@ -373,8 +373,10 @@ public final class CosmeticaSession {
 		websocket.send(packet);
 	}
 
-	// secret 'api'
-	public static boolean silence400 = false;
+	// secret 'api' in case some clients want to handle logging themselves.
+	// Not recommended as this may remove helpful information.
+	@SuppressWarnings("unused")
+	static boolean silence400 = false;
 
 	public static LoginResult login(UUID uuid, String username, String accessToken) throws IOException {
 		// ensure we are deauthenticated.
@@ -405,7 +407,7 @@ public final class CosmeticaSession {
 				String message = job.get("message").getAsString();
 
 				if (!silence400) {
-					logBadResponse("Request to key was not successful", response);
+					logBadResponse("Request to /key was not successful", response);
 				}
 				return new LoginResult(false, LoginResult.Code.forKeyApi(code), message);
 			} else {
@@ -476,8 +478,18 @@ public final class CosmeticaSession {
 						new PlayerResponse().isUser(true).user(user)
 				);
 				return new LoginResult(true, SUCCESS, "");
+			} else if (response.getStatusCode() == 400) {
+				JsonObject job = response.readEntityJson().getAsJsonObject();
+
+				String code = job.get("code").getAsString();
+				String message = job.get("message").getAsString();
+
+				if (!silence400) {
+					logBadResponse("Request to /verify was not successful", response);
+				}
+				return new LoginResult(false, LoginResult.Code.forVerifyApi(code), message);
 			} else {
-				logBadResponse("Cosmetica authentication failed", response);
+				logBadResponse("Cosmetica authentication verification failed", response);
 				return new LoginResult(false, GENERIC_VERIFY_ERROR, "Failed to verify login (error code " + response.getStatusCode() + ")");
 			}
 		}
