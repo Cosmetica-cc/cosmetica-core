@@ -17,6 +17,7 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.CosmeticaAPI;
+import cc.cosmetica.core.api.LoginResult;
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.util.Response;
 import cc.cosmetica.core.util.Websocket;
@@ -48,6 +49,8 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static cc.cosmetica.core.api.LoginResult.Code.*;
 
 /**
  * Handles authentication and websocket for Cosmetica.
@@ -370,7 +373,10 @@ public final class CosmeticaSession {
 		websocket.send(packet);
 	}
 
-	public static boolean login(UUID uuid, String username, String accessToken) throws IOException {
+	// secret 'api'
+	public static boolean silence400 = false;
+
+	public static LoginResult login(UUID uuid, String username, String accessToken) throws IOException {
 		// ensure we are deauthenticated.
 		deauthenticate();
 
@@ -387,14 +393,24 @@ public final class CosmeticaSession {
 
 		try (Response response = Response.post(authURL + "/java/key", keyRequest)) {
 			if (response.isSuccessful()) {
-				JsonObject jo = response.readEntityJson().getAsJsonObject();
+				JsonObject job = response.readEntityJson().getAsJsonObject();
 
-				sessionId = jo.get("sessionId").getAsString();
-				verifyToken = jo.get("verifyToken").getAsString();
-				publicKey = Base64.getDecoder().decode(jo.get("publicKey").getAsString());
+				sessionId = job.get("sessionId").getAsString();
+				verifyToken = job.get("verifyToken").getAsString();
+				publicKey = Base64.getDecoder().decode(job.get("publicKey").getAsString());
+			} else if (response.getStatusCode() == 400) {
+				JsonObject job = response.readEntityJson().getAsJsonObject();
+
+				String code = job.get("code").getAsString();
+				String message = job.get("message").getAsString();
+
+				if (!silence400) {
+					logBadResponse("Request to key was not successful", response);
+				}
+				return new LoginResult(false, LoginResult.Code.forKeyApi(code), message);
 			} else {
 				logBadResponse("Request to key was not successful", response);
-				return false;
+				return new LoginResult(false, GENERIC_KEY_ERROR, "Error fetching Key (error code " + response.getStatusCode() + ")");
 			}
 		}
 
@@ -414,7 +430,7 @@ public final class CosmeticaSession {
 			// Ensure successful
 			if (!response.isSuccessful()) {
 				logBadResponse("Could not log in to Cosmetica", response);
-				return false;
+				return new LoginResult(false, MOJANG_LOGIN_ERROR, "Failed to join session server (error code " + response.getStatusCode() + ")");
 			}
 		}
 
@@ -436,7 +452,7 @@ public final class CosmeticaSession {
 			);
 		} catch (GeneralSecurityException e) {
 			Logging.getInstance().error("Error encrypting data", e);
-			return false;
+			return new LoginResult(false, ENCRYPTION_ERROR, e.getClass().getSimpleName() + ": " + e.getMessage());
 		}
 
 		// Verify with auth server
@@ -459,10 +475,10 @@ public final class CosmeticaSession {
 				SelfCosmeticManager.update(
 						new PlayerResponse().isUser(true).user(user)
 				);
-				return true;
+				return new LoginResult(true, SUCCESS, "");
 			} else {
 				logBadResponse("Cosmetica authentication failed", response);
-				return false;
+				return new LoginResult(false, GENERIC_VERIFY_ERROR, "Failed to verify login (error code " + response.getStatusCode() + ")");
 			}
 		}
 	}

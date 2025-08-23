@@ -105,7 +105,7 @@ public final class CosmeticaAPI {
 	 * Log in with the currently logged-in user. Does not spawn another thread.
 	 * @return whether login was successful.
 	 */
-	public static boolean login() throws IOException {
+	public static LoginResult login() throws IOException {
 		User user = Minecraft.getInstance().getUser();
 		return CosmeticaSession.login(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken());
 	}
@@ -117,7 +117,7 @@ public final class CosmeticaAPI {
 	 * @param accessToken the minecraft access token to use to sign in.
 	 * @return whether login was successful.
 	 */
-	public static boolean login(UUID uuid, String username, String accessToken) throws IOException {
+	public static LoginResult login(UUID uuid, String username, String accessToken) throws IOException {
 		return CosmeticaSession.login(uuid, username, accessToken);
 	}
 
