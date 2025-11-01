@@ -21,7 +21,7 @@ import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.util.Response;
 import gg.cloaks.javaclient.ApiException;
-import gg.cloaks.javaclient.api.DefaultApi;
+import gg.cloaks.javaclient.api.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.resources.ResourceLocation;
@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 /**
  * Provides access to the authenticated instance of the Cosmetica web API.
@@ -40,11 +39,163 @@ public final class CosmeticaAPI {
 		// NO-OP
 	}
 
+//	/**
+//	 * Get asynchronous access to an API controller.
+//	 * @param cstr a constructor for an API found in {@link gg.cloaks.javaclient.api}
+//	 */
+//	public static <T> AsyncApi<T> asyncController(Function<ApiClient, T> cstr) {
+//		return new AsyncApi<>(cstr.apply(CosmeticaSession.getCurrentSession().client));
+//	}
+
 	/**
-	 * Get the current instance of {@link DefaultApi}.
+	 * Get the accessories controller for the API.
+	 * @return an asynchronous accessor to the accessories api.
 	 */
-	public static DefaultApi getInstance() {
-		return CosmeticaSession.getCurrentSession().api;
+	public static AsyncApi<AccessoriesApi> accessories() {
+		return CosmeticaSession.getCurrentSession().accessoriesApi;
+	}
+
+	/**
+	 * Get the controller for the africa API.
+	 * @return an asynchronous accessor to the africa api.
+	 */
+	public static AsyncApi<AfricaApi> africa() {
+		return CosmeticaSession.getCurrentSession().africaApi;
+	}
+
+	/**
+	 * Get the auth controller for the API.
+	 * @return an asynchronous accessor to the auth api.
+	 */
+	public static AsyncApi<AuthApi> auth() {
+		return CosmeticaSession.getCurrentSession().authApi;
+	}
+
+	/**
+	 * Get the capes controller for the API.
+	 * @return an asynchronous accessor to the capes api.
+	 */
+	public static AsyncApi<CapesApi> capes() {
+		return CosmeticaSession.getCurrentSession().capesApi;
+	}
+
+	/**
+	 * Get the downloads controller for the API.
+	 * @return an asynchronous accessor to the downloads api.
+	 */
+	public static AsyncApi<DownloadsApi> downloads() {
+		return CosmeticaSession.getCurrentSession().downloadsApi;
+	}
+
+	/**
+	 * Get the controller for the external capes API.
+	 * @return an asynchronous accessor to the external capes api.
+	 */
+	public static AsyncApi<ExternalCapesApi> externalCapes() {
+		return CosmeticaSession.getCurrentSession().externalCapesApi;
+	}
+
+	/**
+	 * Get the controller for the icons API.
+	 * @return an asynchronous accessor to the icons api.
+	 */
+	public static AsyncApi<IconsApi> icons() {
+		return CosmeticaSession.getCurrentSession().iconsApi;
+	}
+
+	/**
+	 * Get the controller for the leaderboard API.
+	 * @return an asynchronous accessor to the leaderboard api.
+	 */
+	public static AsyncApi<LeaderboardApi> leaderboard() {
+		return CosmeticaSession.getCurrentSession().leaderboardApi;
+	}
+
+	/**
+	 * Get the controller for the lore API.
+	 * @return an asynchronous accessor to the lore api.
+	 */
+	public static AsyncApi<LoreApi> lore() {
+		return CosmeticaSession.getCurrentSession().loreApi;
+	}
+
+	/**
+	 * Get the controller for the outfits API.
+	 * @return an asynchronous accessor to the outfits api.
+	 */
+	public static AsyncApi<OutfitsApi> outfits() {
+		return CosmeticaSession.getCurrentSession().outfitsApi;
+	}
+
+	/**
+	 * Get the controller for the player API.
+	 * @return an asynchronous accessor to the player api.
+	 */
+	public static AsyncApi<PlayersApi> players() {
+		return CosmeticaSession.getCurrentSession().playerApi;
+	}
+
+	/**
+	 * Get the controller for the premium API.
+	 * @return an asynchronous accessor to the premium api.
+	 */
+	public static AsyncApi<PremiumApi> premiumApi() {
+		return CosmeticaSession.getCurrentSession().premiumApi;
+	}
+
+	/**
+	 * Get the controller for the renderer API.
+	 * @return an asynchronous accessor to the renderer api.
+	 */
+	public static AsyncApi<RendererApi> renderer() {
+		return CosmeticaSession.getCurrentSession().rendererApi;
+	}
+
+	/**
+	 * Get the controller for the roles API.
+	 * @return an asynchronous accessor to the roles api.
+	 */
+	public static AsyncApi<RolesApi> roles() {
+		return CosmeticaSession.getCurrentSession().rolesApi;
+	}
+
+	/**
+	 * Get the controller for the search API.
+	 * @return an asynchronous accessor to the search api.
+	 */
+	public static AsyncApi<SearchApi> search() {
+		return CosmeticaSession.getCurrentSession().searchApi;
+	}
+
+	/**
+	 * Get the controller for the settings API.
+	 * @return an asynchronous accessor to the settings api.
+	 */
+	public static AsyncApi<SettingsApi> settings() {
+		return CosmeticaSession.getCurrentSession().settingsApi;
+	}
+
+	/**
+	 * Get the controller for the statistics API.
+	 * @return an asynchronous accessor to the statistics api.
+	 */
+	public static AsyncApi<StatsApi> stats() {
+		return CosmeticaSession.getCurrentSession().statsApi;
+	}
+
+	/**
+	 * Get the controller for the user API.
+	 * @return an asynchronous accessor to the user api.
+	 */
+	public static AsyncApi<UsersApi> users() {
+		return CosmeticaSession.getCurrentSession().userApi;
+	}
+	/**
+	 * Get the controller for the verify API.
+	 * @return an asynchronous accessor to the verify api.
+	 */
+	public static AsyncApi<VerifyApi> verify() {
+		return CosmeticaSession.getCurrentSession().verifyApi;
 	}
 
 	/**
@@ -54,25 +205,6 @@ public final class CosmeticaAPI {
 	 */
 	public static boolean isAuthenticated() {
 		return CosmeticaSession.getCurrentSession().isAuthenticated();
-	}
-
-	/**
-	 * Perform a task async on the Cosmetica threadpool. Intended for API requests to cosmetica.
-	 * If the request returns a 401, the API instance is deauthenticated.
-	 *
-	 * @param request the request to perform.
-	 * @param <T>     the type of the promise.
-	 * @return a {@link CompletableFuture} that promises the response of the request.
-	 */
-	public static <T> CompletableFuture<T> performAsync(Function<DefaultApi, T> request) {
-		return CompletableFuture.supplyAsync(() -> request.apply(CosmeticaSession.getCurrentSession().api), MasterCosmeticManager.HTTP_THREAD_POOL)
-				.exceptionally(t -> {
-					if (t instanceof ApiException && ((ApiException) t).getCode() == 401) {
-						CosmeticaSession.deauthenticate();
-					}
-
-					throw (RuntimeException)t;
-				});
 	}
 
 	/**

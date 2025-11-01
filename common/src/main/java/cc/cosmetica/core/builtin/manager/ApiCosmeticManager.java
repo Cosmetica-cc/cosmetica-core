@@ -100,9 +100,9 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 			Logging.getInstance().debug("Looking up user by {}", lookupBy);
 
-			CosmeticaAPI.performAsync(api -> {
+			CosmeticaAPI.players().requestAsync(api -> {
 				try {
-					return api.playersControllerGetPlayer(lookupBy);
+					return api.getPlayer(lookupBy);
 				} catch (ApiException e) {
 					if (e.getCode() != 404) {
 						Logging.getInstance().error("Error fetching player data by name/id.", e);
@@ -119,9 +119,9 @@ public class ApiCosmeticManager implements CosmeticManager {
 			// and texture data for the servers.
 
 			// Make a request for player info using the texture packet endpoint.
-			CosmeticaAPI.performAsync(api -> {
+			CosmeticaAPI.players().requestAsync(api -> {
 				try {
-					return api.playersControllerSubmitTexturePacket(
+					return api.submitTexturePacket(
 							new TexturePacketDto()
 									.value(textureProperty.getValue())
 									.signature(textureProperty.getSignature())

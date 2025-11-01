@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.api.AsyncApi;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.LoginResult;
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
@@ -26,7 +27,7 @@ import com.google.gson.*;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.Configuration;
-import gg.cloaks.javaclient.api.DefaultApi;
+import gg.cloaks.javaclient.api.*;
 import gg.cloaks.javaclient.model.AfricaSession;
 import gg.cloaks.javaclient.model.CosmeticaUser;
 import gg.cloaks.javaclient.model.PlayerResponse;
@@ -63,12 +64,50 @@ public final class CosmeticaSession {
 	 * @param user the user's uuid. Set to null if not signed in.
 	 */
 	private CosmeticaSession(ApiClient client, String token, @Nullable UUID user) {
-		this.api = new DefaultApi(client);
+		this.accessoriesApi = new AsyncApi<>(new AccessoriesApi(client));
+		this.africaApi = new AsyncApi<>(new AfricaApi(client));
+		this.authApi = new AsyncApi<>(new AuthApi(client));
+		this.capesApi = new AsyncApi<>(new CapesApi(client));
+		this.downloadsApi = new AsyncApi<>(new DownloadsApi(client));
+		this.externalCapesApi = new AsyncApi<>(new ExternalCapesApi(client));
+		this.iconsApi = new AsyncApi<>(new IconsApi(client));
+		this.leaderboardApi = new AsyncApi<>(new LeaderboardApi(client));
+		this.loreApi = new AsyncApi<>(new LoreApi(client));
+		this.outfitsApi = new AsyncApi<>(new OutfitsApi(client));
+		this.playerApi = new AsyncApi<>(new PlayersApi(client));
+		this.premiumApi = new AsyncApi<>(new PremiumApi(client));
+		this.rendererApi = new AsyncApi<>(new RendererApi(client));
+		this.rolesApi = new AsyncApi<>(new RolesApi(client));
+		this.searchApi = new AsyncApi<>(new SearchApi(client));
+		this.settingsApi = new AsyncApi<>(new SettingsApi(client));
+		this.statsApi = new AsyncApi<>(new StatsApi(client));
+		this.userApi = new AsyncApi<>(new UsersApi(client));
+		this.verifyApi = new AsyncApi<>(new VerifyApi(client));
 		this.sessionToken = token;
 		this.user = user;
 	}
 
-	public final DefaultApi api;
+	// Probably not much better than just creating a new api object each time
+	public final AsyncApi<AccessoriesApi> accessoriesApi;
+	public final AsyncApi<AfricaApi> africaApi;
+	public final AsyncApi<AuthApi> authApi;
+	public final AsyncApi<CapesApi> capesApi;
+	public final AsyncApi<DownloadsApi> downloadsApi;
+	public final AsyncApi<ExternalCapesApi> externalCapesApi;
+	public final AsyncApi<IconsApi> iconsApi;
+	public final AsyncApi<LeaderboardApi> leaderboardApi;
+	public final AsyncApi<LoreApi> loreApi;
+	public final AsyncApi<OutfitsApi> outfitsApi;
+	public final AsyncApi<PlayersApi> playerApi;
+	public final AsyncApi<PremiumApi> premiumApi;
+	public final AsyncApi<RendererApi> rendererApi;
+	public final AsyncApi<RolesApi> rolesApi;
+	public final AsyncApi<SearchApi> searchApi;
+	public final AsyncApi<SettingsApi> settingsApi;
+	public final AsyncApi<StatsApi> statsApi;
+	public final AsyncApi<UsersApi> userApi;
+	public final AsyncApi<VerifyApi> verifyApi;
+
 	public final String sessionToken;
 	private final @Nullable UUID user;
 	private Websocket websocket;
@@ -79,7 +118,7 @@ public final class CosmeticaSession {
 
 	private void logInToAfrica() {
 		// Log in to africa websocket
-		CosmeticaAPI.performAsync(DefaultApi::africaControllerRequestSession)
+		CosmeticaAPI.africa().requestAsync(AfricaApi::requestSession)
 				.thenApply(africaSession -> {
 					Logging.getInstance().info("Connecting to {}", africaSession.getName());
 					Logging.getInstance().info(africaSession.getMessage());
@@ -308,7 +347,7 @@ public final class CosmeticaSession {
 		// Fetch own cosmetics
 		Logging.getInstance().debug("Logged in to {}, fetching own cosmetics.", uuid);
 		// TODO make texture packet request and submit that instead.
-		CosmeticaAPI.performAsync(DefaultApi::usersControllerGetSelf)
+		CosmeticaAPI.users().requestAsync(UsersApi::getSelf)
 				.thenAccept(user -> {
 					Logging.getInstance().debug("Received Login Cosmetics");
 					// set self cosmetics
@@ -383,7 +422,7 @@ public final class CosmeticaSession {
 		deauthenticate();
 
 		// Get the authentication server to authenticate with
-		String authURL = getCurrentSession().api.authControllerGetAuthServer().getUrl();
+		String authURL = getCurrentSession().authApi.get().getAuthServer().getUrl();
 
 		// Initiate a session
 		JsonObject keyRequest = new JsonObject();
@@ -470,7 +509,7 @@ public final class CosmeticaSession {
 				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
 
 				// set user
-				CosmeticaUser user = getCurrentSession().api.getApiClient().getObjectMapper().readValue(
+				CosmeticaUser user = getCurrentSession().accessoriesApi.get().getApiClient().getObjectMapper().readValue(
 						new Gson().toJson(jo.get("user")),
 						CosmeticaUser.class
 				);

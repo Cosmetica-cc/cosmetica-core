@@ -16,11 +16,10 @@
 
 package cc.cosmetica.core.api;
 
-import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.impl.UUIDs;
 import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.ApiException;
+import gg.cloaks.javaclient.api.OutfitsApi;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import gg.cloaks.javaclient.model.Outfit;
 import gg.cloaks.javaclient.model.OutfitAccessory;
@@ -41,6 +40,8 @@ public class OutfitCosmetics implements Cosmetics {
 		this.id = outfit.getId();
 		this.creator = Cosmetic.gameProfileOf(outfit.getCreator());
 		this.accessories = new ArrayList<>();
+
+
 
 		// read accessories
 		for (OutfitAccessory accessory : outfit.getAccessories()) {
@@ -126,7 +127,7 @@ public class OutfitCosmetics implements Cosmetics {
 	 * @return a completable future to contain the cosmetics on a successful call, otherwise contains null.
 	 */
 	public static CompletableFuture<? extends Cosmetics> getAsyncById(String outfitId) {
-		return CosmeticaAPI.performAsync(api -> api.outfitsControllerGet(outfitId))
+		return CosmeticaAPI.outfits().requestAsync(api -> api.get(outfitId))
 				.thenApply(OutfitCosmetics::new)
 				.exceptionally(e -> {
 					/* probably no outfit exists */
