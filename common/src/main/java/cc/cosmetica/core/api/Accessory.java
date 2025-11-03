@@ -142,27 +142,27 @@ public final class Accessory implements Cosmetic {
 
 		switch (attachment) {
 		case HEAD:
-			dy = 8.0;
-			dx = 8.0;
+			dy = 8.0 - 4;
+			dx = 8.0 - 8;
 			break;
 		case RIGHT_ARM:
-			dy = 0.0;
-			dx = 8.0;
+			dy = 0.0 - 6;
+			dx = 8.0 - 8;
 			break;
 		case LEFT_ARM:
-			dy = 0.0;
-			dx = 7.0;
+			dy = 0.0 - 6;
+			dx = 7.0 - 8;
 			break;
 		default:
-			dy = -2.0;
-			dx = 8.0;
+			dy = -2.0 - 6;
+			dx = 8.0 - 8;
 			break;
 		}
 
 		return new Vec3(
 				(x + dx) / 16.0,
 				(y + dy) / 16.0,
-				(z + 8.0) / 16.0
+				(z) / 16.0
 		);
 	}
 }
