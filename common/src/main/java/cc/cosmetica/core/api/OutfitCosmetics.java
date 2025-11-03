@@ -41,8 +41,6 @@ public class OutfitCosmetics implements Cosmetics {
 		this.creator = Cosmetic.gameProfileOf(outfit.getCreator());
 		this.accessories = new ArrayList<>();
 
-//		System.out.println(outfit);
-
 		// read accessories
 		for (OutfitAccessory accessory : outfit.getAccessories()) {
 			this.accessories.add(Accessory.fromOutfitAccessory(accessory));
