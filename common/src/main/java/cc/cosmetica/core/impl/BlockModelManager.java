@@ -204,6 +204,7 @@ public class BlockModelManager {
 
 							// calculate bounds
 							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
+							Logging.getInstance().debug("Bounding Box calculation for {}: {}", blockModel.name, aabb);
 
 							lambdaHack.setModel(blockModel, aabb);
 						} catch (IOException | RuntimeException e) {

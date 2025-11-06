@@ -167,10 +167,12 @@ public final class CosmeticaModelBakery {
 				Collection<Vector3f> rotated = new HashSet<>();
 
 				for (Vector3f corner : corners) {
+					Vector3f origin = element.rotation.origin.copy();
+					origin.mul(16);
 					rotated.add(
 							rotateCorner(
 									corner,
-									element.rotation.origin,
+									origin,
 									element.rotation.axis,
 									element.rotation.angle
 							));
