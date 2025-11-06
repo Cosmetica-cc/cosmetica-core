@@ -66,6 +66,6 @@ public class NametagConfig {
 	}
 
 	// NOTE: this might change to an Optional or @Nullable field in the future.
-	public static final ImageCosmetic NO_ICON = new ImageCosmetic(CachedImage.NO_TEXTURE, "", "", null, "");
+	public static final ImageCosmetic NO_ICON = new ImageCosmetic(CachedImage.NO_TEXTURE, "", "", null, "", 0);
 	public static final NametagConfig EMPTY = new NametagConfig("", "", NO_ICON, false);
 }

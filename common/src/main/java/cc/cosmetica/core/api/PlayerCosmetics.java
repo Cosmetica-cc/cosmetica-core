@@ -55,8 +55,8 @@ public final class PlayerCosmetics implements Cosmetics {
 							lore.getService(),
 							lore.getService(), // use service as id as well
 							null,
-							lore.getIconUrl()),
-					false);
+							lore.getIconUrl(),
+							0), false);
 		}
 
 		// outfit

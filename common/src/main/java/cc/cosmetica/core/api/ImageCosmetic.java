@@ -29,12 +29,14 @@ import java.util.Optional;
  * Represents data about a simple image cosmetic.
  */
 public final class ImageCosmetic implements Cosmetic {
-    public ImageCosmetic(CachedImage image, String name, String id, @Nullable GameProfile creator, String thumbnail) {
+    public ImageCosmetic(CachedImage image, String name, String id, @Nullable GameProfile creator, String thumbnail,
+                         int flags) {
         this.image = image;
         this.name = name;
         this.id = id;
         this.creator = creator;
         this.thumbnail = thumbnail;
+        this.flags = flags;
     }
 
     private final CachedImage image;
@@ -44,6 +46,7 @@ public final class ImageCosmetic implements Cosmetic {
     @Nullable
     private final GameProfile creator;
     private final String thumbnail;
+    private final int flags;
 
     @Override
     public String getName() {
@@ -74,6 +77,14 @@ public final class ImageCosmetic implements Cosmetic {
     }
 
     /**
+     * Get the flags for this {@link ImageCosmetic}. The interpretation of these depends on the cosmetic.
+     * @apiNote refer to <a href="https://api.cloaks.gg/docs">the documentation</a> for interpretation.
+     */
+    public int getFlags() {
+        return this.flags;
+    }
+
+    /**
      * Create an ImageCosmetic from the API.
      * @param cosmetic the cosmetic.
      * @param category the image category for image caching.
@@ -85,7 +96,8 @@ public final class ImageCosmetic implements Cosmetic {
                 cosmetic.getName(),
                 cosmetic.getId(),
                 Cosmetic.gameProfileOf(cosmetic.getCreator()),
-                cosmetic.getThumbnail());
+                cosmetic.getThumbnail(),
+                cosmetic.getFlags().intValue());
     }
 
     /**
@@ -101,6 +113,7 @@ public final class ImageCosmetic implements Cosmetic {
                 icon.getName(),
                 icon.getId(),
                 Cosmetic.gameProfileOf(icon.getCreator()),
-                icon.getThumbnail());
+                icon.getThumbnail(),
+                icon.getFlags().intValue());
     }
 }

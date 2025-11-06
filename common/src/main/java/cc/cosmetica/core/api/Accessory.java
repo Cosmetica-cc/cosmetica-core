@@ -38,6 +38,13 @@ public final class Accessory implements Cosmetic {
 		this.model = model;
 		this.offset = offset;
 		this.flags = new HashSet<>();
+		// initialise flags
+		int flags = accessory.getFlags().intValue();
+		for (Flag flag : Flag.values()) {
+			if (flag.isSet(flags)) {
+				this.flags.add(flag);
+			}
+		}
 	}
 
 	private final gg.cloaks.javaclient.model.Accessory jsonObject;
@@ -97,7 +104,23 @@ public final class Accessory implements Cosmetic {
 	}
 
 	public enum Flag {
-		HIDE_WITH_HELMET
+		HIDE_WITH_HELMET(0x1),
+		HIDE_WITH_CHESTPLATE(0x2),
+		HIDE_WITH_LEGGINGS(0x4),
+		HIDE_WITH_BOOTS(0x8),
+		HIDE_WITH_CAPE(0x10),
+		HIDE_WITH_ELYTRA(0x20),
+		HIDE_WITH_PARROT(0x40);
+
+		Flag(int mask) {
+			this.mask = mask;
+		}
+
+		private final int mask;
+
+		boolean isSet(int value) {
+			return (value & mask) != 0;
+		}
 	}
 
 	/**
