@@ -29,6 +29,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ElytraItem;
 import net.minecraft.world.phys.Vec3;
@@ -91,9 +92,40 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 		}
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_PARROT)) {
+			if (entity instanceof AbstractClientPlayer) {
+				HumanoidArm side = null;
 
-//		if (left != null && ((left.extraInfo() & Model.SHOW_SHOULDER_BUDDY_WITH_PARROT) != 0 || player.getShoulderEntityLeft().isEmpty())) render(left, stack, multiBufferSource, packedLight, (Playerish) player, true);
-//					if (right != null && ((right.extraInfo() & Model.SHOW_SHOULDER_BUDDY_WITH_PARROT) != 0 || player.getShoulderEntityRight().isEmpty())) render(right, stack, multiBufferSource, packedLight, (Playerish) player, false);
+				switch (accessory.getAttachment()) {
+					case HEAD:
+					case BODY:
+						// decide based on which side it is skewed to
+						// If not skewed hide with either parrot
+						Vec3 centre = accessory.getModel().getBoundingBox().getCenter();
+						if (Math.abs(centre.x) > 0.5) {
+							side = centre.x < 8 ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
+						}
+						break;
+					case LEFT_ARM:
+					case LEFT_LEG:
+						side = accessory.isMirrored() ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
+					case RIGHT_ARM:
+					case RIGHT_LEG:
+						side = accessory.isMirrored() ? HumanoidArm.RIGHT : HumanoidArm.LEFT;
+					case UNKNOWN_DEFAULT_OPEN_API:
+						break;
+				}
+
+				if (side == null || side == HumanoidArm.LEFT) {
+					if (!((AbstractClientPlayer) entity).getShoulderEntityLeft().isEmpty()) {
+						return;
+					}
+				}
+				if (side == null || side == HumanoidArm.RIGHT) {
+					if (!((AbstractClientPlayer) entity).getShoulderEntityRight().isEmpty()) {
+						return;
+					}
+				}
+			}
 		}
 
 		ModelPart part = null;
