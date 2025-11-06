@@ -28,8 +28,12 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ElytraItem;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.Collection;
 
 /**
  * Renderer for Cosmetic models on humanoid entities.
@@ -42,73 +46,118 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 	@Override
 	public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int light, E entity,
 					   float f, float g, float pitch, float j, float k, float l) {
+		if (entity.isInvisible())return;//don't show cosmetics when invisible
+
 		Cosmetics.getCosmetics(entity).ifPresent(cosmetics -> {
 			for (Accessory accessory : cosmetics.getAccessories()) {
-				//System.out.println("rendering accessory " + accessory.getName() + " on " + accessory.getAttachment().getValue()	);
-				ModelPart part = null;
-
-				// additional shifting for slim/thick arms
-				float additionalXOffset = 0;
-
-				switch (accessory.getAttachment()) {
-				case HEAD:
-					part = this.getParentModel().head;
-					break;
-				case BODY:
-					part = this.getParentModel().body;
-					break;
-				case LEFT_ARM:
-					part = accessory.isMirrored() ?
-							this.getParentModel().rightArm :
-							this.getParentModel().leftArm;
-
-					// thin skin: shift
-					if (this.getParentModel() instanceof PlayerModel) {
-						if (((PlayerModelAccessor) this.getParentModel()).isSlim()) {
-							additionalXOffset += 0.5f / 16.0f;
-						}
-					}
-					break;
-				case RIGHT_ARM:
-					part = accessory.isMirrored() ?
-							this.getParentModel().leftArm :
-							this.getParentModel().rightArm;
-
-					// thin skin: shift
-					if (this.getParentModel() instanceof PlayerModel) {
-						if (((PlayerModelAccessor) this.getParentModel()).isSlim()) {
-							additionalXOffset += 0.5f / 16.0f;
-						}
-					}
-					break;
-				case LEFT_LEG:
-					part = accessory.isMirrored() ?
-							this.getParentModel().rightLeg :
-							this.getParentModel().leftLeg;
-					break;
-				case RIGHT_LEG:
-					part = accessory.isMirrored() ?
-							this.getParentModel().leftLeg :
-							this.getParentModel().rightLeg;
-					break;
-				case UNKNOWN_DEFAULT_OPEN_API:
-					Logging.getInstance().warnOnce(
-							"attachment_unknown_accessory",
-							"Unknown attachment for accessory: {}",
-							accessory.getName());
-					continue;
-				}
-
-				Vec3 offset = accessory.getOffset();
-
-				if (part.visible) {
-					accessory.getModel().renderOnPart(
-							part, poseStack, multiBufferSource, light,
-							(float) offset.x + additionalXOffset, (float) offset.y, (float) offset.z,
-							accessory.isMirrored()
-					);
-				}
+				this.renderAccessory(accessory, poseStack, multiBufferSource, light, entity);
 			}
 		});
+	}
+
+	private void renderAccessory(Accessory accessory, PoseStack stack, MultiBufferSource multiBufferSource, int light, E entity) {
+		//System.out.println("rendering accessory " + accessory.getName() + " on " + accessory.getAttachment().getValue()	);
+		// Check if accessory can be rendered
+		Collection<Accessory.Flag> flags = accessory.getFlags();
+
+		if (flags.contains(Accessory.Flag.HIDE_WITH_HELMET)) {
+			if (entity.hasItemInSlot(EquipmentSlot.HEAD)) {
+				return;
+			}
+		}
+
+		if (entity.hasItemInSlot(EquipmentSlot.CHEST)) {
+			if (entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem) {
+				if (flags.contains(Accessory.Flag.HIDE_WITH_ELYTRA)) {
+					return;
+				}
+			} else {
+				if (flags.contains(Accessory.Flag.HIDE_WITH_CHESTPLATE)) {
+					return;
+				}
+			}
+		}
+
+		if (flags.contains(Accessory.Flag.HIDE_WITH_LEGGINGS)) {
+			if (entity.hasItemInSlot(EquipmentSlot.LEGS)) {
+				return;
+			}
+		}
+
+		if (flags.contains(Accessory.Flag.HIDE_WITH_BOOTS)) {
+			if (entity.hasItemInSlot(EquipmentSlot.FEET)) {
+				return;
+			}
+		}
+
+		if (flags.contains(Accessory.Flag.HIDE_WITH_PARROT)) {
+
+//		if (left != null && ((left.extraInfo() & Model.SHOW_SHOULDER_BUDDY_WITH_PARROT) != 0 || player.getShoulderEntityLeft().isEmpty())) render(left, stack, multiBufferSource, packedLight, (Playerish) player, true);
+//					if (right != null && ((right.extraInfo() & Model.SHOW_SHOULDER_BUDDY_WITH_PARROT) != 0 || player.getShoulderEntityRight().isEmpty())) render(right, stack, multiBufferSource, packedLight, (Playerish) player, false);
+		}
+
+		ModelPart part = null;
+
+		// additional shifting for slim/thick arms
+		float additionalXOffset = 0;
+
+		switch (accessory.getAttachment()) {
+			case HEAD:
+				part = this.getParentModel().head;
+				break;
+			case BODY:
+				part = this.getParentModel().body;
+				break;
+			case LEFT_ARM:
+				part = accessory.isMirrored() ?
+						this.getParentModel().rightArm :
+						this.getParentModel().leftArm;
+
+				// thin skin: shift
+				if (this.getParentModel() instanceof PlayerModel) {
+					if (((PlayerModelAccessor) this.getParentModel()).isSlim()) {
+						additionalXOffset += 0.5f / 16.0f;
+					}
+				}
+				break;
+			case RIGHT_ARM:
+				part = accessory.isMirrored() ?
+						this.getParentModel().leftArm :
+						this.getParentModel().rightArm;
+
+				// thin skin: shift
+				if (this.getParentModel() instanceof PlayerModel) {
+					if (((PlayerModelAccessor) this.getParentModel()).isSlim()) {
+						additionalXOffset += 0.5f / 16.0f;
+					}
+				}
+				break;
+			case LEFT_LEG:
+				part = accessory.isMirrored() ?
+						this.getParentModel().rightLeg :
+						this.getParentModel().leftLeg;
+				break;
+			case RIGHT_LEG:
+				part = accessory.isMirrored() ?
+						this.getParentModel().leftLeg :
+						this.getParentModel().rightLeg;
+				break;
+			case UNKNOWN_DEFAULT_OPEN_API:
+				Logging.getInstance().warnOnce(
+						"attachment_unknown_accessory",
+						"Unknown attachment for accessory: {}",
+						accessory.getName());
+				return;
+		}
+
+		Vec3 offset = accessory.getOffset();
+
+		if (part.visible) {
+			accessory.getModel().renderOnPart(
+					part, stack, multiBufferSource, light,
+					(float) offset.x + additionalXOffset, (float) offset.y, (float) offset.z,
+					accessory.isMirrored()
+			);
+		}
 	}
 }

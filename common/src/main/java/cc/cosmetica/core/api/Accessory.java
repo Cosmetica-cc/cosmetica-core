@@ -38,6 +38,8 @@ public final class Accessory implements Cosmetic {
 		this.model = model;
 		this.offset = offset;
 		this.flags = new HashSet<>();
+		System.out.println(model.getBoundingBox());
+
 		// initialise flags
 		int flags = accessory.getFlags().intValue();
 		for (Flag flag : Flag.values()) {
