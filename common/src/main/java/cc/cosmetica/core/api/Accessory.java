@@ -40,9 +40,10 @@ public final class Accessory implements Cosmetic {
 		this.flags = new HashSet<>();
 
 		// initialise flags
-		int flags = accessory.getFlags().intValue();
+		BigDecimal flags = accessory.getFlags();
+
 		for (Flag flag : Flag.values()) {
-			if (flag.isSet(flags)) {
+			if (flag.isSet(flags.intValue())) {
 				this.flags.add(flag);
 			}
 		}
