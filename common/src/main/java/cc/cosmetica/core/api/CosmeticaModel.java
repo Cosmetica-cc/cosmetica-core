@@ -16,10 +16,10 @@
 
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Quaternion;
@@ -57,8 +57,10 @@ public final class CosmeticaModel {
 		this.textureLoaded = true;
 		Logging.getInstance().debug("Model: texture finished loading for {}", this.texture);
 
-		if (this.unbakedModel != null) {
-			this.startBaking();
+		final BlockModel unbaked = this.unbakedModel;
+
+		if (unbaked != null) {
+			this.startBaking(unbaked);
 		}
 	}
 
@@ -73,16 +75,16 @@ public final class CosmeticaModel {
 		this.boundingBox = boundingBox;
 
 		if (this.textureLoaded) {
-			this.startBaking();
+			this.startBaking(model);
 		}
 	}
 
-	private void startBaking() {
+	private void startBaking(BlockModel model) {
 		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
 		Logging.getInstance().debug("Scheduling baking for {}", this.texture);
 
 		RenderSystem.recordRenderCall(() -> {
-			this.model = CosmeticaModelBakery.bakeModel(this.texture, this.unbakedModel);
+			this.model = CosmeticaModelBakery.bakeModel(this.texture, model);
 			this.unbakedModel = null; // free memory
 			Logging.getInstance().debug("Baked model {}", this.texture);
 		});
