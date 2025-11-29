@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * Represents an Accessory equipped on a user.
  */
-public final class Accessory implements Cosmetic {
+public class Accessory implements Cosmetic {
 	public Accessory(gg.cloaks.javaclient.model.Accessory accessory, @Nullable GameProfile creator,
 					 boolean mirrored, CosmeticaModel model, Vec3 offset) {
 		Objects.requireNonNull(accessory, "Accessory json object cannot be null.");
@@ -53,8 +53,8 @@ public final class Accessory implements Cosmetic {
 	@Nullable
 	private final GameProfile creator;
 	private final CosmeticaModel model;
-	private final Vec3 offset;
-	private final boolean mirrored;
+	protected Vec3 offset;
+	protected boolean mirrored;
 	private final Collection<Flag> flags;
 
 	/**
