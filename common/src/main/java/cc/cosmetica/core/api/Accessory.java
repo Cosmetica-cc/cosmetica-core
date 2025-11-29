@@ -125,6 +125,20 @@ public class Accessory implements Cosmetic {
 		}
 	}
 
+	public static final class Adjustable extends Accessory {
+		public Adjustable(gg.cloaks.javaclient.model.Accessory accessory, @Nullable GameProfile creator, CosmeticaModel model, AttachmentEnum attachmentEnum) {
+			super(accessory, creator, false, model, attachmentTransform(attachmentEnum, 0, 0, 0));
+		}
+
+		public void setOffset(Vec3 offset) {
+			this.offset = offset;
+		}
+
+		public void setMirrored(boolean mirrored) {
+			this.mirrored = mirrored;
+		}
+	}
+
 	/**
 	 * Create an {@link Accessory} from the given {@link OutfitAccessory}.
 	 * @param accessory the OutfitAccessory received from the server.
@@ -154,6 +168,30 @@ public class Accessory implements Cosmetic {
 						offset.get(1).doubleValue(),
 						offset.get(2).doubleValue()
 				)
+		);
+	}
+
+	/**
+	 * Create an {@link Adjustable} accessory from the given {@link gg.cloaks.javaclient.model.Accessory}.
+	 * @param accessory the api Accessory received from the server.
+	 * @return an adjustable accessory from the given api Accessory.
+	 * @apiNote don't keep this longer than you need it so that the models and textures can be garbage collected.
+	 */
+	public static Adjustable fromAccessory(gg.cloaks.javaclient.model.Accessory accessory) {
+		CosmeticaModel model = CosmeticaModel.getOrCreateModel(
+				"accessory",
+				accessory.getId(),
+				accessory.getModel(),
+				accessory.getTexture(),
+				accessory.getTicksPerFrame().intValue(),
+				accessory.getFrames().intValue()
+		);
+
+		return new Adjustable(
+				accessory,
+				Cosmetic.gameProfileOf(accessory.getCreator()),
+				model,
+				accessory.getAttachment()
 		);
 	}
 
