@@ -128,10 +128,17 @@ public class Accessory implements Cosmetic {
 	public static final class Adjustable extends Accessory {
 		public Adjustable(gg.cloaks.javaclient.model.Accessory accessory, @Nullable GameProfile creator, CosmeticaModel model, AttachmentEnum attachmentEnum) {
 			super(accessory, creator, false, model, attachmentTransform(attachmentEnum, 0, 0, 0));
+			this.baseOffset = this.offset;
 		}
+
+		private final Vec3 baseOffset;
 
 		public void setOffset(Vec3 offset) {
 			this.offset = offset;
+		}
+
+		public Vec3 getBaseOffset() {
+			return this.baseOffset;
 		}
 
 		public void setMirrored(boolean mirrored) {
