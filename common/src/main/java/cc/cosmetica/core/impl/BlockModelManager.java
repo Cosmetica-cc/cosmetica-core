@@ -37,6 +37,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -138,7 +140,7 @@ public class BlockModelManager {
 	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
-	 * @param jsonUrl the location of the Java Block/Item model json to download if the model hasn't been created yet.
+	 * @param jsonSource the location of the Java Block/Item model json to download if the model hasn't been created yet.
 	 * @param textureUrl the location of the texture for this model.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
 	 * @param frames the number of frames in the image. Set to 0 for a static texture.
@@ -146,7 +148,7 @@ public class BlockModelManager {
 	 * @implNote a weak reference to the {@link CosmeticaModel} is stored in cache.
 	 * @return a {@link CosmeticaModel} with the model amnd texture location for this model.
 	 */
-	public static CosmeticaModel getOrCreateModel(String id, String jsonUrl,
+	public static CosmeticaModel getOrCreateModel(String id, Supplier<CompletableFuture<String>> jsonSource,
 												  String textureUrl, int ticksPerFrame, int frames) {
 		CosmeticaModel model = MODEL_CACHE.get(id);
 
@@ -190,7 +192,7 @@ public class BlockModelManager {
 
 			// load model
 			final CosmeticaModel lambdaHack = model;
-			CosmeticaAPI.downloadAsync(jsonUrl)
+			jsonSource.get()
 					.exceptionally(ex -> { // handle non-success responses
 						Logging.getInstance().error("Failed to download block model for {}", ex, id);
 						return null;

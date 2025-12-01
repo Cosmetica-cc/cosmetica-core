@@ -33,7 +33,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
+import java.io.*;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * Contains model data for a cosmetica model.
@@ -166,7 +169,38 @@ public final class CosmeticaModel {
 	 */
 	public static CosmeticaModel getOrCreateModel(String category, String id, String modelURL,
 												  String textureURL, int ticksPerFrame, int frames) {
-		return BlockModelManager.getOrCreateModel(category + "/" + id, modelURL, textureURL, ticksPerFrame, frames);
+		return BlockModelManager.getOrCreateModel(category + "/" + id, () -> CosmeticaAPI.downloadAsync(modelURL), textureURL, ticksPerFrame, frames);
+	}
+
+	/**
+	 * Get or bake a model for the given id, with a model override.
+	 * @param category the category of the model. Allowed characters are the same as id.
+	 * @param id the id of the model. Should be unique per-model, per category.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param model an input stream to the Java Block/Item model json to use if the model hasn't been created yet.
+	 * @param textureURL the url for the texture to download, if the model has not been created yet.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Set to a negative number to have multiple frames, but not auto-animate.
+	 *               Image frames are to be stored as a tilesheet, top to bottom.
+	 * @implNote a weak reference to the BakedModel is stored in cache.
+	 * @return a {@link CosmeticaModel} with the model and texture location for this model.
+	 */
+	public static CosmeticaModel getOrCreateModel(String category, String id, InputStreamSupplier model,
+												String textureURL, int ticksPerFrame, int frames) {
+		return BlockModelManager.getOrCreateModel(category + "/" + id, () -> CompletableFuture.supplyAsync(() -> {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(model.open()))) {
+				return reader.lines().collect(Collectors.joining("\n"));
+			} catch (IOException e) {
+				throw new UncheckedIOException("Failed to read model " + category + "/" + id + " from input stream", e);
+			}
+		}), textureURL, ticksPerFrame, frames);
+	}
+
+	@FunctionalInterface
+	public interface InputStreamSupplier {
+		InputStream open() throws IOException;
 	}
 
 	/**

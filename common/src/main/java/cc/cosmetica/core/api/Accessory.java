@@ -204,9 +204,9 @@ public class Accessory implements Cosmetic {
 
 	/**
 	 * Transform x, y, and z offsets from the server renderer space to world space.
-	 * @return a Vec3 with the render offset.
+	 * @return a Vec3 with the render offset to use in-game.
 	 */
-	private static Vec3 attachmentTransform(AttachmentEnum attachment, double x, double y, double z) {
+	public static Vec3 attachmentTransform(AttachmentEnum attachment, double x, double y, double z) {
 		double dy;
 		double dx;
 
