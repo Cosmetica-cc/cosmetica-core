@@ -27,10 +27,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
- * Cosmetics received from the API for yourself. Will use cached cosmetics if none can be obtained from the API.
- * // TODO should cached cosmetics be a Cosmetica feature, not core?
+ * Cosmetics received from the API for yourself.
  */
 public class SelfCosmeticManager implements CosmeticManager {
 	public SelfCosmeticManager() {
@@ -62,6 +64,14 @@ public class SelfCosmeticManager implements CosmeticManager {
 		MasterCosmeticManager.post(user, cosmetics);
 	}
 	// todo detect account switching to change cosmetics
+
+	/**
+	 * Get the current self cosmetics.
+	 * @return the current self cosmetics.
+	 */
+	public static Optional<Cosmetics> getCosmetics() {
+		return Optional.ofNullable(cosmetics);
+	}
 
 	private static final ResourceLocation SELF_MANAGER = new ResourceLocation("cosmetica", "self");
 }

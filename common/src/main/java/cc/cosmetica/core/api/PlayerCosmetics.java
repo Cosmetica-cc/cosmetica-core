@@ -87,6 +87,23 @@ public final class PlayerCosmetics implements Cosmetics {
 		}
 	}
 
+	/**
+	 * Raw constructor for PlayerCosmetics.
+	 */
+	public PlayerCosmetics(
+			@Nullable ImageCosmetic cloak, @Nullable ImageCosmetic elytra,
+			List<Accessory> accessories,
+			String outfitName, String outfitId,
+			NametagConfig nametag, NametagConfig lore) {
+		this.cloak = Optional.ofNullable(cloak);
+		this.elytra = Optional.ofNullable(elytra);
+		this.accessories = accessories;
+		this.outfitName = outfitName;
+		this.outfitId = outfitId;
+		this.nametag = nametag;
+		this.lore = lore;
+	}
+
 	private final Optional<ImageCosmetic> cloak;
 	private final Optional<ImageCosmetic> elytra;
 	private final List<Accessory> accessories;
