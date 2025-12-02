@@ -62,7 +62,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 			// test if cosmetics are different from the most recently added (other end of the queue)
 			Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
 			if (next != ((Deque<Cosmetics>)this.cosmeticacore$cosmetics).peekLast()) {
-				Logging.getInstance().debug(LoggingCategories.COSMETICS, "New cosmetics detected. Refreshing for {}", this.getUUID());
+				Logging.getInstance().debug(LoggingCategory.COSMETICS, "New cosmetics detected. Refreshing for {}", this.getUUID());
 				// load new cosmetics
 				cosmeticacore$updateCosmetics(manager);
 			}
@@ -82,7 +82,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 			} else {
 				// push a new cosmetics
 				Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
-				Logging.getInstance().debug(LoggingCategories.COSMETICS, "Next cosmetics " + next);
+				Logging.getInstance().debug(LoggingCategory.COSMETICS, "Next cosmetics " + next);
 
 				synchronized (this.cosmeticacore$cosmetics) {
 					this.cosmeticacore$cosmetics.add(next);
@@ -100,7 +100,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 								this.cosmeticacore$cosmetics.remove();
 						}
 
-						Logging.getInstance().debug(LoggingCategories.COSMETICS, "Loaded Cosmetics {}", this.cosmeticacore$cosmetics);
+						Logging.getInstance().debug(LoggingCategory.COSMETICS, "Loaded Cosmetics {}", this.cosmeticacore$cosmetics);
 					}
 
 					if (updated) {

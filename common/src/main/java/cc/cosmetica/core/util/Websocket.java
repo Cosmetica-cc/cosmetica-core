@@ -17,7 +17,7 @@
 package cc.cosmetica.core.util;
 
 import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.impl.LoggingCategories;
+import cc.cosmetica.core.impl.LoggingCategory;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -202,7 +202,7 @@ public abstract class Websocket {
 		@Override
 		public void channelInactive(ChannelHandlerContext ctx) {
 			// Call the callback. Handled by user.
-			Logging.getInstance().debug(LoggingCategories.WEBSOCKET, "channel inactive");
+			Logging.getInstance().debug(LoggingCategory.WEBSOCKET, "channel inactive");
 			Websocket.this.connectionDropped();
 		}
 
@@ -210,7 +210,7 @@ public abstract class Websocket {
 		protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
 			if (!this.handshaker.isHandshakeComplete()) {
 				this.handshaker.finishHandshake(ctx.channel(), (FullHttpResponse) msg);
-				Logging.getInstance().debug(LoggingCategories.WEBSOCKET, "{} connected!", Websocket.this.name);
+				Logging.getInstance().debug(LoggingCategory.WEBSOCKET, "{} connected!", Websocket.this.name);
 				Websocket.this.onConnected();
 				this.handshakeFuture.setSuccess();
 				return;
@@ -221,7 +221,7 @@ public abstract class Websocket {
 //				Logging.getInstance().info("RECEIVED ON WEBSOCKET {}", textFrame.text());
 				Websocket.this.receive(new JsonParser().parse(textFrame.text()));
 			} else if (msg instanceof CloseWebSocketFrame) {
-				Logging.getInstance().debug(LoggingCategories.WEBSOCKET, "{}: server closed connection", Websocket.this.name);
+				Logging.getInstance().debug(LoggingCategory.WEBSOCKET, "{}: server closed connection", Websocket.this.name);
 				ctx.close();
 			}
 			// PongWebSocketFrame also exists

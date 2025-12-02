@@ -61,7 +61,7 @@ public final class CosmeticaModelBakery {
 	 * @param model the model to bake.
 	 */
 	public static BakedModel bakeModel(ResourceLocation location, BlockModel model) {
-		Logging.getInstance().debug(LoggingCategories.ASSETS, "Computing Baked Model: {}", location);
+		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
 		if (modelTexture instanceof CosmeticaTexture) {

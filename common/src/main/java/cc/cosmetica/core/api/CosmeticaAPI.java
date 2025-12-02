@@ -18,7 +18,7 @@ package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.impl.CosmeticaSession;
 import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.impl.LoggingCategories;
+import cc.cosmetica.core.impl.LoggingCategory;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.util.Response;
 import gg.cloaks.javaclient.ApiException;
@@ -216,7 +216,7 @@ public final class CosmeticaAPI {
 	 * @return a completable future for the response.
 	 */
 	public static CompletableFuture<String> downloadAsync(String url) {
-		Logging.getInstance().debug(LoggingCategories.ASSETS, "Downloading " + url);
+		Logging.getInstance().debug(LoggingCategory.ASSETS, "Downloading " + url);
 
 		return CompletableFuture.supplyAsync(() -> {
 			try {

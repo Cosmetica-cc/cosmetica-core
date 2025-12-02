@@ -22,7 +22,7 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.impl.LoggingCategories;
+import cc.cosmetica.core.impl.LoggingCategory;
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -99,7 +99,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 				lookupBy = uuid.toString();
 			}
 
-			Logging.getInstance().debug(LoggingCategories.LOOKUP, "Looking up user by {}", lookupBy);
+			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Looking up user by {}", lookupBy);
 
 			CosmeticaAPI.players().requestAsync(api -> {
 				try {
@@ -144,14 +144,14 @@ public class ApiCosmeticManager implements CosmeticManager {
 	 */
 	private static void updatePlayer(GameProfile profile, @Nullable PlayerResponse response) {
 		if (response == null) {
-			Logging.getInstance().debug(LoggingCategories.LOOKUP, "Skipping update for {} (no data)", profile);
+			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Skipping update for {} (no data)", profile);
 			return;
 		}
 
 		// check if game profile id matches user's id
 		if (profile.equals(Minecraft.getInstance().getUser().getGameProfile())) {
 			// configure own cosmetics
-			Logging.getInstance().debug(LoggingCategories.LOOKUP, "Updating cosmetics for self, {}", profile);
+			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Updating cosmetics for self, {}", profile);
 			SelfCosmeticManager.update(response);
 			return;
 		}
@@ -163,7 +163,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 			return;
 		}
 
-		Logging.getInstance().debug(LoggingCategories.LOOKUP, "Updating cosmetics for {}", profile);
+		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Updating cosmetics for {}", profile);
 		Player player = level.getPlayerByUUID(profile.getId());
 
 		if (player == null) {

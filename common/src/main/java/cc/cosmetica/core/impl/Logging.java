@@ -61,8 +61,8 @@ public final class Logging {
 	private final boolean debug = Boolean.getBoolean("cosmetica.debug");
 	private final Set<String> debugCategories = new HashSet<>();
 
-	public void debug(@Nullable String category, String message, Object... args) {
-		if (debug && (this.debugCategories.isEmpty() || category == null || this.debugCategories.contains(category))) {
+	public void debug(@Nullable LoggingCategory category, String message, Object... args) {
+		if (debug && (this.debugCategories.isEmpty() || category == null || this.debugCategories.contains(category.name))) {
 			info(message, args);
 		} else {
 			this.logger.debug(message, args);

@@ -18,7 +18,6 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
-import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -64,7 +63,7 @@ public class BlockModelManager {
 			CACHE_DIRECTORY = CosmeticaCoreExpectPlatform.getGameDirectory().resolve(".cosmetica");
 		}
 
-		Logging.getInstance().debug(LoggingCategories.ASSETS, "Cosmetica cache directory: {}", CACHE_DIRECTORY);
+		Logging.getInstance().debug(LoggingCategory.ASSETS, "Cosmetica cache directory: {}", CACHE_DIRECTORY);
 
 		// create cache directory if it doesn't exist
 		if (!Files.exists(CACHE_DIRECTORY)) {
@@ -169,10 +168,10 @@ public class BlockModelManager {
 						CosmeticaModel _model = MODEL_CACHE.get(id);
 
 						if (_model != null) {
-							Logging.getInstance().debug(LoggingCategories.ASSETS, "Texture loaded for {}", id);
+							Logging.getInstance().debug(LoggingCategory.ASSETS, "Texture loaded for {}", id);
 							_model.setTextureLoaded();
 						} else {
-							Logging.getInstance().debug(LoggingCategories.ASSETS, "Texture failed to load for {} (Model is missing)", id);
+							Logging.getInstance().debug(LoggingCategory.ASSETS, "Texture failed to load for {} (Model is missing)", id);
 						}
 					})
 					.build();
@@ -180,12 +179,12 @@ public class BlockModelManager {
 			// upload texture
 			// don't use isOnRenderThreadOrInit
 			if (RenderSystem.isOnRenderThread()) {
-				Logging.getInstance().debug(LoggingCategories.ASSETS, "Registering texture for cosmetic {}", id);
+				Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture for cosmetic {}", id);
 				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 			}
 			else {
 				RenderSystem.recordRenderCall(() -> {
-					Logging.getInstance().debug(LoggingCategories.ASSETS, "Registering texture for cosmetic {}", id);
+					Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture for cosmetic {}", id);
 					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 				});
 			}
@@ -206,7 +205,7 @@ public class BlockModelManager {
 
 							// calculate bounds
 							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
-							Logging.getInstance().debug(LoggingCategories.ASSETS, "Bounding Box calculation for {}: {}", blockModel.name, aabb);
+							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", blockModel.name, aabb);
 
 							lambdaHack.setModel(blockModel, aabb);
 						} catch (IOException | RuntimeException e) {
@@ -248,7 +247,7 @@ public class BlockModelManager {
 						CachedImage _image = IMAGE_CACHE.get(id);
 
 						if (_image != null) {
-							Logging.getInstance().debug(LoggingCategories.ASSETS, "Texture loaded for {}", id);
+							Logging.getInstance().debug(LoggingCategory.ASSETS, "Texture loaded for {}", id);
 							_image.setLoaded(nativeImage.getWidth(), nativeImage.getHeight());
 						} else {
 							Logging.getInstance().warn("Texture failed to load for {} (CachedImage is missing)", id);
@@ -262,12 +261,12 @@ public class BlockModelManager {
 			// upload texture
 			// don't use isOnRenderThreadOrInit because we spawn other threads on init.
 			if (RenderSystem.isOnRenderThread()) {
-				Logging.getInstance().debug(LoggingCategories.ASSETS, "Registering texture for cosmetic {} at {}", id, textureLocation);
+				Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture for cosmetic {} at {}", id, textureLocation);
 				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 			}
 			else {
 				RenderSystem.recordRenderCall(() -> {
-					Logging.getInstance().debug(LoggingCategories.ASSETS, "Registering texture for cosmetic {} at {}", id, textureLocation);
+					Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture for cosmetic {} at {}", id, textureLocation);
 					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 				});
 			}
@@ -404,7 +403,7 @@ public class BlockModelManager {
 				// remove from cache
 				cachedIds.remove(gcIndex);
 				cache.remove(id);
-				Logging.getInstance().debug(LoggingCategories.GARBAGE_COLLECTOR, "Cosmetica GC: removing {}", id);
+				Logging.getInstance().debug(LoggingCategory.GARBAGE_COLLECTOR, "Cosmetica GC: removing {}", id);
 
 				// free the texture
 				ResourceLocation textureLocation = getLocation(id);
