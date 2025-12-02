@@ -69,13 +69,13 @@ public class ImageCacheManager {
     }
 
     public void saveSync() throws IOException {
-        Logging.getInstance().debug("Saving cosmetica image cache metadata (sync)");
+        Logging.getInstance().debug(LoggingCategories.ASSETS, "Saving cosmetica image cache metadata (sync)");
         this.save(this.keep, this.entries);
     }
 
     public void saveAsync() {
         // gather data on main thread, save off thread
-        Logging.getInstance().debug("Saving cosmetica image cache metadata (async)");
+        Logging.getInstance().debug(LoggingCategories.ASSETS, "Saving cosmetica image cache metadata (async)");
         long timestamp = System.nanoTime();
 
         // deep copy
@@ -152,7 +152,7 @@ public class ImageCacheManager {
     }
 
     public void clearOldEntries() {
-        Logging.getInstance().debug("Clearing old cache entries");
+        Logging.getInstance().debug(LoggingCategories.ASSETS, "Clearing old cache entries");
 
         // 14 day cache
         long now = System.nanoTime();
@@ -202,7 +202,7 @@ public class ImageCacheManager {
         }
 
         long delay = (System.nanoTime() - now) / 1_000_000;
-        Logging.getInstance().debug("Cleared {} old cache entries in {} ms", count, delay);
+        Logging.getInstance().debug(LoggingCategories.ASSETS, "Cleared {} old cache entries in {} ms", count, delay);
     }
 
     private static class CacheMeta {

@@ -17,6 +17,7 @@
 package cc.cosmetica.core.api.texture;
 
 import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.impl.LoggingCategories;
 import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.TextureUtil;
@@ -106,7 +107,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
             // failed to load cache - use internet
             HttpURLConnection httpURLConnection = null;
-            Logging.getInstance().debug("Downloading cosmetica texture from {} to {}", this.url, this.cacheFile);
+            Logging.getInstance().debug(LoggingCategories.ASSETS, "Downloading cosmetica texture from {} to {}", this.url, this.cacheFile);
 
             try {
                 httpURLConnection = (HttpURLConnection)new URL(this.url).openConnection(Minecraft.getInstance().getProxy());
@@ -181,7 +182,7 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         if (this.cacheFile != null && this.cacheFile.isFile()) {
-            Logging.getInstance().debug("Loading cosmetica texture from local cache ({})", this.cacheFile);
+            Logging.getInstance().debug(LoggingCategories.ASSETS, "Loading cosmetica texture from local cache ({})", this.cacheFile);
 
             FileInputStream fileInputStream = new FileInputStream(this.cacheFile);
 
@@ -259,7 +260,7 @@ public class CosmeticaTexture extends AbstractTexture {
     @Override
     public void close() {
         //Debug.info("Closing image on thread {} due to dispose. Are we allowed? {}", Thread.currentThread(), RenderSystem.isOnRenderThreadOrInit());
-        Logging.getInstance().debug("Closing image {}", this.url);
+        Logging.getInstance().debug(LoggingCategories.ASSETS, "Closing image {}", this.url);
         if (this.image != null) this.image.close();
         //Debug.info("Disposed of image.");
     }
@@ -328,7 +329,7 @@ public class CosmeticaTexture extends AbstractTexture {
             // NativeImage can read a png
             return new AnimatedInputStream(imageSource, 1);
         } else {
-            Logging.getInstance().debug("(Cosmetica Texture) Image is not a PNG. Applying transformation.");
+            Logging.getInstance().debug(LoggingCategories.ASSETS, "(Cosmetica Texture) Image is not a PNG. Applying transformation.");
             // Transform other formats to png and flatten animations (especially webp, used by Cosmetica for thumbnails)
             // https://github.com/haraldk/TwelveMonkeys?tab=readme-ov-file#advanced-usage
             // https://codingtechroom.com/question/convert-anime-gif-frames-to-bufferedimage-java

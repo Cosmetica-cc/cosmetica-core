@@ -16,10 +16,19 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -27,14 +36,33 @@ import java.util.Set;
  */
 public final class Logging {
 	private Logging() {
+		if (this.debug) {
+			Path config = CosmeticaCoreExpectPlatform.getConfigDirectory().resolve("cosmetica").resolve("debug.properties");
+
+			try (BufferedReader reader = Files.newBufferedReader(config, StandardCharsets.UTF_8)) {
+				Properties debugConfig = new Properties();
+				for (String s : debugConfig.stringPropertyNames()) {
+					if ("true".equals(debugConfig.getProperty(s))) {
+						debugCategories.add(s);
+					}
+				}
+			} catch (NoSuchFileException e) {
+				// File does not exist, ignore
+				debug(null, "No debug config file, enabling all logging...");
+			} catch (IOException e) {
+				// Other unexpected error (e.g. permissions)
+				error("Error reading {}: ", e);
+			}
+		}
 	}
 
 	private final Set<String> warnings = new HashSet<>();
 	private final Logger logger = LogManager.getLogger("Cosmetica");
 	private final boolean debug = Boolean.getBoolean("cosmetica.debug");
+	private final Set<String> debugCategories = new HashSet<>();
 
-	public void debug(String message, Object... args) {
-		if (debug) {
+	public void debug(@Nullable String category, String message, Object... args) {
+		if (debug && (this.debugCategories.isEmpty() || category == null || this.debugCategories.contains(category))) {
 			info(message, args);
 		} else {
 			this.logger.debug(message, args);

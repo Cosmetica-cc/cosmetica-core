@@ -199,7 +199,7 @@ public final class CosmeticaSession {
 			@Override
 			protected void receive(JsonElement data) {
 				if (DEBUG_WEBSOCKET) {
-					Logging.getInstance().debug("Websocket Received {}", data);
+					Logging.getInstance().debug(LoggingCategories.WEBSOCKET, "Websocket Received {}", data);
 				}
 
 				JsonObject obj = data.getAsJsonObject();
@@ -227,7 +227,7 @@ public final class CosmeticaSession {
 	// synchronised, because it would be pretty bad if it became null before it closed the socket
 	private synchronized void closeSocket() {
 		if (websocket != null) {
-			Logging.getInstance().debug("Closing africa websocket");
+			Logging.getInstance().debug(LoggingCategories.WEBSOCKET, "Closing africa websocket");
 			websocket.closeFuture();
 			websocket = null;
 		}
@@ -247,7 +247,7 @@ public final class CosmeticaSession {
 	private static boolean isScheduled;
 
 	static {
-		Logging.getInstance().debug("Using API url: {}", BASE_PATH);
+		Logging.getInstance().debug(null, "Using API url: {}", BASE_PATH);
 
 		ApiClient defaultClient = Configuration.getDefaultApiClient().setBasePath(BASE_PATH);
 		authenticationInstance = new CosmeticaSession(defaultClient, "",null);
@@ -345,11 +345,11 @@ public final class CosmeticaSession {
 		authenticationInstance = new CosmeticaSession(newClient, jwt, uuid);
 
 		// Fetch own cosmetics
-		Logging.getInstance().debug("Logged in to {}, fetching own cosmetics.", uuid);
+		Logging.getInstance().debug(LoggingCategories.LOOKUP, "Logged in to {}, fetching own cosmetics.", uuid);
 		// TODO make texture packet request and submit that instead.
 		CosmeticaAPI.users().requestAsync(UsersApi::getSelf)
 				.thenAccept(user -> {
-					Logging.getInstance().debug("Received Login Cosmetics");
+					Logging.getInstance().debug(LoggingCategories.LOOKUP, "Received Login Cosmetics");
 					// set self cosmetics
 					SelfCosmeticManager.update(new PlayerResponse().isUser(true).user(user));
 					// Don't set ApiCosmeticsHolder cosmetics. That is only for other players.
@@ -391,7 +391,7 @@ public final class CosmeticaSession {
 				Logging.getInstance().info("Session changed. Aborting reconnect.");
 			} else {
 				try {
-					Logging.getInstance().debug("Attempting to reconnect to Cosmetica Africa...");
+					Logging.getInstance().debug(LoggingCategories.WEBSOCKET, "Attempting to reconnect to Cosmetica Africa...");
 					session.logInToAfrica();
 				} catch (Exception e) {
 					System.out.println("Reconnect attempt failed: " + e.getMessage());
@@ -407,7 +407,7 @@ public final class CosmeticaSession {
 		packet.add("event", new JsonPrimitive(event));
 		packet.add("data", data);
 		if (DEBUG_WEBSOCKET) {
-			Logging.getInstance().debug("Websocket.Send {}", new Gson().toJson(packet));
+			Logging.getInstance().debug(LoggingCategories.WEBSOCKET, "Websocket.Send {}", new Gson().toJson(packet));
 		}
 		websocket.send(packet);
 	}
@@ -506,7 +506,7 @@ public final class CosmeticaSession {
 			if (response.isSuccessful()) {
 				JsonObject jo = response.readEntityJson().getAsJsonObject();
 				authenticate(jo.get("jwt").getAsString());
-				Logging.getInstance().debug("Cosmetica: Logged in as {}", username);
+				Logging.getInstance().debug(null, "Cosmetica: Logged in as {}", username);
 
 				// set user
 				CosmeticaUser user = getCurrentSession().accessoriesApi.get().getApiClient().getObjectMapper().readValue(

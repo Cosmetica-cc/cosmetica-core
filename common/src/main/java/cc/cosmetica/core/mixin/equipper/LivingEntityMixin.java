@@ -18,10 +18,7 @@ package cc.cosmetica.core.mixin.equipper;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
-import cc.cosmetica.core.impl.CosmeticEquipper;
-import cc.cosmetica.core.impl.IdentityCache;
-import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.impl.MasterCosmeticManager;
+import cc.cosmetica.core.impl.*;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -65,7 +62,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 			// test if cosmetics are different from the most recently added (other end of the queue)
 			Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
 			if (next != ((Deque<Cosmetics>)this.cosmeticacore$cosmetics).peekLast()) {
-				Logging.getInstance().debug("New cosmetics detected. Refreshing for {}", this.getUUID());
+				Logging.getInstance().debug(LoggingCategories.COSMETICS, "New cosmetics detected. Refreshing for {}", this.getUUID());
 				// load new cosmetics
 				cosmeticacore$updateCosmetics(manager);
 			}
@@ -85,7 +82,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 			} else {
 				// push a new cosmetics
 				Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
-				Logging.getInstance().debug("Next cosmetics " + next);
+				Logging.getInstance().debug(LoggingCategories.COSMETICS, "Next cosmetics " + next);
 
 				synchronized (this.cosmeticacore$cosmetics) {
 					this.cosmeticacore$cosmetics.add(next);
@@ -103,7 +100,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 								this.cosmeticacore$cosmetics.remove();
 						}
 
-						Logging.getInstance().debug("Loaded Cosmetics {}", this.cosmeticacore$cosmetics);
+						Logging.getInstance().debug(LoggingCategories.COSMETICS, "Loaded Cosmetics {}", this.cosmeticacore$cosmetics);
 					}
 
 					if (updated) {
