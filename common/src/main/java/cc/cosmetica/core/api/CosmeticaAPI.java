@@ -209,6 +209,23 @@ public final class CosmeticaAPI {
 	}
 
 	/**
+	 * Add the given authentication change callback.
+	 * @param callback the callback to add.
+	 */
+	public static void addAuthenticationChangeCallback(Runnable callback) {
+		CosmeticaSession.addAuthChangeCallback(callback);
+	}
+
+	/**
+	 * Remove an authentication change callback.
+	 * @param callback the callback object to remove.
+	 * @return whether the callback was present.
+	 */
+	public static boolean removeAuthenticationChangeaCallback(Runnable callback) {
+		return CosmeticaSession.removeAuthChangeCallback(callback);
+	}
+
+	/**
 	 * Download data from a url asynchronously. The completable future will contain an exception if not a 2XX response.
 	 * A successful response with no body will return empty string.
 	 *

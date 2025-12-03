@@ -43,10 +43,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -259,6 +256,24 @@ public final class CosmeticaSession {
 		pingAfrica();
 	}
 
+	/* Auth Events */
+	private static final List<Runnable> CALLBACKS = new ArrayList<>();
+
+	public static void addAuthChangeCallback(Runnable callback) {
+		CALLBACKS.add(callback);
+	}
+
+	public static boolean removeAuthChangeCallback(Runnable callback) {
+		return CALLBACKS.remove(callback);
+	}
+
+	private static void notifyAuthChange() {
+		Iterator<Runnable> callbacks = CALLBACKS.iterator();
+		while (callbacks.hasNext()) {
+			callbacks.next().run();
+		}
+	}
+
 	/* Called every 30 seconds to maintain connection */
 	private static void pingAfrica() {
 		// ping current socket
@@ -274,7 +289,7 @@ public final class CosmeticaSession {
 		return authenticationInstance;
 	}
 
-	/* Events */
+	/* Websocket Events */
 	public static void subscribe(String eventId, ResourceLocation key, Runnable callback) {
 		JsonArray eventIds = new JsonArray();
 		eventIds.add(eventId);
@@ -321,6 +336,7 @@ public final class CosmeticaSession {
 		authenticationInstance.closeSocket(); // close existing auth websocket
 		/* Default client already has base path set */
 		authenticationInstance = new CosmeticaSession(Configuration.getDefaultApiClient(), "", null);
+		notifyAuthChange();
 	}
 
 	public static void authenticate(String jwt) {
@@ -343,6 +359,7 @@ public final class CosmeticaSession {
 		}
 
 		authenticationInstance = new CosmeticaSession(newClient, jwt, uuid);
+		notifyAuthChange();
 
 		// Fetch own cosmetics
 		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Logged in to {}, fetching own cosmetics.", uuid);
