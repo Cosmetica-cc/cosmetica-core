@@ -211,6 +211,7 @@ public final class CosmeticaAPI {
 	/**
 	 * Add the given authentication change callback.
 	 * @param callback the callback to add.
+	 * @apiNote be careful when using this to retry logins, as {@link CosmeticaAPI#login()} and similar deauthenticate internally.
 	 */
 	public static void addAuthenticationChangeCallback(Runnable callback) {
 		CosmeticaSession.addAuthChangeCallback(callback);
