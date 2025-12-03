@@ -119,6 +119,7 @@ public interface Cosmetics {
 
 	/**
 	 * Register a callback for fetching new data for self.
+	 * This does not catch de-authentications. For de-authentication, see {@link CosmeticaAPI#addAuthenticationChangeCallback(Runnable)} which runs earlier.
 	 */
 	static void registerUserDataFetchCallback(BiConsumer<PlayerResponse, Cosmetics> onFetch) {
 		MasterCosmeticManager.addSelfCallback(onFetch);

@@ -16,10 +16,7 @@
 
 package cc.cosmetica.core.builtin.manager;
 
-import cc.cosmetica.core.api.CosmeticManager;
-import cc.cosmetica.core.api.CosmeticaAPI;
-import cc.cosmetica.core.api.Cosmetics;
-import cc.cosmetica.core.api.PlayerCosmetics;
+import cc.cosmetica.core.api.*;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.UUIDs;
 import gg.cloaks.javaclient.model.PlayerResponse;
@@ -42,11 +39,11 @@ public class SelfCosmeticManager implements CosmeticManager {
 				SELF_MANAGER, () -> ApiCosmeticManager.lookUpGameProfile(Minecraft.getInstance().getUser().getGameProfile()));
 	}
 
-	private static PlayerCosmetics cosmetics;
+	private static Cosmetics cosmetics = NoneCosmetics.NONE;
 
 	@Override
 	public boolean canManage(LivingEntity entity) {
-		return entity instanceof LocalPlayer && cosmetics != null;
+		return entity instanceof LocalPlayer && cosmetics != NoneCosmetics.NONE;
 	}
 
 	@Override
@@ -63,6 +60,10 @@ public class SelfCosmeticManager implements CosmeticManager {
 		cosmetics = PlayerCosmetics.fromResponse(user);
 		MasterCosmeticManager.post(user, cosmetics);
 	}
+
+	public static void clear() {
+		cosmetics = NoneCosmetics.NONE;
+	}
 	// todo detect account switching to change cosmetics
 
 	/**
@@ -70,7 +71,7 @@ public class SelfCosmeticManager implements CosmeticManager {
 	 * @return the current self cosmetics.
 	 */
 	public static Optional<Cosmetics> getCosmetics() {
-		return Optional.ofNullable(cosmetics);
+		return cosmetics == NoneCosmetics.NONE ? Optional.empty() : Optional.of(cosmetics);
 	}
 
 	private static final ResourceLocation SELF_MANAGER = new ResourceLocation("cosmetica", "self");

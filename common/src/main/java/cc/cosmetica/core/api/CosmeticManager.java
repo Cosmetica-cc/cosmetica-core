@@ -35,7 +35,7 @@ public interface CosmeticManager {
 	/**
 	 * Get the cosmetics to apply to the given entity being managed.
 	 * @param entity the entity being managed by this.
-	 * @return the cosmetics that should be rendered on this living entity. Cannot be null.
+	 * @return the cosmetics that should be rendered on this living entity. Cannot be null once {@link CosmeticManager#canManage(LivingEntity)} has returned true.
 	 */
 	Cosmetics getCosmetics(LivingEntity entity);
 
