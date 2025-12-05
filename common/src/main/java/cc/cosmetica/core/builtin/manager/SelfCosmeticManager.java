@@ -63,6 +63,7 @@ public class SelfCosmeticManager implements CosmeticManager {
 
 	public static void clear() {
 		cosmetics = NoneCosmetics.NONE;
+		MasterCosmeticManager.post((PlayerResponse) null, cosmetics);
 	}
 	// todo detect account switching to change cosmetics
 

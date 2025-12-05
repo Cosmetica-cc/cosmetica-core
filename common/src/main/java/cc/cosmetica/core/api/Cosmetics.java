@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.impl.CosmeticEquipper;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.NametagRenderer;
@@ -120,6 +121,7 @@ public interface Cosmetics {
 	/**
 	 * Register a callback for fetching new data for self.
 	 * This does not catch de-authentications. For de-authentication, see {@link CosmeticaAPI#addAuthenticationChangeCallback(Runnable)} which runs earlier.
+	 * However, it does catch mods clearing cosmetics via {@link SelfCosmeticManager#clear()}, which may provide null player response!
 	 */
 	static void registerUserDataFetchCallback(BiConsumer<PlayerResponse, Cosmetics> onFetch) {
 		MasterCosmeticManager.addSelfCallback(onFetch);

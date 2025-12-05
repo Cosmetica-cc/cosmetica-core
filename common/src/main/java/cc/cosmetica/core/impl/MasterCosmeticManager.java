@@ -127,7 +127,7 @@ public final class MasterCosmeticManager {
 	/**
 	 * Update all listeners to new data received for the self. The cosmetics may not be loaded yet.
 	 */
-	public static void post(PlayerResponse user, @Nullable Cosmetics newCosmetics) {
+	public static void post(@Nullable PlayerResponse user, @Nullable Cosmetics newCosmetics) {
 		for (BiConsumer<PlayerResponse, Cosmetics> consumer : SELF_CALLBACKS) {
 			consumer.accept(user, newCosmetics);
 		}
