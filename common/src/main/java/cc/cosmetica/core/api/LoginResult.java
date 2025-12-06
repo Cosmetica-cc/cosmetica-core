@@ -17,22 +17,25 @@
 package cc.cosmetica.core.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * Indicates a login success or error, and forwards error messages for unsuccessful logins to the caller.
  */
 public class LoginResult {
-    public LoginResult(boolean success, @NotNull Code code, @NotNull String message) {
+    public LoginResult(boolean success, @NotNull Code code, @NotNull String message, @Nullable Exception exception) {
         this.success = success;
         this.code = code;
         this.message = message;
+        this.exception = exception;
     }
 
     private final boolean success;
     private final Code code;
     private final String message;
+    private final @Nullable Exception exception;
 
     public boolean isSuccess() {
         return this.success;
@@ -44,6 +47,14 @@ public class LoginResult {
 
     public String getMessage() {
         return this.message;
+    }
+
+    /**
+     * @return the underlying exception, if this status was caused by an exception.
+     * @apiNote Most login codes do not have an exception associated.
+     */
+    public Optional<Exception> getException() {
+        return Optional.ofNullable(this.exception);
     }
 
     @Override

@@ -448,7 +448,7 @@ public final class CosmeticaSession {
 			if (!silence400) {
 				Logging.getInstance().error("Failed to get Cosmetica auth server URL: ", e);
 			}
-			return new LoginResult(false, GET_AUTH_SERVER_ERROR, "Error code " + e.getCode() + ": " + e.getMessage());
+			return new LoginResult(false, GET_AUTH_SERVER_ERROR, "Error code " + e.getCode() + ": " + e.getMessage(), e);
 		}
 
 		// Initiate a session
@@ -475,10 +475,10 @@ public final class CosmeticaSession {
 				if (!silence400) {
 					logBadResponse("Request to /key was not successful", response);
 				}
-				return new LoginResult(false, LoginResult.Code.forKeyApi(code), message);
+				return new LoginResult(false, LoginResult.Code.forKeyApi(code), message, null);
 			} else {
 				logBadResponse("Request to key was not successful", response);
-				return new LoginResult(false, GENERIC_KEY_ERROR, "Error fetching Key (error code " + response.getStatusCode() + ")");
+				return new LoginResult(false, GENERIC_KEY_ERROR, "Error fetching Key (error code " + response.getStatusCode() + ")", null);
 			}
 		}
 
@@ -498,7 +498,7 @@ public final class CosmeticaSession {
 			// Ensure successful
 			if (!response.isSuccessful()) {
 				logBadResponse("Could not log in to Cosmetica", response);
-				return new LoginResult(false, MOJANG_LOGIN_ERROR, "Failed to join session server (error code " + response.getStatusCode() + ")");
+				return new LoginResult(false, MOJANG_LOGIN_ERROR, "Failed to join session server (error code " + response.getStatusCode() + ")", null);
 			}
 		}
 
@@ -520,7 +520,7 @@ public final class CosmeticaSession {
 			);
 		} catch (GeneralSecurityException e) {
 			Logging.getInstance().error("Error encrypting data", e);
-			return new LoginResult(false, ENCRYPTION_ERROR, e.getClass().getSimpleName() + ": " + e.getMessage());
+			return new LoginResult(false, ENCRYPTION_ERROR, e.getClass().getSimpleName() + ": " + e.getMessage(), e);
 		}
 
 		// Verify with auth server
@@ -543,7 +543,7 @@ public final class CosmeticaSession {
 				SelfCosmeticManager.update(
 						new PlayerResponse().isUser(true).user(user)
 				);
-				return new LoginResult(true, SUCCESS, "");
+				return new LoginResult(true, SUCCESS, "", null);
 			} else if (response.getStatusCode() == 400) {
 				JsonObject job = response.readEntityJson().getAsJsonObject();
 
@@ -553,10 +553,10 @@ public final class CosmeticaSession {
 				if (!silence400) {
 					logBadResponse("Request to /verify was not successful", response);
 				}
-				return new LoginResult(false, LoginResult.Code.forVerifyApi(code), message);
+				return new LoginResult(false, LoginResult.Code.forVerifyApi(code), message, null);
 			} else {
 				logBadResponse("Cosmetica authentication verification failed", response);
-				return new LoginResult(false, GENERIC_VERIFY_ERROR, "Failed to verify login (error code " + response.getStatusCode() + ")");
+				return new LoginResult(false, GENERIC_VERIFY_ERROR, "Failed to verify login (error code " + response.getStatusCode() + ")", null);
 			}
 		}
 	}
