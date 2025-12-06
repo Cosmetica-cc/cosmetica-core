@@ -64,6 +64,7 @@ public class LoginResult {
         ENCRYPTION_ERROR,
 
         // Api Responses
+        GET_AUTH_SERVER_ERROR,
         INVALID_REQUEST_BODY_KEY,
         INVALID_USERNAME_KEY,
         INVALID_REQUEST_BODY_VERIFY,

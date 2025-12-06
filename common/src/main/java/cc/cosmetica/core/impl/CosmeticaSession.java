@@ -436,12 +436,20 @@ public final class CosmeticaSession {
 	@SuppressWarnings("unused")
 	static boolean silence400 = false;
 
-	public static LoginResult login(UUID uuid, String username, String accessToken) throws IOException {
+	public static LoginResult login(UUID uuid, String username, String accessToken) throws IOException, ApiException {
 		// ensure we are deauthenticated.
 		deauthenticate();
 
 		// Get the authentication server to authenticate with
-		String authURL = getCurrentSession().authApi.get().getAuthServer().getUrl();
+		String authURL;
+		try {
+			authURL = getCurrentSession().authApi.get().getAuthServer().getUrl();
+		} catch (ApiException e) {
+			if (!silence400) {
+				Logging.getInstance().error("Failed to get Cosmetica auth server URL: ", e);
+			}
+			return new LoginResult(false, GET_AUTH_SERVER_ERROR, "Error code " + e.getCode() + ": " + e.getMessage());
+		}
 
 		// Initiate a session
 		JsonObject keyRequest = new JsonObject();
