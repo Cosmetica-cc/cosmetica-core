@@ -246,7 +246,9 @@ public final class CosmeticaSession {
 	static {
 		Logging.getInstance().debug(null, "Using API url: {}", BASE_PATH);
 
-		ApiClient defaultClient = Configuration.getDefaultApiClient().setBasePath(BASE_PATH);
+		ApiClient defaultClient = Configuration.getDefaultApiClient()
+				.setBasePath(BASE_PATH)
+				.setConnectTimeout(20_000);
 		authenticationInstance = new CosmeticaSession(defaultClient, "",null);
 
 		// close socket before shutdown
