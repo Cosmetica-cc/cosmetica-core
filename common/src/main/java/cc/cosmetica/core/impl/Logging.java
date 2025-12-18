@@ -48,6 +48,7 @@ public final class Logging {
 						debugCategories.add(s);
 					}
 				}
+
 			} catch (NoSuchFileException e) {
 				// File does not exist, ignore
 				debug(null, "No debug config file, enabling all logging...");

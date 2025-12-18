@@ -45,6 +45,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -118,7 +119,7 @@ public class CosmeticaTexture extends AbstractTexture {
                     InputStream rawInputStream = httpURLConnection.getInputStream();
 
                     if (this.cacheFile == null) {
-                        AnimatedInputStream ais = readToPNG(rawInputStream);
+                        AnimatedInputStream ais = readToPNG(rawInputStream, this.cacheFile.getName());
 
                         Minecraft.getInstance().execute(() -> {
                             try {
@@ -189,7 +190,7 @@ public class CosmeticaTexture extends AbstractTexture {
             NativeImage nativeImage1 = null;
             int trueFrames = 1;
             try {
-                AnimatedInputStream inputStream = readToPNG(fileInputStream);
+                AnimatedInputStream inputStream = readToPNG(fileInputStream, this.cacheFile.getName());
                 nativeImage1 = NativeImage.read(inputStream.stream);
                 trueFrames = inputStream.frames;
             } catch (IOException e) {
@@ -298,7 +299,7 @@ public class CosmeticaTexture extends AbstractTexture {
      * @param imageSource the image source.
      * @return an input stream for a PNG image.
      */
-    private static AnimatedInputStream readToPNG(InputStream imageSource) throws IOException {
+    private static AnimatedInputStream readToPNG(InputStream imageSource, String str) throws IOException {
         if (!imageSource.markSupported()) {
             // make mark supported by wrapping in buffered input stream
             imageSource = new BufferedInputStream(imageSource);
@@ -370,6 +371,10 @@ public class CosmeticaTexture extends AbstractTexture {
             // write image PNG to byte array and read to get png
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(flattened, "png", os);
+            // debug
+            new File("./cosmetica-debug").mkdir();
+            ImageIO.write(flattened, "png", new File("./cosmetica-debug/" + str + "-"+ frames + ".png"));
+
             return new AnimatedInputStream(new ByteArrayInputStream(os.toByteArray()), frames);
         }
     }
