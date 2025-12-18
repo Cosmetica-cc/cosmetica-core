@@ -171,7 +171,7 @@ public class BlockModelManager {
 							Logging.getInstance().debug(LoggingCategory.ASSETS, "Texture loaded for {}", id);
 							_model.setTextureLoaded();
 						} else {
-							Logging.getInstance().debug(LoggingCategory.ASSETS, "Texture failed to load for {} (Model is missing)", id);
+							Logging.getInstance().warn("Texture failed to load for {} (Model is missing)", id);
 						}
 					})
 					.build();

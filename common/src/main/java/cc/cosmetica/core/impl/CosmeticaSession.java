@@ -410,7 +410,7 @@ public final class CosmeticaSession {
 				Logging.getInstance().info("Session changed. Aborting reconnect.");
 			} else {
 				try {
-					Logging.getInstance().debug(LoggingCategory.WEBSOCKET, "Attempting to reconnect to Cosmetica Africa...");
+					Logging.getInstance().info("Attempting to reconnect to Cosmetica Africa...");
 					session.logInToAfrica();
 				} catch (Exception e) {
 					System.out.println("Reconnect attempt failed: " + e.getMessage());

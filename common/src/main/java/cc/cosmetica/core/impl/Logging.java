@@ -41,6 +41,8 @@ public final class Logging {
 
 			try (BufferedReader reader = Files.newBufferedReader(config, StandardCharsets.UTF_8)) {
 				Properties debugConfig = new Properties();
+				debugConfig.load(reader);
+
 				for (String s : debugConfig.stringPropertyNames()) {
 					if ("true".equals(debugConfig.getProperty(s))) {
 						debugCategories.add(s);
