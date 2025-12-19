@@ -39,7 +39,8 @@ public class CosmeticaCoreForge {
 		String devAuth = System.getProperty("cosmetica.token");
 
 		if (devAuth != null) {
-			CosmeticaAPI.authenticate(devAuth);
+			// TODO maybe make this system opt-in from other mods
+			CosmeticaAPI.authenticate(devAuth, "core-dev");
 		}
 	}
 }

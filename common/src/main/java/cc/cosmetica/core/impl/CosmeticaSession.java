@@ -60,7 +60,7 @@ public final class CosmeticaSession {
 	 * @param token the user's token. Leave blank if not signed in.
 	 * @param user the user's uuid. Set to null if not signed in.
 	 */
-	private CosmeticaSession(ApiClient client, String token, @Nullable UUID user) {
+	private CosmeticaSession(ApiClient client, String token, String clientName, @Nullable UUID user) {
 		this.accessoriesApi = new AsyncApi<>(new AccessoriesApi(client));
 		this.africaApi = new AsyncApi<>(new AfricaApi(client));
 		this.authApi = new AsyncApi<>(new AuthApi(client));
@@ -82,6 +82,7 @@ public final class CosmeticaSession {
 		this.verifyApi = new AsyncApi<>(new VerifyApi(client));
 		this.sessionToken = token;
 		this.user = user;
+		this.clientName = clientName;
 	}
 
 	// Probably not much better than just creating a new api object each time
@@ -107,6 +108,7 @@ public final class CosmeticaSession {
 
 	public final String sessionToken;
 	private final @Nullable UUID user;
+	private final String clientName;
 	private Websocket websocket;
 
 	public boolean isAuthenticated() {
@@ -134,6 +136,7 @@ public final class CosmeticaSession {
 					JsonObject authData = new JsonObject();
 					authData.add("uuid", new JsonPrimitive(this.user.toString()));
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
+					authData.add("client", new JsonPrimitive(client));
 					sendEvent(websocket1, "auth", authData);
 
 					// Resubscribe to events
@@ -249,7 +252,7 @@ public final class CosmeticaSession {
 		ApiClient defaultClient = Configuration.getDefaultApiClient()
 				.setBasePath(BASE_PATH)
 				.setConnectTimeout(20_000);
-		authenticationInstance = new CosmeticaSession(defaultClient, "",null);
+		authenticationInstance = new CosmeticaSession(defaultClient, "", "core default", null);
 
 		// close socket before shutdown
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> getCurrentSession().closeSocket()));
@@ -337,11 +340,11 @@ public final class CosmeticaSession {
 	public static void deauthenticate() {
 		authenticationInstance.closeSocket(); // close existing auth websocket
 		/* Default client already has base path set */
-		authenticationInstance = new CosmeticaSession(Configuration.getDefaultApiClient(), "", null);
+		authenticationInstance = new CosmeticaSession(Configuration.getDefaultApiClient(), "", "core default", null);
 		notifyAuthChange();
 	}
 
-	public static void authenticate(String jwt) {
+	public static void authenticate(String jwt, String client) {
 		ApiClient newClient = new ApiClient()
 				.setBasePath(BASE_PATH)
 				.addDefaultHeader("Authorization", "Bearer " + jwt);
@@ -360,7 +363,7 @@ public final class CosmeticaSession {
 			throw new RuntimeException("Malformed JWT", e);
 		}
 
-		authenticationInstance = new CosmeticaSession(newClient, jwt, uuid);
+		authenticationInstance = new CosmeticaSession(newClient, jwt, client, uuid);
 		notifyAuthChange();
 
 		// Fetch own cosmetics
@@ -436,7 +439,7 @@ public final class CosmeticaSession {
 	@SuppressWarnings("unused")
 	static boolean silence400 = false;
 
-	public static LoginResult login(UUID uuid, String username, String accessToken) throws IOException, ApiException {
+	public static LoginResult login(UUID uuid, String username, String accessToken, String client) throws IOException, ApiException {
 		// ensure we are deauthenticated.
 		deauthenticate();
 
@@ -532,7 +535,7 @@ public final class CosmeticaSession {
 		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {
 				JsonObject jo = response.readEntityJson().getAsJsonObject();
-				authenticate(jo.get("jwt").getAsString());
+				authenticate(jo.get("jwt").getAsString(), client);
 				Logging.getInstance().debug(null, "Cosmetica: Logged in as {}", username);
 
 				// set user

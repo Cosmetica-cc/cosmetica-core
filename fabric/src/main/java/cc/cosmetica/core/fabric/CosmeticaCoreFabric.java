@@ -33,7 +33,7 @@ public class CosmeticaCoreFabric implements ClientModInitializer {
         String devAuth = System.getProperty("cosmetica.token");
 
         if (devAuth != null) {
-            CosmeticaAPI.authenticate(devAuth);
+            CosmeticaAPI.authenticate(devAuth, "core-dev");
 //            new Thread(() -> {try {
 //                CosmeticaAPI.login();
 //            } catch (Exception e) {

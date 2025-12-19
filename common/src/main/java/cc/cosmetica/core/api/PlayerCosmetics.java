@@ -39,7 +39,7 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @param lore the lore of the player.
 	 * @param icon the icon on the player.
 	 */
-	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon) {
+	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon, boolean online) {
 		// nametag
 		ImageCosmetic iconImage = icon == null ? NO_ICON : ImageCosmetic.fromIcon(icon);
 		this.nametag = new NametagConfig("", "", iconImage, false);
@@ -56,7 +56,7 @@ public final class PlayerCosmetics implements Cosmetics {
 							lore.getService(), // use service as id as well
 							null,
 							lore.getIconUrl(),
-							0), false);
+							0), !online);
 		}
 
 		// outfit
@@ -171,13 +171,13 @@ public final class PlayerCosmetics implements Cosmetics {
 			// read data from the response
 			assert user != null; // response.isIsUser()
 
-			return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon());
+			return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.isOnline());
 		} else {
 			CosmeticaPlayer player = response.getPlayer();
 
 			assert player != null; // !response.isIsUser()
 
-			return new PlayerCosmetics(null, null, null);
+			return new PlayerCosmetics(null, null, null, false);
 		}
 	}
 
@@ -187,6 +187,6 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @return the cosmetics object from the data in the user object.
 	 */
 	public static PlayerCosmetics fromUser(CosmeticaUser user) {
-		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon());
+		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.isOnline());
 	}
 }

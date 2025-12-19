@@ -45,7 +45,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -372,8 +371,10 @@ public class CosmeticaTexture extends AbstractTexture {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(flattened, "png", os);
             // debug
-            new File("./cosmetica-debug").mkdir();
-            ImageIO.write(flattened, "png", new File("./cosmetica-debug/" + str + "-"+ frames + ".png"));
+            if (Boolean.getBoolean("cosmetica.debugDumpImageConversions")) {
+                new File("./cosmetica-debug").mkdir();
+                ImageIO.write(flattened, "png", new File("./cosmetica-debug/" + str + "-"+ frames + ".png"));
+            }
 
             return new AnimatedInputStream(new ByteArrayInputStream(os.toByteArray()), frames);
         }
