@@ -447,7 +447,8 @@ public final class CosmeticaSession {
 	@SuppressWarnings("unused")
 	static boolean silence400 = false;
 
-	public static LoginResult login(UUID uuid, String username, String accessToken, String client) throws IOException, ApiException {
+	public static LoginResult login(UUID uuid, String username, String accessToken, String client,
+									boolean useCloudSettings, @Nullable String icon) throws IOException, ApiException {
 		// ensure we are deauthenticated.
 		deauthenticate();
 
@@ -539,6 +540,10 @@ public final class CosmeticaSession {
 		verifyRequest.addProperty("secret", sharedSecretEncrypted);
 		verifyRequest.addProperty("verifyToken", verifyTokenEncrypted);
 		verifyRequest.addProperty("sessionId", sessionId);
+		verifyRequest.addProperty("useCloudSettings", useCloudSettings);
+		if (icon != null) {
+			verifyRequest.addProperty("modpackId", icon);
+		}
 
 		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {

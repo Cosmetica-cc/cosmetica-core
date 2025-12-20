@@ -27,6 +27,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.resources.ResourceLocation;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.UUID;
@@ -211,7 +212,7 @@ public final class CosmeticaAPI {
 	/**
 	 * Add the given authentication change callback.
 	 * @param callback the callback to add.
-	 * @apiNote be careful when using this to retry logins, as {@link CosmeticaAPI#login(String)} and similar deauthenticate internally.
+	 * @apiNote be careful when using this to retry logins, as {@link CosmeticaAPI#login(String, boolean, String)} and similar deauthenticate internally.
 	 */
 	public static void addAuthenticationChangeCallback(Runnable callback) {
 		CosmeticaSession.addAuthChangeCallback(callback);
@@ -255,11 +256,17 @@ public final class CosmeticaAPI {
 	/**
 	 * Log in with the currently logged-in user. Does not spawn another thread.
 	 * @param client the client name string (identifies your client).
+	 * @param useCloudSettings whether to switch to cloud settings on startup.
+	 * @param icon a custom icon brand, if one should be used.
 	 * @return whether login was successful.
 	 */
-	public static LoginResult login(String client) throws IOException {
+	public static LoginResult login(String client, boolean useCloudSettings, @Nullable String icon) throws IOException {
 		User user = Minecraft.getInstance().getUser();
-		return CosmeticaSession.login(user.getGameProfile().getId(), user.getGameProfile().getName(), user.getAccessToken(), client);
+		return CosmeticaSession.login(
+				user.getGameProfile().getId(),
+				user.getGameProfile().getName(),
+				user.getAccessToken(),
+				client, useCloudSettings, icon);
 	}
 
 	/**
@@ -268,10 +275,13 @@ public final class CosmeticaAPI {
 	 * @param username the username of the user to sign in as.
 	 * @param accessToken the minecraft access token to use to sign in.
 	 * @param client the client name string (identifies your client).
+	 * @param useCloudSettings whether to switch to cloud settings on startup.
+	 * @param icon a custom icon brand, if one should be used.
 	 * @return whether login was successful.
 	 */
-	public static LoginResult login(UUID uuid, String username, String accessToken, String client) throws IOException {
-		return CosmeticaSession.login(uuid, username, accessToken, client);
+	public static LoginResult login(UUID uuid, String username, String accessToken, String client,
+									boolean useCloudSettings, @Nullable String icon) throws IOException {
+		return CosmeticaSession.login(uuid, username, accessToken, client, useCloudSettings, icon);
 	}
 
 	/**
