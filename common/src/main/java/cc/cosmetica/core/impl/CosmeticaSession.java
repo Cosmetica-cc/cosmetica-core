@@ -31,6 +31,7 @@ import gg.cloaks.javaclient.api.*;
 import gg.cloaks.javaclient.model.AfricaSession;
 import gg.cloaks.javaclient.model.CosmeticaUser;
 import gg.cloaks.javaclient.model.PlayerResponse;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nonnull;
@@ -137,6 +138,7 @@ public final class CosmeticaSession {
 					authData.add("uuid", new JsonPrimitive(this.user.toString()));
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
 					authData.add("client", new JsonPrimitive(this.clientName));
+					authData.add("minecraft", new JsonPrimitive(Minecraft.getInstance().getLaunchedVersion()));
 					sendEvent(websocket1, "auth", authData);
 
 					// Resubscribe to events
@@ -202,10 +204,16 @@ public final class CosmeticaSession {
 					Logging.getInstance().debug(LoggingCategory.WEBSOCKET, "Websocket Received {}", data);
 				}
 
-				JsonObject obj = data.getAsJsonObject();
+				JsonObject body = data.getAsJsonObject();
+				String socketEvent = body.get("event").getAsString();
 
-				if ("event".equals(obj.get("event").getAsString())) {
-					String eventId = obj.get("data").getAsString();
+				if ("ping".equals(socketEvent)) {
+					JsonObject pong = new JsonObject();
+					pong.add("id", body.getAsJsonObject("data").get("id"));
+					sendEvent(this, "pong", pong);
+				}
+				else if ("event".equals(socketEvent)) {
+					String eventId = body.get("data").getAsString();
 
 					// run callbacks
 					synchronized (WEBSOCKET_SUBSCRIPTIONS) {
