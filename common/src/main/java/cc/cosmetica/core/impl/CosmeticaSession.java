@@ -136,7 +136,7 @@ public final class CosmeticaSession {
 					JsonObject authData = new JsonObject();
 					authData.add("uuid", new JsonPrimitive(this.user.toString()));
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
-					authData.add("client", new JsonPrimitive(client));
+					authData.add("client", new JsonPrimitive(this.clientName));
 					sendEvent(websocket1, "auth", authData);
 
 					// Resubscribe to events

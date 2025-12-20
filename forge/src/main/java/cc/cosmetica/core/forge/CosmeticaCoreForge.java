@@ -22,6 +22,7 @@ import cc.cosmetica.core.builtin.BuiltinManagers;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @Mod("cosmetica-core")
 public class CosmeticaCoreForge {
@@ -38,8 +39,7 @@ public class CosmeticaCoreForge {
 		// Development Testing Auth
 		String devAuth = System.getProperty("cosmetica.token");
 
-		if (devAuth != null) {
-			// TODO maybe make this system opt-in from other mods
+		if (devAuth != null && !FMLEnvironment.production) {
 			CosmeticaAPI.authenticate(devAuth, "core-dev");
 		}
 	}

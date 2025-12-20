@@ -20,6 +20,7 @@ import cc.cosmetica.core.CosmeticaCore;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.builtin.BuiltinManagers;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class CosmeticaCoreFabric implements ClientModInitializer {
     @Override
@@ -32,13 +33,8 @@ public class CosmeticaCoreFabric implements ClientModInitializer {
         // Development Testing Auth
         String devAuth = System.getProperty("cosmetica.token");
 
-        if (devAuth != null) {
+        if (devAuth != null && FabricLoader.getInstance().isDevelopmentEnvironment()) {
             CosmeticaAPI.authenticate(devAuth, "core-dev");
-//            new Thread(() -> {try {
-//                CosmeticaAPI.login();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }});
         }
     }
 }
