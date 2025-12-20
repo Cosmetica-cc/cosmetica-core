@@ -40,7 +40,7 @@ public class CosmeticaCoreForge {
 		String devAuth = System.getProperty("cosmetica.token");
 
 		if (devAuth != null && !FMLEnvironment.production) {
-			CosmeticaAPI.authenticate(devAuth, "core-dev");
+			CosmeticaAPI.authenticate(devAuth, "development");
 		}
 	}
 }
