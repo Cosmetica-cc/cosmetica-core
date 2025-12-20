@@ -19,6 +19,7 @@ package cc.cosmetica.core;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Adapter for forge/fabric specific methods.
@@ -45,6 +46,14 @@ public class CosmeticaCoreExpectPlatform {
 	 */
 	@ExpectPlatform
 	public static boolean isDev() {
+		throw new AssertionError();
+	}
+
+	/**
+	 * Get the client name specified by the implementing mod, if provided.
+	 */
+	@ExpectPlatform
+	public static Optional<String> getClientName() {
 		throw new AssertionError();
 	}
 }

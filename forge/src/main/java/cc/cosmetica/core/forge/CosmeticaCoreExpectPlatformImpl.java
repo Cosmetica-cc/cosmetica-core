@@ -17,9 +17,13 @@
 package cc.cosmetica.core.forge;
 
 import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 
 import java.nio.file.Path;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Forge implementation of CosmeticaCore expect platform.
@@ -35,5 +39,14 @@ public class CosmeticaCoreExpectPlatformImpl {
 
 	public static boolean isDev() {
 		return !FMLEnvironment.production;
+	}
+
+	public static Optional<String> getClientName() {
+		return FMLLoader.getLoadingModList().getMods()
+				.stream()
+				.map(info -> info.<String>getConfigElement("cosmetica-client"))
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.findFirst();
 	}
 }

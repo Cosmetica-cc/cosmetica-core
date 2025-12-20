@@ -17,8 +17,12 @@
 package cc.cosmetica.core.fabric;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.CustomValue;
 
 import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Fabric implementation of CosmeticaCore expect platform.
@@ -34,5 +38,15 @@ public class CosmeticaCoreExpectPlatformImpl {
 
 	public static boolean isDev() {
 		return FabricLoader.getInstance().isDevelopmentEnvironment();
+	}
+
+	public static Optional<String> getClientName() {
+		return FabricLoader.getInstance().getAllMods().stream()
+				.map(ModContainer::getMetadata)
+				.map( mm -> mm.getCustomValue("cosmetica-client"))
+				.filter(Objects::nonNull)
+				.filter(cv -> cv.getType() == CustomValue.CvType.STRING)
+				.map(CustomValue::getAsString)
+				.findFirst();
 	}
 }

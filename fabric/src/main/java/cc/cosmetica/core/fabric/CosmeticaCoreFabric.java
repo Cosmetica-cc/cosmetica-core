@@ -17,6 +17,7 @@
 package cc.cosmetica.core.fabric;
 
 import cc.cosmetica.core.CosmeticaCore;
+import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.builtin.BuiltinManagers;
 import net.fabricmc.api.ClientModInitializer;
@@ -32,8 +33,9 @@ public class CosmeticaCoreFabric implements ClientModInitializer {
         // Development Testing Auth
         String devAuth = System.getProperty("cosmetica.token");
 
+        System.out.println(CosmeticaCoreExpectPlatform.getClientName());
         if (devAuth != null) {
-            CosmeticaAPI.authenticate(devAuth, "core-dev");
+            CosmeticaAPI.authenticate(devAuth);
 //            new Thread(() -> {try {
 //                CosmeticaAPI.login();
 //            } catch (Exception e) {

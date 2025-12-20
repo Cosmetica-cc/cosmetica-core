@@ -19,9 +19,15 @@ package cc.cosmetica.core.forge;
 import cc.cosmetica.core.CosmeticaCore;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.builtin.BuiltinManagers;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.loading.FMLLoader;
+
+import java.util.Optional;
 
 @Mod("cosmetica-core")
 public class CosmeticaCoreForge {
@@ -40,7 +46,7 @@ public class CosmeticaCoreForge {
 
 		if (devAuth != null) {
 			// TODO maybe make this system opt-in from other mods
-			CosmeticaAPI.authenticate(devAuth, "core-dev");
+			CosmeticaAPI.authenticate(devAuth);
 		}
 	}
 }
