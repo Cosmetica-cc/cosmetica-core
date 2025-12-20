@@ -23,14 +23,15 @@ import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.util.Response;
 import cc.cosmetica.core.util.Websocket;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.gson.*;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.*;
-import gg.cloaks.javaclient.model.AfricaSession;
-import gg.cloaks.javaclient.model.CosmeticaUser;
-import gg.cloaks.javaclient.model.PlayerResponse;
+import gg.cloaks.javaclient.model.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
@@ -45,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -352,7 +354,17 @@ public final class CosmeticaSession {
 		notifyAuthChange();
 	}
 
-	public static void authenticate(String jwt, String client) {
+	public static final class AuthenticationData {
+		public AuthenticationData(boolean useCloudSettings, @Nullable String packId) {
+			this.useCloudSettings = useCloudSettings;
+			this.packId = packId;
+		}
+
+		private final boolean useCloudSettings;
+		private final String packId;
+	}
+
+	public static void authenticate(String jwt, String client, @Nullable AuthenticationData data) {
 		ApiClient newClient = new ApiClient()
 				.setBasePath(BASE_PATH)
 				.addDefaultHeader("Authorization", "Bearer " + jwt);
@@ -375,8 +387,51 @@ public final class CosmeticaSession {
 		notifyAuthChange();
 
 		// Fetch own cosmetics
+		if (data == null) {
+			// from login()
+			fetchOwnCosmetics(uuid);
+		} else {
+			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Authenticated as {}. Updating auth session and texture packet", uuid);
+
+			// from authenticate() or core's debug
+			CompletableFuture<PlayerResponse> texturePacket = CosmeticaAPI.players().requestAsync(api -> {
+				// Make a copy of the profile and get texture packet data
+				GameProfile userProfile = Minecraft.getInstance().getUser().getGameProfile();
+				GameProfile profileCopy = new GameProfile(userProfile.getId(), userProfile.getName());
+
+				Minecraft.getInstance().getMinecraftSessionService().fillProfileProperties(profileCopy, true);
+				final Property textureProperty = Iterables.getFirst(profileCopy.getProperties().get("textures"), null);
+				if (textureProperty == null) {
+					throw new IllegalStateException("Should not have no texture property after filling profile properties");
+				}
+
+				// Submit texture packet to website to update skin etc
+				TexturePacketDto dto = new TexturePacketDto();
+				dto.setSignature(textureProperty.getValue());
+				dto.setSignature(textureProperty.getSignature());
+
+				return api.submitTexturePacket(dto);
+			});
+			CompletableFuture<Void> updateSettings = CosmeticaAPI.auth().requestAsync(api -> {
+				UpdateSessionDto dto = new UpdateSessionDto();
+				dto.setModpackId(data.packId);
+				dto.setUseCloudSettings(data.useCloudSettings);
+				api.updateSessionOptions(dto);
+				return null;
+			});
+			// Fetch self after both are done
+			CompletableFuture.allOf(texturePacket, updateSettings).thenRunAsync(() -> {
+				fetchOwnCosmetics(uuid);
+			}, Minecraft.getInstance());
+		}
+
+		// log in to africa
+		authenticationInstance.logInToAfrica();
+	}
+
+	private static void fetchOwnCosmetics(UUID uuid) {
 		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Logged in to {}, fetching own cosmetics.", uuid);
-		// TODO make texture packet request and submit that instead.
+
 		CosmeticaAPI.users().requestAsync(UsersApi::getSelf)
 				.thenAccept(user -> {
 					Logging.getInstance().debug(LoggingCategory.LOOKUP, "Received Login Cosmetics");
@@ -388,9 +443,6 @@ public final class CosmeticaSession {
 					Logging.getInstance().error("Error loading own cosmetics", t);
 					return null;
 				});
-
-		// log in to africa
-		authenticationInstance.logInToAfrica();
 	}
 
 	private static void reconnectSocket() {
@@ -548,7 +600,7 @@ public final class CosmeticaSession {
 		try (Response response = Response.post(authURL + "/java/verify", verifyRequest)) {
 			if (response.isSuccessful()) {
 				JsonObject jo = response.readEntityJson().getAsJsonObject();
-				authenticate(jo.get("jwt").getAsString(), client);
+				authenticate(jo.get("jwt").getAsString(), client, null);
 				Logging.getInstance().debug(null, "Cosmetica: Logged in as {}", username);
 
 				// set user

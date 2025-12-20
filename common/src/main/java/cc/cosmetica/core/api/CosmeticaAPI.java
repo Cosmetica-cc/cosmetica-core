@@ -276,21 +276,23 @@ public final class CosmeticaAPI {
 	 * @param accessToken the minecraft access token to use to sign in.
 	 * @param client the client name string (identifies your client).
 	 * @param useCloudSettings whether to switch to cloud settings on startup.
-	 * @param icon a custom icon brand, if one should be used.
+	 * @param modpackId pack id for a custom icon brand, if one should be used.
 	 * @return whether login was successful.
 	 */
 	public static LoginResult login(UUID uuid, String username, String accessToken, String client,
-									boolean useCloudSettings, @Nullable String icon) throws IOException {
-		return CosmeticaSession.login(uuid, username, accessToken, client, useCloudSettings, icon);
+									boolean useCloudSettings, @Nullable String modpackId) throws IOException {
+		return CosmeticaSession.login(uuid, username, accessToken, client, useCloudSettings, modpackId);
 	}
 
 	/**
 	 * Immediately authenticate with the given JSON Web Token.
 	 * @param jwt the json web token with which to authenticate.
 	 * @param client the client name string (identifies your client).
+	 * @param useCloudSettings whether to switch to cloud settings on startup.
+	 * @param modpackId pack id for a custom icon brand, if one should be used.
 	 */
-	public static void authenticate(String jwt, String client) {
-		CosmeticaSession.authenticate(jwt, client);
+	public static void authenticate(String jwt, String client, boolean useCloudSettings, @Nullable String modpackId) {
+		CosmeticaSession.authenticate(jwt, client, new CosmeticaSession.AuthenticationData(useCloudSettings, modpackId));
 	}
 
 	/**
