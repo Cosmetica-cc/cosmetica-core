@@ -519,6 +519,14 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         /**
+         * Get the current frame count setting of this builder.
+         * @return the current frame count setting.
+         */
+        public int getFrames() {
+            return this.frames;
+        }
+
+        /**
          * Set whether this texture should automatically animate with multiple frames. AUTO by default.
          * Automatic animations will prioritise true animations over tilesheet animations.
          * @return This Builder instance.

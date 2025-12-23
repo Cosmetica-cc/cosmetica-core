@@ -243,6 +243,8 @@ public class BlockModelManager {
 			image = new CachedImage(textureLocation, textureBuilder.getTicksPerFrame());
 
 			// create texture
+			final int frameCount = textureBuilder.getFrames();
+
 			AbstractTexture texture = textureBuilder
 					.cached(cacheFile)
 					.onLoad(nativeImage -> {
@@ -251,7 +253,7 @@ public class BlockModelManager {
 
 						if (_image != null) {
 							Logging.getInstance().debug(LoggingCategory.ASSETS, "Texture loaded for {}", id);
-							_image.setLoaded(nativeImage.getWidth(), nativeImage.getHeight());
+							_image.setLoaded(nativeImage.getWidth(), nativeImage.getHeight() / frameCount);
 						} else {
 							Logging.getInstance().warn("Texture failed to load for {} (CachedImage is missing)", id);
 						}
