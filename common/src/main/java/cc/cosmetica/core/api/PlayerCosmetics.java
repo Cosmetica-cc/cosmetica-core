@@ -17,7 +17,6 @@
 package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
-import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.impl.BlockModelManager;
 import gg.cloaks.javaclient.model.*;
 
@@ -39,7 +38,8 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @param lore the lore of the player.
 	 * @param icon the icon on the player.
 	 */
-	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon, boolean online) {
+	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon,
+							@Nullable ExternalCape externalCape, boolean online) {
 		// nametag
 		ImageCosmetic iconImage = icon == null ? NO_ICON : ImageCosmetic.fromIcon(icon);
 		this.nametag = new NametagConfig("", "", iconImage, false);
@@ -51,7 +51,9 @@ public final class PlayerCosmetics implements Cosmetics {
 			this.lore = new NametagConfig(
 					lore.getFormatted().replaceAll("&", "§"), "",
 					lore.getIconUrl() == null ? NO_ICON : new ImageCosmetic(
-							CosmeticaModel.getOrCreateImage("lore", lore.getService(), new CosmeticaTexture.Builder(lore.getIconUrl(), BlockModelManager.FALLBACK_TEXTURE)),
+							CosmeticaModel.getOrCreateCosmeticaImage(
+									new CosmeticaTexture.Builder(lore.getIconUrl(), BlockModelManager.FALLBACK_TEXTURE)
+							),
 							lore.getService(),
 							lore.getService(), // use service as id as well
 							null,
@@ -71,8 +73,12 @@ public final class PlayerCosmetics implements Cosmetics {
 			@Nullable AnimatedTextureCosmetic cloak = outfit.getCloak();
 			@Nullable AnimatedTextureCosmetic elytra = outfit.getElytra();
 
-			if (cloak != null) this.cloak = Optional.of(ImageCosmetic.fromAPI(cloak, "cape")); else this.cloak = Optional.empty();
-			if (elytra != null) this.elytra = Optional.of(ImageCosmetic.fromAPI(elytra, "cape")); else this.elytra = Optional.empty();
+			this.cloak = cloak == null
+					? (externalCape == null ? Optional.empty() : Optional.of(ImageCosmetic.fromExternalCape(externalCape)))
+					: Optional.of(ImageCosmetic.fromAPI(cloak));
+			this.elytra = elytra == null
+					? (externalCape == null || !externalCape.isHasElytra() ? Optional.empty() : Optional.of(ImageCosmetic.fromExternalCape(externalCape)))
+					: Optional.of(ImageCosmetic.fromAPI(elytra));
 
 			// equip acessories
 			for (OutfitAccessory accessory : outfit.getAccessories()) {
@@ -82,8 +88,8 @@ public final class PlayerCosmetics implements Cosmetics {
 			// no outfit
 			this.outfitName = null;
 			this.outfitId = null;
-			this.cloak = Optional.empty();
-			this.elytra = Optional.empty();
+			this.cloak = externalCape == null ? Optional.empty() : Optional.of(ImageCosmetic.fromExternalCape(externalCape));
+			this.elytra = externalCape == null || !externalCape.isHasElytra() ? Optional.empty() : Optional.of(ImageCosmetic.fromExternalCape(externalCape));
 		}
 	}
 
@@ -158,6 +164,11 @@ public final class PlayerCosmetics implements Cosmetics {
 		task.run();
 	}
 
+	@Override
+	public String toString() {
+		return "PlayerCosmetics{" + this.outfitId + "}@" + Integer.toHexString(this.hashCode());
+	}
+
 	/**
 	 * Create a player cosmetics from the given {@link PlayerResponse}.
 	 * @param response the response.
@@ -171,13 +182,13 @@ public final class PlayerCosmetics implements Cosmetics {
 			// read data from the response
 			assert user != null; // response.isIsUser()
 
-			return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.isOnline());
+			return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.getExternalCape(), user.isOnline());
 		} else {
 			CosmeticaPlayer player = response.getPlayer();
 
 			assert player != null; // !response.isIsUser()
 
-			return new PlayerCosmetics(null, null, null, false);
+			return new PlayerCosmetics(null, null, null, player.getExternalCape(), false);
 		}
 	}
 
@@ -187,6 +198,6 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @return the cosmetics object from the data in the user object.
 	 */
 	public static PlayerCosmetics fromUser(CosmeticaUser user) {
-		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.isOnline());
+		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.getExternalCape(), user.isOnline());
 	}
 }

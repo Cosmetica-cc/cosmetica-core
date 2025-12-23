@@ -20,6 +20,7 @@ import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.impl.BlockModelManager;
 import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
+import gg.cloaks.javaclient.model.ExternalCape;
 import gg.cloaks.javaclient.model.Icon;
 
 import javax.annotation.Nullable;
@@ -29,7 +30,10 @@ import java.util.Optional;
  * Represents data about a simple image cosmetic.
  */
 public final class ImageCosmetic implements Cosmetic {
-    public ImageCosmetic(CachedImage image, String name, String id, @Nullable GameProfile creator, String thumbnail,
+    /**
+     * Constructor for a cosmetica image cosmetic.
+     */
+    public ImageCosmetic(CachedImage image, String name, String id, @Nullable GameProfile creator, @Nullable String thumbnail,
                          int flags) {
         this.image = image;
         this.name = name;
@@ -37,14 +41,30 @@ public final class ImageCosmetic implements Cosmetic {
         this.creator = creator;
         this.thumbnail = thumbnail;
         this.flags = flags;
+        this.external = false;
+    }
+
+    /**
+     * Constructor for an external image cosmetic.
+     */
+    public ImageCosmetic(CachedImage image, String name, String id, int flags) {
+        this.image = image;
+        this.name = name;
+        this.id = id;
+        this.creator = null;
+        this.thumbnail = null;
+        this.flags = flags;
+        this.external = true;
     }
 
     private final CachedImage image;
 
     private final String name;
     private final String id;
+    private final boolean external;
     @Nullable
     private final GameProfile creator;
+    @Nullable
     private final String thumbnail;
     private final int flags;
 
@@ -56,6 +76,10 @@ public final class ImageCosmetic implements Cosmetic {
     @Override
     public String getId() {
         return this.id;
+    }
+
+    public boolean isExternal() {
+        return this.external;
     }
 
     /**
@@ -72,8 +96,8 @@ public final class ImageCosmetic implements Cosmetic {
     }
 
     @Override
-    public String getThumbnail() {
-        return this.thumbnail;
+    public Optional<String> getThumbnail() {
+        return Optional.ofNullable(this.thumbnail);
     }
 
     /**
@@ -87,12 +111,11 @@ public final class ImageCosmetic implements Cosmetic {
     /**
      * Create an ImageCosmetic from the API.
      * @param cosmetic the cosmetic.
-     * @param category the image category for image caching.
      * @return a new {@link ImageCosmetic}.
      */
-    public static ImageCosmetic fromAPI(AnimatedTextureCosmetic cosmetic, String category) {
+    public static ImageCosmetic fromAPI(AnimatedTextureCosmetic cosmetic) {
         return new ImageCosmetic(
-                CosmeticaModel.getOrCreateImage(category, cosmetic),
+                CosmeticaModel.getOrCreateCosmeticaImage(cosmetic),
                 cosmetic.getName(),
                 cosmetic.getId(),
                 Cosmetic.gameProfileOf(cosmetic.getCreator()),
@@ -101,15 +124,39 @@ public final class ImageCosmetic implements Cosmetic {
     }
 
     /**
+     * Create an ImageCosmetic from an external cape.
+     * @param cosmetic the cosmetic.
+     * @return a new {@link ImageCosmetic}.
+     */
+    public static ImageCosmetic fromExternalCape(ExternalCape cosmetic) {
+        return new ImageCosmetic(
+                CosmeticaModel.getOrCreateImage(
+                        "externalcapes",
+                        CosmeticaModel.textureId(cosmetic.getTexture()),
+                        new CosmeticaTexture.Builder(cosmetic.getTexture(), BlockModelManager.FALLBACK_TEXTURE)
+                                .frames(cosmetic.getFrames().intValue(), cosmetic.getTicksPerFrame().intValue())),
+                cosmetic.getName() == null ? (cosmetic.getServiceName() + " Cape") : cosmetic.getName(),
+                cosmetic.getId(),
+                null,
+                null,
+                0);
+    }
+
+    /**
      * Create an ImageCosmetic from an API Icon.
      * @param icon the icon.
      * @return a new {@link ImageCosmetic}.
      */
     public static ImageCosmetic fromIcon(Icon icon) {
+        if (icon.getTexture() == null) {
+            throw new IllegalArgumentException("Tried to create image cosmetic from Icon with no texture?");
+        }
+
         return new ImageCosmetic(
-                CosmeticaModel.getOrCreateImage("icon", icon.getId(),
+                CosmeticaModel.getOrCreateCosmeticaImage(
                         new CosmeticaTexture.Builder(icon.getTexture(), BlockModelManager.FALLBACK_TEXTURE)
-                                .frames(icon.getFrames().intValue(), icon.getTicksPerFrame().intValue())),
+                                .frames(icon.getFrames().intValue(), icon.getTicksPerFrame().intValue())
+                ),
                 icon.getName(),
                 icon.getId(),
                 Cosmetic.gameProfileOf(icon.getCreator()),

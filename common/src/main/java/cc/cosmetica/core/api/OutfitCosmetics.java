@@ -19,7 +19,6 @@ package cc.cosmetica.core.api;
 import cc.cosmetica.core.impl.Logging;
 import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.ApiException;
-import gg.cloaks.javaclient.api.OutfitsApi;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import gg.cloaks.javaclient.model.Outfit;
 import gg.cloaks.javaclient.model.OutfitAccessory;
@@ -51,14 +50,14 @@ public class OutfitCosmetics implements Cosmetics {
 		AnimatedTextureCosmetic elytra = outfit.getElytra();
 
 		this.cloak = cloak == null ? Optional.empty() : Optional.of(new ImageCosmetic(
-                CosmeticaModel.getOrCreateImage("cape", cloak),
+                CosmeticaModel.getOrCreateCosmeticaImage(cloak),
                 cloak.getName(),
                 cloak.getId(),
                 Cosmetic.gameProfileOf(cloak.getCreator()),
                 cloak.getThumbnail(),
 				cloak.getFlags().intValue()));
 		this.elytra = elytra == null ? Optional.empty() : Optional.of(new ImageCosmetic(
-				CosmeticaModel.getOrCreateImage("cape", elytra),
+				CosmeticaModel.getOrCreateCosmeticaImage(elytra),
 				elytra.getName(),
 				elytra.getId(),
 				Cosmetic.gameProfileOf(elytra.getCreator()),
@@ -119,6 +118,11 @@ public class OutfitCosmetics implements Cosmetics {
 	public void enqueue(Runnable task, Runnable onFail) {
 		// todo actually enqueue
 		task.run();
+	}
+
+	@Override
+	public String toString() {
+		return "OutfitCosmetics{" + this.id + "}@" + Integer.toHexString(this.hashCode());
 	}
 
 	/**

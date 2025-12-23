@@ -473,6 +473,13 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         /**
+         * Get the URL this builder's texture will point to.
+         */
+        public String getURL() {
+            return this.url;
+        }
+
+        /**
          * Set the error texture, should the texture fail to load.
          * @param errorTexture the error texture.
          * @return This Builder instance.

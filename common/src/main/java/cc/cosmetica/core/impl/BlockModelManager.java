@@ -136,7 +136,10 @@ public class BlockModelManager {
 	/**
 	 * Create and start baking a model if not already loaded, and return the global instance for that model.
 	 * Designed to avoid duplicating models for the same cosmetic.
-	 * @param id the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
+	 * @param modelId the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param textureId the id of the model's texture. Should be unique per-texture, so I recommend adding a prefix related to the purpose.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
 	 * @param jsonSource the location of the Java Block/Item model json to download if the model hasn't been created yet.
@@ -147,14 +150,14 @@ public class BlockModelManager {
 	 * @implNote a weak reference to the {@link CosmeticaModel} is stored in cache.
 	 * @return a {@link CosmeticaModel} with the model amnd texture location for this model.
 	 */
-	public static CosmeticaModel getOrCreateModel(String id, Supplier<CompletableFuture<String>> jsonSource,
+	public static CosmeticaModel getOrCreateModel(String modelId, String textureId, Supplier<CompletableFuture<String>> jsonSource,
 												  String textureUrl, int ticksPerFrame, int frames) {
-		CosmeticaModel model = MODEL_CACHE.get(id);
+		CosmeticaModel model = MODEL_CACHE.get(modelId);
 
 		// if the model doesn't exist or has expired, generate a new one
 		if (model == null) {
 			// model id. Primarily used for texture location.
-			ResourceLocation textureLocation = getLocation(id);
+			ResourceLocation textureLocation = getLocation(textureId);
 			File cacheFile = getCacheFile(textureLocation, IMAGE_CACHE_MANAGER).toFile();
 
 			model = new CosmeticaModel(textureLocation);
@@ -165,13 +168,13 @@ public class BlockModelManager {
 					.cached(cacheFile)
 					.onLoad(image -> {
 						// don't store a reference to the CosmeticaModel or it will prevent GC
-						CosmeticaModel _model = MODEL_CACHE.get(id);
+						CosmeticaModel _model = MODEL_CACHE.get(modelId);
 
 						if (_model != null) {
-							Logging.getInstance().debug(LoggingCategory.ASSETS, "Texture loaded for {}", id);
+							Logging.getInstance().debug(LoggingCategory.ASSETS, "Texture loaded for {} ({})", modelId, textureId);
 							_model.setTextureLoaded();
 						} else {
-							Logging.getInstance().warn("Texture failed to load for {} (Model is missing)", id);
+							Logging.getInstance().warn("Texture failed to load for {} ({}) (Model is missing)", modelId, textureId);
 						}
 					})
 					.build();
@@ -179,12 +182,12 @@ public class BlockModelManager {
 			// upload texture
 			// don't use isOnRenderThreadOrInit
 			if (RenderSystem.isOnRenderThread()) {
-				Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture for cosmetic {}", id);
+				Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture {} for cosmetic {}", textureId, modelId);
 				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 			}
 			else {
 				RenderSystem.recordRenderCall(() -> {
-					Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture for cosmetic {}", id);
+					Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture {} for cosmetic {}", textureId, modelId);
 					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
 				});
 			}
@@ -193,7 +196,7 @@ public class BlockModelManager {
 			final CosmeticaModel lambdaHack = model;
 			jsonSource.get()
 					.exceptionally(ex -> { // handle non-success responses
-						Logging.getInstance().error("Failed to download block model for {}", ex, id);
+						Logging.getInstance().error("Failed to download block model for {}", ex, modelId);
 						return null;
 					})
 					.thenAccept(json -> {
@@ -201,7 +204,7 @@ public class BlockModelManager {
 
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
 							BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
-							blockModel.name = id;
+							blockModel.name = modelId;
 
 							// calculate bounds
 							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
@@ -209,12 +212,12 @@ public class BlockModelManager {
 
 							lambdaHack.setModel(blockModel, aabb);
 						} catch (IOException | RuntimeException e) {
-							Logging.getInstance().error("Failed to parse model " + id, e);
+							Logging.getInstance().error("Failed to parse model " + modelId, e);
 						}
 					});
 
 			// store in cache
-			MODEL_CACHE.cacheWeakly(id, model);
+			MODEL_CACHE.cacheWeakly(modelId, model);
 		}
 
 		return model;

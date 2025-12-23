@@ -45,10 +45,10 @@ public interface Cosmetic {
     Optional<GameProfile> getCreator();
 
     /**
-     * Get the URL of the Accessory's official thumbnail. If no thumbnail, may be an empty string.
-     * @return the URL of the accessory's official thumbnail. At the time of writing, the image format is {@code webp}.
+     * Get the URL of the Accessory's official thumbnail. If no thumbnail, may be empty.
+     * @return the URL of the accessory's official thumbnail. The image format is likely to be {@code webp}.
      */
-    String getThumbnail();
+    Optional<String> getThumbnail();
 
     /**
      * Convert a {@link CosmeticaUser} to a {@link GameProfile}.

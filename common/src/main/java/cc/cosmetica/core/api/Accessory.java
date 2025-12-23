@@ -81,8 +81,8 @@ public class Accessory implements Cosmetic {
 	}
 
 	@Override
-	public String getThumbnail() {
-		return this.jsonObject.getThumbnail();
+	public Optional<String> getThumbnail() {
+		return Optional.ofNullable(this.jsonObject.getThumbnail());
 	}
 
 	public AttachmentEnum getAttachment() {
@@ -153,8 +153,7 @@ public class Accessory implements Cosmetic {
 	 * @apiNote don't keep this longer than you need it so that the models and textures can be garbage collected.
 	 */
 	public static Accessory fromOutfitAccessory(OutfitAccessory accessory) {
-		CosmeticaModel model = CosmeticaModel.getOrCreateModel(
-				"accessory",
+		CosmeticaModel model = CosmeticaModel.getOrCreateCosmeticaModel(
 				accessory.getAccessory().getId(),
 				accessory.getAccessory().getModel(),
 				accessory.getAccessory().getTexture(),
@@ -185,8 +184,7 @@ public class Accessory implements Cosmetic {
 	 * @apiNote don't keep this longer than you need it so that the models and textures can be garbage collected.
 	 */
 	public static Adjustable fromAccessory(gg.cloaks.javaclient.model.Accessory accessory) {
-		CosmeticaModel model = CosmeticaModel.getOrCreateModel(
-				"accessory",
+		CosmeticaModel model = CosmeticaModel.getOrCreateCosmeticaModel(
 				accessory.getId(),
 				accessory.getModel(),
 				accessory.getTexture(),

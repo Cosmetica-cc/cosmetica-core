@@ -35,11 +35,8 @@ import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -156,9 +153,86 @@ public final class CosmeticaModel {
 
 	private static final AABB ZERO_BOUNDS = AABB.ofSize(0, 0, 0);
 
+	// ==== Direct Model/Image Overloads ==== //
+
 	/**
 	 * Get or bake a model for the given id.
-	 * @param category the category of the model. Allowed characters are the same as id.
+	 * @param id the id of the model. Should be unique per-model.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param textureCategory the category to cache the texture in. Rules are the same as textureId.
+	 * @param textureId the id of the model's texture. Should be unique per-texture, per category.
+	 *           It is recommended to use {@link CosmeticaModel#textureId(String)} for cosmetica models.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param modelURL the url to the Java Block/Item model json to use if the model hasn't been created yet.
+	 * @param textureURL the url for the texture to download, if the model has not been created yet.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Set to a negative number to have multiple frames, but not auto-animate.
+	 *               Image frames are to be stored as a tilesheet, top to bottom.
+	 * @implNote a weak reference to the BakedModel is stored in cache.
+	 * @return a {@link CosmeticaModel} with the model and texture location for this model.
+	 */
+	public static CosmeticaModel getOrCreateModel(String id, String textureCategory, String textureId, String modelURL,
+												  String textureURL, int ticksPerFrame, int frames) {
+		return BlockModelManager.getOrCreateModel(id, textureCategory + "/" + textureId, () -> CosmeticaAPI.downloadAsync(modelURL), textureURL, ticksPerFrame, frames);
+	}
+
+	/**
+	 * Get or bake a model for the given id, with a model override.
+	 * @param id the id of the model. Should be unique per-model.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param textureCategory the category to cache the texture in. Rules are the same as textureId.
+	 * @param textureId the id of the model's texture. Should be unique per-texture, per category.
+	 *           It is recommended to use {@link CosmeticaModel#textureId(String)} for cosmetica models.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param model an input stream to the Java Block/Item model json to use if the model hasn't been created yet.
+	 * @param textureURL the url for the texture to download, if the model has not been created yet.
+	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
+	 * @param frames the number of frames in the image. Set to 0 for a static texture.
+	 *               Set to a negative number to have multiple frames, but not auto-animate.
+	 *               Image frames are to be stored as a tilesheet, top to bottom.
+	 * @implNote a weak reference to the BakedModel is stored in cache.
+	 * @return a {@link CosmeticaModel} with the model and texture location for this model.
+	 */
+	public static CosmeticaModel getOrCreateModel(String id, String textureCategory, String textureId, InputStreamSupplier model,
+												String textureURL, int ticksPerFrame, int frames) {
+		return BlockModelManager.getOrCreateModel(id, textureCategory + "/" + textureId, () -> CompletableFuture.supplyAsync(() -> {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(model.open()))) {
+				return reader.lines().collect(Collectors.joining("\n"));
+			} catch (IOException e) {
+				throw new UncheckedIOException("Failed to read model " + id + " from input stream", e);
+			}
+		}), textureURL, ticksPerFrame, frames);
+	}
+
+	@FunctionalInterface
+	public interface InputStreamSupplier {
+		InputStream open() throws IOException;
+	}
+
+	/**
+	 * Get or download an image for the given id. This ensures a given image is only in memory once and is removed when
+	 * all references are gone.
+	 * @param category the category of the image. Allowed characters are the same as id.
+	 * @param textureId the id of the image. Should be unique per-image, per category.
+	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
+	 *           {@link ResourceLocation} pathnames.
+	 * @param texture The builder from which to set up the texture. Note! {@code cached} and {@code onLoad} will be overridden.
+	 * @implNote a weak reference to the CachedImage is stored in cache.
+	 * @return a {@link CachedImage}.
+	 */
+	public static CachedImage getOrCreateImage(String category, String textureId, CosmeticaTexture.Builder texture) {
+		return BlockModelManager.getOrCreateImage(category + "/" + textureId, texture);
+	}
+
+	// ==== Cosmetica Core Overloads ==== //
+
+	/**
+	 * Get or bake a cosmetica model for the given id.
 	 * @param id the id of the model. Should be unique per-model, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
@@ -171,68 +245,49 @@ public final class CosmeticaModel {
 	 * @implNote a weak reference to the BakedModel is stored in cache.
 	 * @return a {@link CosmeticaModel} with the model and texture location for this model.
 	 */
-	public static CosmeticaModel getOrCreateModel(String category, String id, String modelURL,
-												  String textureURL, int ticksPerFrame, int frames) {
-		return BlockModelManager.getOrCreateModel(category + "/" + id, () -> CosmeticaAPI.downloadAsync(modelURL), textureURL, ticksPerFrame, frames);
-	}
-
-	/**
-	 * Get or bake a model for the given id, with a model override.
-	 * @param category the category of the model. Allowed characters are the same as id.
-	 * @param id the id of the model. Should be unique per-model, per category.
-	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
-	 * @param model an input stream to the Java Block/Item model json to use if the model hasn't been created yet.
-	 * @param textureURL the url for the texture to download, if the model has not been created yet.
-	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
-	 * @param frames the number of frames in the image. Set to 0 for a static texture.
-	 *               Set to a negative number to have multiple frames, but not auto-animate.
-	 *               Image frames are to be stored as a tilesheet, top to bottom.
-	 * @implNote a weak reference to the BakedModel is stored in cache.
-	 * @return a {@link CosmeticaModel} with the model and texture location for this model.
-	 */
-	public static CosmeticaModel getOrCreateModel(String category, String id, InputStreamSupplier model,
-												String textureURL, int ticksPerFrame, int frames) {
-		return BlockModelManager.getOrCreateModel(category + "/" + id, () -> CompletableFuture.supplyAsync(() -> {
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(model.open()))) {
-				return reader.lines().collect(Collectors.joining("\n"));
-			} catch (IOException e) {
-				throw new UncheckedIOException("Failed to read model " + category + "/" + id + " from input stream", e);
-			}
-		}), textureURL, ticksPerFrame, frames);
-	}
-
-	@FunctionalInterface
-	public interface InputStreamSupplier {
-		InputStream open() throws IOException;
+	public static CosmeticaModel getOrCreateCosmeticaModel(String id, String modelURL,
+														   String textureURL, int ticksPerFrame, int frames) {
+		return BlockModelManager.getOrCreateModel(id, "textures/" + textureId(textureURL), () -> CosmeticaAPI.downloadAsync(modelURL), textureURL, ticksPerFrame, frames);
 	}
 
 	/**
 	 * Get or download an image for the given cosmetic. This ensures a given image is only in memory once and is removed when
 	 * all references are gone.
-	 * @param category the category of the image. Allowed characters are the same as id.
 	 * @param cosmetic the animated texture cosmetic. The id will be retrieved from cosmetic#getId()
 	 * @implNote a weak reference to the CachedImage is stored in cache.
 	 * @return a {@link CachedImage}.
 	 */
-	public static CachedImage getOrCreateImage(String category, AnimatedTextureCosmetic cosmetic) {
-		return BlockModelManager.getOrCreateImage(category + "/" + cosmetic.getId(),
+	public static CachedImage getOrCreateCosmeticaImage(AnimatedTextureCosmetic cosmetic) {
+		Objects.requireNonNull(cosmetic.getTexture(), "Cannot create image for cosmetic with null texture.");
+
+		String textureId = textureId(cosmetic.getTexture());
+
+		return BlockModelManager.getOrCreateImage("textures/" + textureId,
 				new CosmeticaTexture.Builder(cosmetic.getTexture(), BlockModelManager.FALLBACK_TEXTURE)
 						.frames(cosmetic.getFrames().intValue(), cosmetic.getTicksPerFrame().intValue()));
 	}
 
 	/**
-	 * Get or download an image for the given id. This ensures a given image is only in memory once and is removed when
+	 * Get or download a cosmetica image for the given id. This ensures a given image is only in memory once and is removed when
 	 * all references are gone.
-	 * @param category the category of the image. Allowed characters are the same as id.
-	 * @param id the id of the image. Should be unique per-image, per category.
-	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
 	 * @param texture The builder from which to set up the texture. Note! {@code cached} and {@code onLoad} will be overridden.
 	 * @implNote a weak reference to the CachedImage is stored in cache.
 	 * @return a {@link CachedImage}.
 	 */
-	public static CachedImage getOrCreateImage(String category, String id, CosmeticaTexture.Builder texture) {
-		return BlockModelManager.getOrCreateImage(category + "/" + id, texture);
+	public static CachedImage getOrCreateCosmeticaImage(CosmeticaTexture.Builder texture) {
+		return BlockModelManager.getOrCreateImage("textures/" + textureId(texture.getURL()), texture);
+	}
+
+	/**
+	 * Extract the texture ID from a texture URL.
+	 * @param textureURL the texture url from cosmetica or nametag. Undefined behaviour with other services.
+	 * @return the texture id.
+	 */
+	public static String textureId(String textureURL) {
+		String[] parts = textureURL.split("/");
+		String textureIdPart = parts[parts.length - 1];
+
+		parts = textureIdPart.split("\\.");
+		return "textures/" + parts[0];
 	}
 }
