@@ -48,6 +48,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static cc.cosmetica.core.api.LoginResult.Code.*;
 
@@ -314,20 +315,20 @@ public final class CosmeticaSession {
 	}
 
 	/* Auth Events */
-	private static final List<Runnable> CALLBACKS = new ArrayList<>();
+	private static final List<Consumer<CosmeticaAPI.AuthChangeReason>> CALLBACKS = new ArrayList<>();
 
-	public static void addAuthChangeCallback(Runnable callback) {
+	public static void addAuthChangeCallback(Consumer<CosmeticaAPI.AuthChangeReason> callback) {
 		CALLBACKS.add(callback);
 	}
 
-	public static boolean removeAuthChangeCallback(Runnable callback) {
+	public static boolean removeAuthChangeCallback(Consumer<CosmeticaAPI.AuthChangeReason> callback) {
 		return CALLBACKS.remove(callback);
 	}
 
-	private static void notifyAuthChange() {
-		Iterator<Runnable> callbacks = CALLBACKS.iterator();
+	private static void notifyAuthChange(CosmeticaAPI.AuthChangeReason reason) {
+		Iterator<Consumer<CosmeticaAPI.AuthChangeReason>> callbacks = CALLBACKS.iterator();
 		while (callbacks.hasNext()) {
-			callbacks.next().run();
+			callbacks.next().accept(reason);
 		}
 	}
 
@@ -389,11 +390,11 @@ public final class CosmeticaSession {
 
 	/* Authenticating and Deauthenticating */
 
-	public static void deauthenticate() {
+	public static void deauthenticate(CosmeticaAPI.AuthChangeReason reason) {
 		authenticationInstance.closeSocket(); // close existing auth websocket
 		/* Default client already has base path set */
 		authenticationInstance = new CosmeticaSession(Configuration.getDefaultApiClient(), "", "core default", null);
-		notifyAuthChange();
+		notifyAuthChange(reason);
 	}
 
 	public static final class AuthenticationData {
@@ -426,7 +427,7 @@ public final class CosmeticaSession {
 		}
 
 		authenticationInstance = new CosmeticaSession(newClient, jwt, client, uuid);
-		notifyAuthChange();
+		notifyAuthChange(CosmeticaAPI.AuthChangeReason.AUTHENTICATED);
 
 		// Fetch own cosmetics
 		if (data == null) {
@@ -507,7 +508,7 @@ public final class CosmeticaSession {
 	public static LoginResult login(UUID uuid, String username, String accessToken, String client,
 									boolean useCloudSettings, @Nullable String icon) throws IOException, ApiException {
 		// ensure we are deauthenticated.
-		deauthenticate();
+		deauthenticate(CosmeticaAPI.AuthChangeReason.REFRESH_LOGIN);
 
 		// Get the authentication server to authenticate with
 		String authURL;

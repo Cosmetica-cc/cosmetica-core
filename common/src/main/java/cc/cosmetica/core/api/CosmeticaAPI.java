@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 /**
  * Provides access to the authenticated instance of the Cosmetica web API.
@@ -214,7 +215,7 @@ public final class CosmeticaAPI {
 	 * @param callback the callback to add.
 	 * @apiNote be careful when using this to retry logins, as {@link CosmeticaAPI#login(String, boolean, String)} and similar deauthenticate internally.
 	 */
-	public static void addAuthenticationChangeCallback(Runnable callback) {
+	public static void addAuthenticationChangeCallback(Consumer<AuthChangeReason> callback) {
 		CosmeticaSession.addAuthChangeCallback(callback);
 	}
 
@@ -223,7 +224,7 @@ public final class CosmeticaAPI {
 	 * @param callback the callback object to remove.
 	 * @return whether the callback was present.
 	 */
-	public static boolean removeAuthenticationChangeaCallback(Runnable callback) {
+	public static boolean removeAuthenticationChangeaCallback(Consumer<AuthChangeReason> callback) {
 		return CosmeticaSession.removeAuthChangeCallback(callback);
 	}
 
@@ -307,7 +308,7 @@ public final class CosmeticaAPI {
 	 * Immediately deauthenticate the API.
 	 */
 	public static void deauthenticate() {
-		CosmeticaSession.deauthenticate();
+		CosmeticaSession.deauthenticate(AuthChangeReason.MANUAL_DEAUTHENTICATE);
 	}
 
 	/**
@@ -357,5 +358,28 @@ public final class CosmeticaAPI {
 		 * Subscribe to outfit updates.
 		 */
 		public static final SubscriptionEvent<UUID> OUTFIT = new SubscriptionEvent<>("outfit");
+	}
+
+	/**
+	 * Enum for authentication change reasons.
+	 */
+	public enum AuthChangeReason {
+		/**
+		 * The user has authenticated.
+		 */
+		AUTHENTICATED,
+		/**
+		 * An API user called {@link CosmeticaAPI#deauthenticate()}.
+		 */
+		MANUAL_DEAUTHENTICATE,
+		/**
+		 * A 401 was received from a Cosmetica API request, indicating an invalid login.
+		 */
+		ERROR_401,
+		/**
+		 * As the implementation may change, it is not guaranteed by the api
+		 * this will always be called at the same places by the implementation.
+		 */
+		REFRESH_LOGIN
 	}
 }
