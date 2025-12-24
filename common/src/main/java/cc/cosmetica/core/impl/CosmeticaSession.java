@@ -46,10 +46,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static cc.cosmetica.core.api.LoginResult.Code.*;
 
@@ -113,6 +111,7 @@ public final class CosmeticaSession {
 	private final @Nullable UUID user;
 	private final String clientName;
 	private Websocket websocket;
+	private boolean isScheduled;
 
 	public boolean isAuthenticated() {
 		return user != null;
@@ -161,6 +160,11 @@ public final class CosmeticaSession {
 					return websocket1;
 				})
 				.exceptionally(ex -> {
+					// seems to be CompletionException?
+					if (ex instanceof CompletionException && ex.getCause() instanceof ApiException) {
+						ex = ex.getCause();
+					}
+
 					if (ex instanceof ApiException) {
 						if (((ApiException) ex).getCode() == 424) {
 							Logging.getInstance().error("Africa servers are full or offline!");
@@ -173,7 +177,7 @@ public final class CosmeticaSession {
 
 					// try reconnect again if it fails and we are still current auth
 					if (CosmeticaSession.this == getCurrentSession()) {
-						reconnectSocket();
+						this.reconnectSocket();
 					}
 
 					return null;
@@ -195,8 +199,9 @@ public final class CosmeticaSession {
 			@Override
 			protected void connectionDropped() {
 				// upon drop only reconnect if still authenticated the same.
-				if (CosmeticaSession.this == getCurrentSession()) {
-					reconnectSocket();
+				CosmeticaSession session = CosmeticaSession.this;
+				if (session == getCurrentSession()) {
+					session.reconnectSocket();
 				}
 			}
 
@@ -243,6 +248,43 @@ public final class CosmeticaSession {
 		}
 	}
 
+	private void reconnectSocket() {
+		synchronized (SCHEDULER) {
+			if (this.isScheduled) {
+				return;
+			}
+
+			this.isScheduled = true;
+		}
+
+		// Compute new timeout (get longer each attempt)
+		int timeout = reconnectTimeout;
+		final int id = reconnectId.incrementAndGet();
+		reconnectTimeout = reconnectTimeout == 0 ? 2 : Math.min(reconnectTimeout * 2, 60);
+
+		// Schedule reconnect
+		Logging.getInstance().warn("Cosmetica Africa disconnected unexpectedly. Attempting reconnect # {} in {} seconds.", id, timeout);
+
+		SCHEDULER.schedule(() -> {
+			// we are running the scheduled task.
+			synchronized (SCHEDULER) {
+				this.isScheduled = false;
+			}
+
+			if (CosmeticaSession.this != getCurrentSession()) {
+				Logging.getInstance().info("Session changed. Aborting reconnect (# {}).", id);
+				return;
+			}
+
+			try {
+				Logging.getInstance().info("Attempting to reconnect to Cosmetica Africa (# {})...", id);
+				this.logInToAfrica();
+			} catch (Exception e) {
+				Logging.getInstance().error("Reconnect attempt (# {}) failed: " + e.getMessage(), id);
+			}
+		}, timeout, TimeUnit.SECONDS);
+	}
+
 	/* Constants */
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, "Cosmetica Reconnector"));
@@ -254,7 +296,7 @@ public final class CosmeticaSession {
 	/* Singleton */
 	private static CosmeticaSession authenticationInstance;
 	private static int reconnectTimeout = 0;
-	private static boolean isScheduled;
+	private static AtomicInteger reconnectId = new AtomicInteger(0);
 
 	static {
 		Logging.getInstance().debug(null, "Using API url: {}", BASE_PATH);
@@ -443,43 +485,6 @@ public final class CosmeticaSession {
 					Logging.getInstance().error("Error loading own cosmetics", t);
 					return null;
 				});
-	}
-
-	private static void reconnectSocket() {
-		synchronized (SCHEDULER) {
-			if (isScheduled) {
-				return;
-			}
-
-			isScheduled = true;
-		}
-
-		// Compute new timeout (get longer each attempt)
-		int timeout = reconnectTimeout;
-		reconnectTimeout = reconnectTimeout == 0 ? 2 : Math.min(reconnectTimeout * 2, 60);
-
-		// Schedule reconnect
-		Logging.getInstance().warn("Cosmetica Africa disconnected unexpectedly. Attempting reconnect in {} seconds.", timeout);
-
-		SCHEDULER.schedule(() -> {
-			CosmeticaSession session = getCurrentSession();
-
-			// we are running the scheduled task.
-			synchronized (SCHEDULER) {
-				isScheduled = false;
-			}
-
-			if (!session.isAuthenticated()) {
-				Logging.getInstance().info("Session changed. Aborting reconnect.");
-			} else {
-				try {
-					Logging.getInstance().info("Attempting to reconnect to Cosmetica Africa...");
-					session.logInToAfrica();
-				} catch (Exception e) {
-					System.out.println("Reconnect attempt failed: " + e.getMessage());
-				}
-			}
-		}, timeout, TimeUnit.SECONDS);
 	}
 
 	private static final boolean DEBUG_WEBSOCKET = Boolean.getBoolean("cosmetica.websocketdebug");
