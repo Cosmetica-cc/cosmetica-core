@@ -52,10 +52,13 @@ shadowJar {
     exclude "architectury.common.json"
 
     relocate 'com.fasterxml.jackson', 'cc.cosmetica.com.fasterxml.jackson'
+    relocate 'org.openapitools.jackson', 'cc.cosmetica.org.openapitools.jackson'
     relocate 'org.apache.hc', 'cc.cosmetica.org.apache.hc'
     relocate 'org.slf4j', 'cc.cosmetica.org.slf4j'
     exclude 'javax/**'
     exclude 'org/apache/commons/**'
+
+    mergeServiceFiles()
 
     configurations = [project.configurations.shadowCommon, project.configurations.shadow]
     archiveClassifier = "dev-shadow"
