@@ -25,6 +25,7 @@ import gg.cloaks.javaclient.model.Icon;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Represents data about a simple image cosmetic.
@@ -137,7 +138,11 @@ public final class ImageCosmetic implements Cosmetic {
                                 .frames(cosmetic.getFrames().intValue(), cosmetic.getTicksPerFrame().intValue())),
                 cosmetic.getName() == null ? (cosmetic.getServiceName() + " Cape") : cosmetic.getName(),
                 cosmetic.getId(),
-                null,
+                // Dummy game profile for service
+                new GameProfile(
+                        UUID.fromString(cosmetic.getService().name()),
+                        cosmetic.getServiceName()
+                ),
                 null,
                 0);
     }
