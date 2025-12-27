@@ -386,15 +386,19 @@ public class CosmeticaTexture extends AbstractTexture {
                     // Yes, this is the fastest method. It's hardware accelerated!
                     // https://stackoverflow.com/questions/3175820/fastest-way-to-draw-bufferedimages-to-another-bufferedimage
                     Graphics g = flattened.getGraphics();
-                    g.drawImage(image0, 0, 0, image0.getWidth(), image0.getHeight(), null);
+                    g.drawImage(image0,
+                            0, 0, image0.getWidth(), Math.min(image0.getHeight(), canvasH),
+                            0, 0, image0.getWidth(), Math.min(image0.getHeight(), canvasH),
+                            null);
 
                     // draw remaining frames
                     for (int frame = 1, parsedFrame = 1; frame < frames; frame++) {
-                        if (proportionalHeight == 1 || (frame % proportionalHeight) == 0) {
-                            BufferedImage imageFrame = reader.read(frame);
-                            g.drawImage(imageFrame, 0, parsedFrame * canvasH, imageFrame.getWidth(), imageFrame.getHeight(), null);
-                            parsedFrame++;
-                        }
+                        BufferedImage imageFrame = reader.read(frame);
+                        g.drawImage(imageFrame,
+                                0, parsedFrame * canvasH, imageFrame.getWidth(), Math.min(imageFrame.getHeight(), canvasH),
+                                0, 0,                     imageFrame.getWidth(), Math.min(imageFrame.getHeight(), canvasH),
+                                null);
+                        parsedFrame++;
                     }
                 }
             }
