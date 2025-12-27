@@ -19,6 +19,7 @@ package cc.cosmetica.core.api.texture;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
 import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
+import cc.cosmetica.core.util.VP8X;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -45,6 +46,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -330,6 +332,12 @@ public class CosmeticaTexture extends AbstractTexture {
             return new AnimatedInputStream(imageSource, 1);
         } else {
             Logging.getInstance().debug(LoggingCategory.ASSETS, "(Cosmetica Texture) Image is not a PNG. Applying transformation.");
+
+            // If webp, use canvas size instead of frame size
+            imageSource.mark(VP8X.MARK_LIMIT);
+            Optional<int[]> webpDimensions = VP8X.getWebpDimensions(imageSource);
+            imageSource.reset();
+
             // Transform other formats to png and flatten animations (especially webp, used by Cosmetica for thumbnails)
             // https://github.com/haraldk/TwelveMonkeys?tab=readme-ov-file#advanced-usage
             // https://codingtechroom.com/question/convert-anime-gif-frames-to-bufferedimage-java
@@ -348,21 +356,29 @@ public class CosmeticaTexture extends AbstractTexture {
                 frames = reader.getNumImages(true);
                 BufferedImage image0 = reader.read(0);
 
-                if (frames < 2) {
-                    flattened = image0;
+                final int canvasW = webpDimensions.map(v -> v[0]).orElse(image0.getWidth());
+                final int canvasH = webpDimensions.map(v -> v[1]).orElse(image0.getHeight());
+
+                if (frames <= 1) {
+                    if (image0.getWidth() == canvasW && image0.getHeight() == canvasH) {
+                        flattened = image0;
+                    } else {
+                        flattened = new BufferedImage(canvasW, canvasH * frames, BufferedImage.TYPE_INT_ARGB);
+                        Graphics g = flattened.getGraphics();
+                        g.drawImage(image0, 0, 0, image0.getWidth(), image0.getHeight(), null);
+                    }
                 } else {
-                    final int w = image0.getWidth();
-                    final int h = image0.getHeight();
                     // flatten
-                    flattened = new BufferedImage(w, h * frames, BufferedImage.TYPE_INT_ARGB);
+                    flattened = new BufferedImage(canvasW, canvasH * frames, BufferedImage.TYPE_INT_ARGB);
                     // Yes, this is the fastest method. It's hardware accelerated!
                     // https://stackoverflow.com/questions/3175820/fastest-way-to-draw-bufferedimages-to-another-bufferedimage
                     Graphics g = flattened.getGraphics();
-                    g.drawImage(image0, 0, 0, w, h, null);
+                    g.drawImage(image0, 0, 0, image0.getWidth(), image0.getHeight(), null);
 
                     // draw remaining frames
                     for (int frame = 1; frame < frames; frame++) {
-                        g.drawImage(reader.read(frame), 0, frame * h, w, h, null);
+                        BufferedImage imageFrame = reader.read(frame);
+                        g.drawImage(imageFrame, 0, frame * canvasH, imageFrame.getWidth(), imageFrame.getHeight(), null);
                     }
                 }
             }
