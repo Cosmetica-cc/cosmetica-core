@@ -122,7 +122,7 @@ public class CosmeticaTexture extends AbstractTexture {
                     InputStream rawInputStream = httpURLConnection.getInputStream();
 
                     if (this.cacheFile == null) {
-                        AnimatedInputStream ais = readToPNG(rawInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetIncrement : 1);
+                        AnimatedInputStream ais = readToPNG(rawInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetFrames : 1);
 
                         Minecraft.getInstance().execute(() -> {
                             try {
@@ -193,7 +193,7 @@ public class CosmeticaTexture extends AbstractTexture {
             NativeImage nativeImage1 = null;
             int trueFrames = 1;
             try {
-                AnimatedInputStream inputStream = readToPNG(fileInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetIncrement : 1);
+                AnimatedInputStream inputStream = readToPNG(fileInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetFrames : 1);
                 nativeImage1 = NativeImage.read(inputStream.stream);
                 trueFrames = inputStream.frames;
             } catch (IOException e) {
@@ -221,7 +221,7 @@ public class CosmeticaTexture extends AbstractTexture {
         this.image = image;
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
         this.currentFrames = nextFrames;
-        this.autoFrameInc = nextFrameInc;
+        this.autoFrameInc = this.ignoreTilesheet ? 1 : nextFrameInc;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
         this.upload(image, false);
