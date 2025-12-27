@@ -220,7 +220,7 @@ public class CosmeticaTexture extends AbstractTexture {
     private void firstUpload(NativeImage image, boolean trueImage, int nextFrames, int nextFrameInc) {
         this.image = image;
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
-        this.currentFrames = nextFrames;
+        this.currentFrames = this.ignoreTilesheet ? (nextFrames / this.tilesheetFrames) : nextFrames;
         this.autoFrameInc = this.ignoreTilesheet ? 1 : nextFrameInc;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
