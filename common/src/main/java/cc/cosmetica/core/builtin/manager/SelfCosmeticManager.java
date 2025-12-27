@@ -78,7 +78,7 @@ public class SelfCosmeticManager implements CosmeticManager {
 		}
 
 		OutfitCosmetics outfitCosmetics = new OutfitCosmetics(outfit);
-		boolean shouldFetchSelf = false;
+		boolean shouldFetchSelf;
 
 		if (cosmetics == NoneCosmetics.NONE) {
 			cosmetics = outfitCosmetics;
@@ -93,6 +93,7 @@ public class SelfCosmeticManager implements CosmeticManager {
 					cosmetics.getNametag(),
 					cosmetics.getLore().orElse(null)
 			);
+			shouldFetchSelf = !cosmetics.getCloak().isPresent() || !cosmetics.getElytra().isPresent();
 		}
 
 		return shouldFetchSelf;
