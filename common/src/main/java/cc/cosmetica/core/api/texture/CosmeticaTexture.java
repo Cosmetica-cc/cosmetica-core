@@ -52,7 +52,7 @@ import java.util.function.Consumer;
 
 public class CosmeticaTexture extends AbstractTexture {
     private CosmeticaTexture(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture,
-                                    int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload)
+                                    int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload, boolean ignoreTilesheet)
             throws IllegalArgumentException {
         if (frames > 1 && ticksPerFrame == 0) {
             throw new IllegalArgumentException("Animated texture (" + frames + " frames) but ticks per frame is 0!");
@@ -68,6 +68,7 @@ public class CosmeticaTexture extends AbstractTexture {
         this.onFirstUpload = onFirstUpload;
         this.loadingTexture = loadingTexture;
         this.errorTexture = errorTexture;
+        this.ignoreTilesheet = ignoreTilesheet;
     }
 
     private final File cacheFile;
@@ -77,6 +78,7 @@ public class CosmeticaTexture extends AbstractTexture {
     private final int tilesheetFrames;
     private final int realTicksPerFrame;
     private final Consumer<NativeImage> onFirstUpload;
+    private final boolean ignoreTilesheet;
     int tilesheetIncrement = 1;
     @Nullable private CompletableFuture<?> future;
 
@@ -120,7 +122,7 @@ public class CosmeticaTexture extends AbstractTexture {
                     InputStream rawInputStream = httpURLConnection.getInputStream();
 
                     if (this.cacheFile == null) {
-                        AnimatedInputStream ais = readToPNG(rawInputStream, this.cacheFile.getName());
+                        AnimatedInputStream ais = readToPNG(rawInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetIncrement : 1);
 
                         Minecraft.getInstance().execute(() -> {
                             try {
@@ -191,7 +193,7 @@ public class CosmeticaTexture extends AbstractTexture {
             NativeImage nativeImage1 = null;
             int trueFrames = 1;
             try {
-                AnimatedInputStream inputStream = readToPNG(fileInputStream, this.cacheFile.getName());
+                AnimatedInputStream inputStream = readToPNG(fileInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetIncrement : 1);
                 nativeImage1 = NativeImage.read(inputStream.stream);
                 trueFrames = inputStream.frames;
             } catch (IOException e) {
@@ -298,9 +300,11 @@ public class CosmeticaTexture extends AbstractTexture {
     /**
      * Convert any input source to PNG.
      * @param imageSource the image source.
+     * @param str string for debug.
+     * @param proportionalHeight the amount to divide the canvas height by per animated frame.
      * @return an input stream for a PNG image.
      */
-    private static AnimatedInputStream readToPNG(InputStream imageSource, String str) throws IOException {
+    private static AnimatedInputStream readToPNG(InputStream imageSource, String str, int proportionalHeight) throws IOException {
         if (!imageSource.markSupported()) {
             // make mark supported by wrapping in buffered input stream
             imageSource = new BufferedInputStream(imageSource);
@@ -357,7 +361,7 @@ public class CosmeticaTexture extends AbstractTexture {
                 BufferedImage image0 = reader.read(0);
 
                 final int canvasW = webpDimensions.map(v -> v[0]).orElse(image0.getWidth());
-                final int canvasH = webpDimensions.map(v -> v[1]).orElse(image0.getHeight());
+                final int canvasH = webpDimensions.map(v -> v[1]).orElse(image0.getHeight()) / proportionalHeight;
 
                 if (frames <= 1) {
                     if (image0.getWidth() == canvasW && image0.getHeight() == canvasH) {
@@ -376,9 +380,12 @@ public class CosmeticaTexture extends AbstractTexture {
                     g.drawImage(image0, 0, 0, image0.getWidth(), image0.getHeight(), null);
 
                     // draw remaining frames
-                    for (int frame = 1; frame < frames; frame++) {
-                        BufferedImage imageFrame = reader.read(frame);
-                        g.drawImage(imageFrame, 0, frame * canvasH, imageFrame.getWidth(), imageFrame.getHeight(), null);
+                    for (int frame = 1, parsedFrame = 1; frame < frames; frame++) {
+                        if (proportionalHeight == 1 || (frame % proportionalHeight) == 0) {
+                            BufferedImage imageFrame = reader.read(frame);
+                            g.drawImage(imageFrame, 0, parsedFrame * canvasH, imageFrame.getWidth(), imageFrame.getHeight(), null);
+                            parsedFrame++;
+                        }
                     }
                 }
             }
@@ -429,8 +436,9 @@ public class CosmeticaTexture extends AbstractTexture {
      * adding the unnecessary overhead of ticking every static texture (which will be most textures).
      */
     private static class Animated extends CosmeticaTexture implements Tickable {
-        private Animated(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture, int frames, int ticksPerFrame, Consumer<NativeImage> onLoad, int tilesheetAnimInc) throws IllegalArgumentException {
-            super(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad);
+        private Animated(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture,
+                         int frames, int ticksPerFrame, Consumer<NativeImage> onLoad, int tilesheetAnimInc, boolean ignoreTilesheet) throws IllegalArgumentException {
+            super(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, ignoreTilesheet);
             this.tilesheetIncrement = tilesheetAnimInc;
         }
 
@@ -471,6 +479,7 @@ public class CosmeticaTexture extends AbstractTexture {
         private File file;
         private int frames = 1;
         private int ticksPerFrame = 1;
+        private boolean ignoreTilesheet = false;
         private Consumer<NativeImage> onLoad;
         private AutoAnimate autoAnimate = AutoAnimate.AUTO;
         private @Nullable ResourceLocation errorTexture;
@@ -523,6 +532,15 @@ public class CosmeticaTexture extends AbstractTexture {
 
             this.frames = frames;
             this.ticksPerFrame = ticksPerFrame;
+            return this;
+        }
+
+        /**
+         * For non-png textures, ignore the tilesheet when converting to a PNG.
+         * @return This Builder instance.
+         */
+        public Builder ignoreTilesheet() {
+            this.ignoreTilesheet = true;
             return this;
         }
 
@@ -581,9 +599,9 @@ public class CosmeticaTexture extends AbstractTexture {
         public CosmeticaTexture build() {
             // Create and return AnimatedHttpTexture instance
             if ((this.frames < 2 && this.autoAnimate == AutoAnimate.AUTO) || this.autoAnimate == AutoAnimate.NEVER) {
-                return new CosmeticaTexture(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad);
+                return new CosmeticaTexture(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, ignoreTilesheet);
             } else {
-                return new Animated(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, this.autoAnimate == AutoAnimate.NEVER_TILESHEETS ? 0 : 1);
+                return new Animated(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, this.autoAnimate == AutoAnimate.NEVER_TILESHEETS ? 0 : 1, ignoreTilesheet);
             }
         }
     }

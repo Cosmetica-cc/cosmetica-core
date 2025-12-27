@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Interface for the cosmetics equipped on an entity.
@@ -120,7 +121,7 @@ public interface Cosmetics {
 
 	/**
 	 * Register a callback for fetching new data for self.
-	 * This does not catch de-authentications. For de-authentication, see {@link CosmeticaAPI#addAuthenticationChangeCallback(Runnable)} which runs earlier.
+	 * This does not catch de-authentications. For de-authentication, see {@link CosmeticaAPI#addAuthenticationChangeCallback(Consumer)} which runs earlier.
 	 * However, it does catch mods clearing cosmetics via {@link SelfCosmeticManager#clear()}, which may provide null player response!
 	 */
 	static void registerUserDataFetchCallback(BiConsumer<PlayerResponse, Cosmetics> onFetch) {
