@@ -124,11 +124,20 @@ public class CosmeticaTexture extends AbstractTexture {
                     if (this.cacheFile == null) {
                         AnimatedInputStream ais = readToPNG(rawInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetFrames : 1);
 
+                        IOException e_ = null;
+                        NativeImage directRead_ = null;
+                        try {
+                            directRead_ = NativeImage.read(ais.stream);
+                        } catch (IOException ex) {
+                            e_ = ex;
+                        }
+                        final IOException e = e_;
+                        final NativeImage directRead = directRead_;
+
                         Minecraft.getInstance().execute(() -> {
-                            try {
-                                NativeImage directRead = NativeImage.read(ais.stream);
+                            if (e == null) {
                                 this.firstUpload(directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? this.tilesheetIncrement : tilesheetFrames);
-                            } catch (IOException e) {
+                            } else {
                                 Logging.getInstance().error("Couldn't download cosmetica texture", e);
                                 if (this.errorTexture != null) {
                                     try {
@@ -535,14 +544,14 @@ public class CosmeticaTexture extends AbstractTexture {
             return this;
         }
 
-        /**
-         * For non-png textures, ignore the tilesheet when converting to a PNG.
-         * @return This Builder instance.
-         */
-        public Builder ignoreTilesheet() {
-            this.ignoreTilesheet = true;
-            return this;
-        }
+//        /**
+//         * For non-png textures, ignore the tilesheet when converting to a PNG.
+//         * @return This Builder instance.
+//         */
+//        public Builder ignoreTilesheet() {
+//            this.ignoreTilesheet = true;
+//            return this;
+//        }
 
         /**
          * Get the current ticks per frame setting of this builder.
