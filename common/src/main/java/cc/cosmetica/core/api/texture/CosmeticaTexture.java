@@ -379,6 +379,7 @@ public class CosmeticaTexture extends AbstractTexture {
                         flattened = new BufferedImage(canvasW, canvasH * frames, BufferedImage.TYPE_INT_ARGB);
                         Graphics g = flattened.getGraphics();
                         g.drawImage(image0, 0, 0, image0.getWidth(), image0.getHeight(), null);
+                        g.dispose();
                     }
                 } else {
                     // flatten
@@ -400,6 +401,7 @@ public class CosmeticaTexture extends AbstractTexture {
                                 null);
                         parsedFrame++;
                     }
+                    g.dispose();
                 }
             }
 
