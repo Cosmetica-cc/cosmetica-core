@@ -395,7 +395,7 @@ public class CosmeticaTexture extends AbstractTexture {
                     for (int frame = 1, parsedFrame = 1; frame < frames; frame++) {
                         BufferedImage imageFrame = reader.read(frame);
                         g.drawImage(imageFrame,
-                                0, parsedFrame * canvasH, imageFrame.getWidth(), Math.min(imageFrame.getHeight(), canvasH),
+                                0, parsedFrame * canvasH, imageFrame.getWidth(), parsedFrame * canvasH + Math.min(imageFrame.getHeight(), canvasH),
                                 0, 0,                     imageFrame.getWidth(), Math.min(imageFrame.getHeight(), canvasH),
                                 null);
                         parsedFrame++;
