@@ -52,7 +52,7 @@ import java.util.function.Consumer;
 
 public class CosmeticaTexture extends AbstractTexture {
     private CosmeticaTexture(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture,
-                                    int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload, boolean ignoreTilesheet)
+                                    int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload, int heightDivider)
             throws IllegalArgumentException {
         if (frames > 1 && ticksPerFrame == 0) {
             throw new IllegalArgumentException("Animated texture (" + frames + " frames) but ticks per frame is 0!");
@@ -68,7 +68,7 @@ public class CosmeticaTexture extends AbstractTexture {
         this.onFirstUpload = onFirstUpload;
         this.loadingTexture = loadingTexture;
         this.errorTexture = errorTexture;
-        this.ignoreTilesheet = ignoreTilesheet;
+        this.heightDivider = heightDivider;
     }
 
     private final File cacheFile;
@@ -78,7 +78,7 @@ public class CosmeticaTexture extends AbstractTexture {
     private final int tilesheetFrames;
     private final int realTicksPerFrame;
     private final Consumer<NativeImage> onFirstUpload;
-    private final boolean ignoreTilesheet;
+    private final int heightDivider;
     int tilesheetIncrement = 1;
     @Nullable private CompletableFuture<?> future;
 
@@ -122,7 +122,7 @@ public class CosmeticaTexture extends AbstractTexture {
                     InputStream rawInputStream = httpURLConnection.getInputStream();
 
                     if (this.cacheFile == null) {
-                        AnimatedInputStream ais = readToPNG(rawInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetFrames : 1);
+                        AnimatedInputStream ais = readToPNG(rawInputStream, this.cacheFile.getName(), this.heightDivider);
 
                         IOException e_ = null;
                         NativeImage directRead_ = null;
@@ -202,7 +202,7 @@ public class CosmeticaTexture extends AbstractTexture {
             NativeImage nativeImage1 = null;
             int trueFrames = 1;
             try {
-                AnimatedInputStream inputStream = readToPNG(fileInputStream, this.cacheFile.getName(), this.ignoreTilesheet ? this.tilesheetFrames : 1);
+                AnimatedInputStream inputStream = readToPNG(fileInputStream, this.cacheFile.getName(), this.heightDivider);
                 nativeImage1 = NativeImage.read(inputStream.stream);
                 trueFrames = inputStream.frames;
             } catch (IOException e) {
@@ -229,8 +229,8 @@ public class CosmeticaTexture extends AbstractTexture {
     private void firstUpload(NativeImage image, boolean trueImage, int nextFrames, int nextFrameInc) {
         this.image = image;
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
-        this.currentFrames = this.ignoreTilesheet ? (nextFrames / this.tilesheetFrames) : nextFrames;
-        this.autoFrameInc = this.ignoreTilesheet ? 1 : nextFrameInc;
+        this.currentFrames = nextFrames;
+        this.autoFrameInc = nextFrameInc;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
         this.upload(image, false);
@@ -446,8 +446,8 @@ public class CosmeticaTexture extends AbstractTexture {
      */
     private static class Animated extends CosmeticaTexture implements Tickable {
         private Animated(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture,
-                         int frames, int ticksPerFrame, Consumer<NativeImage> onLoad, int tilesheetAnimInc, boolean ignoreTilesheet) throws IllegalArgumentException {
-            super(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, ignoreTilesheet);
+                         int frames, int ticksPerFrame, Consumer<NativeImage> onLoad, int tilesheetAnimInc, int heightDivider) throws IllegalArgumentException {
+            super(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, heightDivider);
             this.tilesheetIncrement = tilesheetAnimInc;
         }
 
@@ -544,14 +544,14 @@ public class CosmeticaTexture extends AbstractTexture {
             return this;
         }
 
-//        /**
-//         * For non-png textures, ignore the tilesheet when converting to a PNG.
-//         * @return This Builder instance.
-//         */
-//        public Builder ignoreTilesheet() {
-//            this.ignoreTilesheet = true;
-//            return this;
-//        }
+        /**
+         * For non-png textures, ignore the tilesheet when converting to a PNG.
+         * @return This Builder instance.
+         */
+        public Builder ignoreTilesheet(boolean ignore) {
+            this.ignoreTilesheet = ignore;
+            return this;
+        }
 
         /**
          * Get the current ticks per frame setting of this builder.
@@ -596,7 +596,7 @@ public class CosmeticaTexture extends AbstractTexture {
          * @param onLoad The task to run when the texture is loaded.
          * @return This Builder instance.
          */
-        public Builder onLoad(Consumer<NativeImage>  onLoad) {
+        public Builder onLoad(Consumer<NativeImage> onLoad) {
             this.onLoad = onLoad;
             return this;
         }
@@ -608,9 +608,9 @@ public class CosmeticaTexture extends AbstractTexture {
         public CosmeticaTexture build() {
             // Create and return AnimatedHttpTexture instance
             if ((this.frames < 2 && this.autoAnimate == AutoAnimate.AUTO) || this.autoAnimate == AutoAnimate.NEVER) {
-                return new CosmeticaTexture(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, ignoreTilesheet);
+                return new CosmeticaTexture(file, url, loadingTexture, errorTexture, ignoreTilesheet ? 1 : frames, ticksPerFrame, onLoad, ignoreTilesheet ? frames : 1);
             } else {
-                return new Animated(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, this.autoAnimate == AutoAnimate.NEVER_TILESHEETS ? 0 : 1, ignoreTilesheet);
+                return new Animated(file, url, loadingTexture, errorTexture, ignoreTilesheet ? 1 : frames, ticksPerFrame, onLoad, this.autoAnimate == AutoAnimate.NEVER_TILESHEETS ? 0 : 1, ignoreTilesheet ? frames : 1);
             }
         }
     }
