@@ -113,7 +113,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 			}).exceptionally(e -> {
 				Logging.getInstance().error("Error fetching player data by name/id.", e);
 				return null;
-			}).thenAccept(r -> {if (r != null)Minecraft.getInstance().tell(() -> updatePlayer(profile, r));}); // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
+			}).thenAccept(r -> {if (r != null)Minecraft.getInstance().execute(() -> updatePlayer(profile, r));}); // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
 		} else {
 			// In order to take the load off the servers (and avoid rate limits), we forward the mojang api response used in
 			// game instead of using a network of workers. This is a more long-term sustainable approach to fetching username
@@ -133,7 +133,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 					}
 					return null;
 				}
-			}).thenAccept(r -> Minecraft.getInstance().tell(() -> updatePlayer(profile, r)));
+			}).thenAccept(r -> Minecraft.getInstance().execute(() -> updatePlayer(profile, r)));
 		}
 	}
 

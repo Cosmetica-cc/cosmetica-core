@@ -118,6 +118,10 @@ public final class CosmeticaSession {
 		return user != null;
 	}
 
+	public boolean isWebsocketConnected() {
+		return this.websocket != null;
+	}
+
 	private void logInToAfrica() {
 		// Log in to africa websocket
 		CosmeticaAPI.africa().requestAsync(AfricaApi::requestSession)
@@ -476,12 +480,12 @@ public final class CosmeticaSession {
 		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Logged in to {}, fetching own cosmetics.", uuid);
 
 		CosmeticaAPI.users().requestAsync(UsersApi::getSelf)
-				.thenAccept(user -> {
+				.thenAcceptAsync(user -> {
 					Logging.getInstance().debug(LoggingCategory.LOOKUP, "Received Login Cosmetics");
 					// set self cosmetics
 					SelfCosmeticManager.update(new PlayerResponse().isUser(true).user(user));
 					// Don't set ApiCosmeticsHolder cosmetics. That is only for other players.
-				})
+				}, Minecraft.getInstance())
 				.exceptionally(t -> {
 					Logging.getInstance().error("Error loading own cosmetics", t);
 					return null;
@@ -614,9 +618,8 @@ public final class CosmeticaSession {
 						new Gson().toJson(jo.get("user")),
 						CosmeticaUser.class
 				);
-				SelfCosmeticManager.update(
-						new PlayerResponse().isUser(true).user(user)
-				);
+				// update cosmetics
+				Minecraft.getInstance().execute(() -> SelfCosmeticManager.update(new PlayerResponse().isUser(true).user(user)));
 				return new LoginResult(true, SUCCESS, "", null);
 			} else if (response.getStatusCode() == 400) {
 				JsonObject job = response.readEntityJson().getAsJsonObject();

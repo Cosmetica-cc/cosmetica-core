@@ -98,9 +98,9 @@ public final class PlayerCosmetics implements Cosmetics {
 	 */
 	public PlayerCosmetics(
 			@Nullable ImageCosmetic cloak, @Nullable ImageCosmetic elytra,
-			List<Accessory> accessories,
+			Collection<Accessory> accessories,
 			String outfitName, String outfitId,
-			NametagConfig nametag, NametagConfig lore) {
+			NametagConfig nametag, @Nullable NametagConfig lore) {
 		this.cloak = Optional.ofNullable(cloak);
 		this.elytra = Optional.ofNullable(elytra);
 		this.accessories = accessories;
@@ -112,7 +112,7 @@ public final class PlayerCosmetics implements Cosmetics {
 
 	private final Optional<ImageCosmetic> cloak;
 	private final Optional<ImageCosmetic> elytra;
-	private final List<Accessory> accessories;
+	private final Collection<Accessory> accessories;
 	private final @Nullable String outfitName, outfitId;
 	private final NametagConfig nametag;
 	private final @Nullable NametagConfig lore;

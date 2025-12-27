@@ -203,11 +203,18 @@ public final class CosmeticaAPI {
 
 	/**
 	 * Get whether cosmetica-core is currently authenticated.
-	 *
 	 * @return whether the cosmetica-core api instance is currently authenticated.
 	 */
 	public static boolean isAuthenticated() {
 		return CosmeticaSession.getCurrentSession().isAuthenticated();
+	}
+
+	/**
+	 * Get whether cosmetica-core is currently connected to the websocket (africa).
+	 * @return whether the cosmetica-core is currently connected to the websocket.
+	 */
+	public static boolean isWebsocketConnected() {
+		return CosmeticaSession.getCurrentSession().isWebsocketConnected();
 	}
 
 	/**
