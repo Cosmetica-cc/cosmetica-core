@@ -265,7 +265,11 @@ public final class CosmeticaSession {
 		// Compute new timeout (get longer each attempt)
 		int timeout = reconnectTimeout;
 		final int id = reconnectId.incrementAndGet();
-		reconnectTimeout = reconnectTimeout == 0 ? 2 : Math.min(reconnectTimeout * 2, 60);
+		if (reconnectTimeout >= 30) {
+			reconnectTimeout = Math.min(reconnectTimeout * 2, 60 * 5);
+		} else {
+			reconnectTimeout = reconnectTimeout == 0 ? 2 : Math.min(reconnectTimeout * 2, 30);
+		}
 
 		// Schedule reconnect
 		Logging.getInstance().warn("Cosmetica Africa disconnected unexpectedly. Attempting reconnect # {} in {} seconds.", id, timeout);
