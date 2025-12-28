@@ -24,6 +24,7 @@ import gg.cloaks.javaclient.model.ExternalCape;
 import gg.cloaks.javaclient.model.Icon;
 
 import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -140,7 +141,7 @@ public final class ImageCosmetic implements Cosmetic {
                 cosmetic.getId(),
                 // Dummy game profile for service
                 new GameProfile(
-                        UUID.fromString(cosmetic.getService().name()),
+                        UUID.nameUUIDFromBytes(cosmetic.getService().name().getBytes(StandardCharsets.UTF_8)),
                         cosmetic.getServiceName()
                 ),
                 null,
