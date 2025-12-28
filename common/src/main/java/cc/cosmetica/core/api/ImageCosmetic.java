@@ -49,11 +49,11 @@ public final class ImageCosmetic implements Cosmetic {
     /**
      * Constructor for an external image cosmetic.
      */
-    public ImageCosmetic(CachedImage image, String name, String id, int flags) {
+    public ImageCosmetic(CachedImage image, String name, String id, @Nullable GameProfile creator, int flags) {
         this.image = image;
         this.name = name;
         this.id = id;
-        this.creator = null;
+        this.creator = creator;
         this.thumbnail = null;
         this.flags = flags;
         this.external = true;
@@ -144,7 +144,6 @@ public final class ImageCosmetic implements Cosmetic {
                         UUID.nameUUIDFromBytes(cosmetic.getService().name().getBytes(StandardCharsets.UTF_8)),
                         cosmetic.getServiceName()
                 ),
-                null,
                 0);
     }
 
