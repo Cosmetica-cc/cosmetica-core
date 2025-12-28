@@ -80,6 +80,7 @@ public class SelfCosmeticManager implements CosmeticManager {
 
 		if (cosmetics == NoneCosmetics.NONE) {
 			cosmetics = outfitCosmetics;
+			MasterCosmeticManager.post((PlayerResponse) null, cosmetics);
 			shouldFetchSelf = true;
 		} else {
 			cosmetics = new PlayerCosmetics(
@@ -91,6 +92,7 @@ public class SelfCosmeticManager implements CosmeticManager {
 					cosmetics.getNametag(),
 					cosmetics.getLore().orElse(null)
 			);
+			MasterCosmeticManager.post((PlayerResponse) null, cosmetics);
 			shouldFetchSelf = !cosmetics.getCloak().isPresent() || !cosmetics.getElytra().isPresent();
 		}
 

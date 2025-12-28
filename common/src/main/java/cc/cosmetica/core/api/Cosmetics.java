@@ -122,9 +122,10 @@ public interface Cosmetics {
 	/**
 	 * Register a callback for fetching new data for self.
 	 * This does not catch de-authentications. For de-authentication, see {@link CosmeticaAPI#addAuthenticationChangeCallback(Consumer)} which runs earlier.
-	 * However, it does catch mods clearing cosmetics via {@link SelfCosmeticManager#clear()}, which may provide null player response!
+	 * However, it does catch mods clearing cosmetics via {@link SelfCosmeticManager#clear()}.
+	 * <b>Note:</b> Both clearing cosmetics and updating cosmetics with an {@link gg.cloaks.javaclient.model.Outfit Outfit} may provide null player response!
 	 */
-	static void registerUserDataFetchCallback(BiConsumer<PlayerResponse, Cosmetics> onFetch) {
+	static void registerUserDataFetchCallback(BiConsumer<@Nullable PlayerResponse, Cosmetics> onFetch) {
 		MasterCosmeticManager.addSelfCallback(onFetch);
 	}
 
