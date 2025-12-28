@@ -78,6 +78,14 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 				}
 			}
 		}
+		if (entity instanceof AbstractClientPlayer &&
+				((AbstractClientPlayer)entity).getCloakTextureLocation() != null &&
+				(!entity.hasItemInSlot(EquipmentSlot.CHEST) || !(entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem))
+		) {
+			if (flags.contains(Accessory.Flag.HIDE_WITH_CLOAK)) {
+				return;
+			}
+		}
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_LEGGINGS)) {
 			if (entity.hasItemInSlot(EquipmentSlot.LEGS)) {

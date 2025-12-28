@@ -44,11 +44,12 @@ public final class Logging {
 				debugConfig.load(reader);
 
 				for (String s : debugConfig.stringPropertyNames()) {
-					if ("true".equals(debugConfig.getProperty(s))) {
-						debugCategories.add(s);
+					if (!"true".equals(debugConfig.getProperty(s))) {
+						hiddenDebugCategories.add(s);
 					}
 				}
 
+				debug(null, "Loaded debug config. Hiding logging from: " + String.join(", ", hiddenDebugCategories));
 			} catch (NoSuchFileException e) {
 				// File does not exist, ignore
 				debug(null, "No debug config file, enabling all logging...");
@@ -62,10 +63,10 @@ public final class Logging {
 	private final Set<String> warnings = new HashSet<>();
 	private final Logger logger = LogManager.getLogger("Cosmetica");
 	private final boolean debug = Boolean.getBoolean("cosmetica.debug");
-	private final Set<String> debugCategories = new HashSet<>();
+	private final Set<String> hiddenDebugCategories = new HashSet<>();
 
 	public void debug(@Nullable LoggingCategory category, String message, Object... args) {
-		if (debug && (this.debugCategories.isEmpty() || category == null || this.debugCategories.contains(category.name))) {
+		if (debug && (category == null || !this.hiddenDebugCategories.contains(category.name))) {
 			info(message, args);
 		} else {
 			this.logger.debug(message, args);
