@@ -145,4 +145,13 @@ public interface Cosmetics {
 	static void configureArmourStandArms(boolean showForCosmetics) {
 		MasterCosmeticManager.armourStandArms = showForCosmetics;
 	}
+
+	/**
+	 * Configure whether capes supplied by vanilla and some other mods should be hidden if a player has cosmetics loaded.
+	 * This affects how cosmetica overrides cape textures and does not affect cosmetica's external capes system.
+	 * @param hideVanillaCapes whether capes provided by the game should be hidden.
+	 */
+	static void configureHideOfficialCapes(boolean hideVanillaCapes) {
+		MasterCosmeticManager.hideVanillaCapes = hideVanillaCapes;
+	}
 }

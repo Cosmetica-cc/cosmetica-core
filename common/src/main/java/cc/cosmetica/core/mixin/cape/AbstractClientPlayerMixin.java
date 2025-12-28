@@ -16,9 +16,9 @@
 
 package cc.cosmetica.core.mixin.cape;
 
-import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.ImageCosmetic;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.BlockPos;
@@ -26,7 +26,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -59,6 +58,8 @@ public abstract class AbstractClientPlayerMixin extends Player {
 
 			if (cloak.isPresent()) {
 				info.setReturnValue(cloak.get().getImage().location); // set the return value to our one
+			} else if (MasterCosmeticManager.hideVanillaCapes) {
+				info.setReturnValue(null);
 			}
 		}
 	}

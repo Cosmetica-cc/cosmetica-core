@@ -44,6 +44,7 @@ public final class MasterCosmeticManager {
 
 	// on by default
 	public static boolean armourStandArms = true;
+	public static boolean hideVanillaCapes = true;
 
 	public static final ExecutorService HTTP_THREAD_POOL;
 	static {
