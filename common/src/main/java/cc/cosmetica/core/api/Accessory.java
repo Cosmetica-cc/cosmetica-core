@@ -120,7 +120,7 @@ public class Accessory implements Cosmetic {
 
 		private final int mask;
 
-		boolean isSet(int value) {
+		public boolean isSet(int value) {
 			return (value & mask) != 0;
 		}
 	}
