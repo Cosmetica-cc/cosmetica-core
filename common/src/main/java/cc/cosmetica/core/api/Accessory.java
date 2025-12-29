@@ -30,7 +30,7 @@ import java.util.*;
  */
 public class Accessory implements Cosmetic {
 	public Accessory(gg.cloaks.javaclient.model.Accessory accessory, @Nullable GameProfile creator,
-					 boolean mirrored, CosmeticaModel model, Vec3 offset) {
+					 OptionalInt flagOverrides, boolean mirrored, CosmeticaModel model, Vec3 offset) {
 		Objects.requireNonNull(accessory, "Accessory json object cannot be null.");
 		this.jsonObject = accessory;
 		this.creator = creator;
@@ -40,10 +40,10 @@ public class Accessory implements Cosmetic {
 		this.flags = new HashSet<>();
 
 		// initialise flags
-		BigDecimal flags = accessory.getFlags();
+		int flags = flagOverrides.orElse(accessory.getFlags());
 
 		for (Flag flag : Flag.values()) {
-			if (flag.isSet(flags.intValue())) {
+			if (flag.isSet(flags)) {
 				this.flags.add(flag);
 			}
 		}
@@ -127,7 +127,7 @@ public class Accessory implements Cosmetic {
 
 	public static final class Adjustable extends Accessory {
 		public Adjustable(gg.cloaks.javaclient.model.Accessory accessory, @Nullable GameProfile creator, CosmeticaModel model, AttachmentEnum attachmentEnum) {
-			super(accessory, creator, false, model, attachmentTransform(attachmentEnum, 0, 0, 0));
+			super(accessory, creator, OptionalInt.empty(), false, model, attachmentTransform(attachmentEnum, 0, 0, 0));
 			this.baseOffset = this.offset;
 		}
 
@@ -166,6 +166,7 @@ public class Accessory implements Cosmetic {
 		return new Accessory(
 				accessory.getAccessory(),
 				Cosmetic.gameProfileOf(accessory.getAccessory().getCreator()),
+				accessory.getFlags().intValue() == -1 ? OptionalInt.empty() : OptionalInt.of(accessory.getFlags().intValue()),
 				accessory.isMirrored(),
 				model,
 				attachmentTransform(

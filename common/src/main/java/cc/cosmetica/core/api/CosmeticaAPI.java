@@ -265,16 +265,16 @@ public final class CosmeticaAPI {
 	 * Log in with the currently logged-in user. Does not spawn another thread.
 	 * @param client the client name string (identifies your client).
 	 * @param useCloudSettings whether to switch to cloud settings on startup.
-	 * @param icon a custom icon brand, if one should be used.
+	 * @param modpackId pack id, if one should be used. Especially when associated with a custom icon brand.
 	 * @return whether login was successful.
 	 */
-	public static LoginResult login(String client, boolean useCloudSettings, @Nullable String icon) throws IOException {
+	public static LoginResult login(String client, boolean useCloudSettings, @Nullable String modpackId) throws IOException {
 		User user = Minecraft.getInstance().getUser();
 		return CosmeticaSession.login(
 				user.getGameProfile().getId(),
 				user.getGameProfile().getName(),
 				user.getAccessToken(),
-				client, useCloudSettings, icon);
+				client, useCloudSettings, modpackId);
 	}
 
 	/**
@@ -284,7 +284,7 @@ public final class CosmeticaAPI {
 	 * @param accessToken the minecraft access token to use to sign in.
 	 * @param client the client name string (identifies your client).
 	 * @param useCloudSettings whether to switch to cloud settings on startup.
-	 * @param modpackId pack id for a custom icon brand, if one should be used.
+	 * @param modpackId pack id, if one should be used. Especially when associated with a custom icon brand.
 	 * @return whether login was successful.
 	 */
 	public static LoginResult login(UUID uuid, String username, String accessToken, String client,
@@ -297,7 +297,7 @@ public final class CosmeticaAPI {
 	 * @param jwt the json web token with which to authenticate.
 	 * @param client the client name string (identifies your client).
 	 * @param useCloudSettings whether to switch to cloud settings on startup.
-	 * @param modpackId pack id for a custom icon brand, if one should be used.
+	 * @param modpackId pack id, if one should be used. Especially when associated with a custom icon brand.
 	 */
 	public static void authenticate(String jwt, String client, boolean useCloudSettings, @Nullable String modpackId) {
 		CosmeticaSession.authenticate(jwt, client, new CosmeticaSession.AuthenticationData(useCloudSettings, modpackId));

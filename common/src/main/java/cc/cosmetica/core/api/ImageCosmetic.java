@@ -21,7 +21,6 @@ import cc.cosmetica.core.impl.BlockModelManager;
 import com.mojang.authlib.GameProfile;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import gg.cloaks.javaclient.model.ExternalCape;
-import gg.cloaks.javaclient.model.Icon;
 
 import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
@@ -31,7 +30,7 @@ import java.util.UUID;
 /**
  * Represents data about a simple image cosmetic.
  */
-public final class ImageCosmetic implements Cosmetic {
+public class ImageCosmetic implements Cosmetic {
     /**
      * Constructor for a cosmetica image cosmetic.
      */
@@ -122,7 +121,7 @@ public final class ImageCosmetic implements Cosmetic {
                 cosmetic.getId(),
                 Cosmetic.gameProfileOf(cosmetic.getCreator()),
                 cosmetic.getThumbnail(),
-                cosmetic.getFlags().intValue());
+                cosmetic.getFlags());
     }
 
     /**
@@ -152,12 +151,12 @@ public final class ImageCosmetic implements Cosmetic {
      * @param icon the icon.
      * @return a new {@link ImageCosmetic}.
      */
-    public static ImageCosmetic fromIcon(Icon icon) {
+    public static ImageCosmetic fromIcon(gg.cloaks.javaclient.model.Icon icon) {
         if (icon.getTexture() == null) {
             throw new IllegalArgumentException("Tried to create image cosmetic from Icon with no texture?");
         }
 
-        return new ImageCosmetic(
+        return new Icon(
                 CosmeticaModel.getOrCreateCosmeticaImage(
                         new CosmeticaTexture.Builder(icon.getTexture(), BlockModelManager.FALLBACK_TEXTURE)
                                 .frames(icon.getFrames().intValue(), icon.getTicksPerFrame().intValue())
@@ -166,6 +165,9 @@ public final class ImageCosmetic implements Cosmetic {
                 icon.getId(),
                 Cosmetic.gameProfileOf(icon.getCreator()),
                 icon.getThumbnail(),
-                icon.getFlags().intValue());
+                icon.getFlags(),
+                icon.isUnlocked(),
+                icon.isPublic(),
+                icon.getModpackId());
     }
 }

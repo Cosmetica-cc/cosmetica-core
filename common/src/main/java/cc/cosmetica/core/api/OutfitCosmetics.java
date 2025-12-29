@@ -55,14 +55,14 @@ public class OutfitCosmetics implements Cosmetics {
                 cloak.getId(),
                 Cosmetic.gameProfileOf(cloak.getCreator()),
                 cloak.getThumbnail(),
-				cloak.getFlags().intValue()));
+				cloak.getFlags()));
 		this.elytra = elytra == null ? Optional.empty() : Optional.of(new ImageCosmetic(
 				CosmeticaModel.getOrCreateCosmeticaImage(elytra),
 				elytra.getName(),
 				elytra.getId(),
 				Cosmetic.gameProfileOf(elytra.getCreator()),
 				elytra.getThumbnail(),
-				elytra.getFlags().intValue()));
+				elytra.getFlags()));
 	}
 
 	private final String name;

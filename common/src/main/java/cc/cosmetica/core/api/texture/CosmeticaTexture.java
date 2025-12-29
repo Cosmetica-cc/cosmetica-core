@@ -45,6 +45,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -348,7 +349,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
             // If webp, use canvas size instead of frame size
             imageSource.mark(VP8X.MARK_LIMIT);
-            Optional<int[]> webpDimensions = VP8X.getWebpDimensions(imageSource);
+            Optional<int[]> canvasDimensions = VP8X.getWebpDimensions(imageSource);
             imageSource.reset();
 
             // Transform other formats to png and flatten animations (especially webp, used by Cosmetica for thumbnails)
@@ -369,8 +370,18 @@ public class CosmeticaTexture extends AbstractTexture {
                 frames = reader.getNumImages(true);
                 BufferedImage image0 = reader.read(0);
 
-                final int canvasW = webpDimensions.map(v -> v[0]).orElse(image0.getWidth());
-                final int canvasH = webpDimensions.map(v -> v[1]).orElse(image0.getHeight()) / proportionalHeight;
+                List<FrameMetaData> metaDataList = null;
+
+                if (reader instanceof FrameMetadataHolder) {
+                    Optional<int[]> canvasDimensions2 = ((FrameMetadataHolder) reader).getCanvasDimensions();
+                    if (canvasDimensions2.isPresent()) {
+                        canvasDimensions = canvasDimensions2;
+                    }
+                    metaDataList = ((FrameMetadataHolder) reader).getFrameMetadata();
+                }
+
+                final int canvasW = canvasDimensions.map(v -> v[0]).orElse(image0.getWidth());
+                final int canvasH = canvasDimensions.map(v -> v[1]).orElse(image0.getHeight()) / proportionalHeight;
 
                 if (frames <= 1) {
                     if (image0.getWidth() == canvasW && image0.getHeight() == canvasH) {
@@ -387,19 +398,43 @@ public class CosmeticaTexture extends AbstractTexture {
                     // Yes, this is the fastest method. It's hardware accelerated!
                     // https://stackoverflow.com/questions/3175820/fastest-way-to-draw-bufferedimages-to-another-bufferedimage
                     Graphics g = flattened.getGraphics();
-                    g.drawImage(image0,
-                            0, 0, image0.getWidth(), Math.min(image0.getHeight(), canvasH),
-                            0, 0, image0.getWidth(), Math.min(image0.getHeight(), canvasH),
-                            null);
 
                     // draw remaining frames
-                    for (int frame = 1, parsedFrame = 1; frame < frames; frame++) {
-                        BufferedImage imageFrame = reader.read(frame);
+                    BufferedImage lastFrame = new BufferedImage(canvasW, canvasH, BufferedImage.TYPE_INT_ARGB);
+                    for (int frame = 0; frame < frames; frame++) {
+                        BufferedImage imageFrame = frame == 0 ? image0 : reader.read(frame);
+
+                        if (metaDataList != null && frame < metaDataList.size()) {
+                            FrameMetaData metaData = metaDataList.get(frame);
+
+                            // composite behaviour
+                            Graphics2D frameGraphics = lastFrame.createGraphics();
+                            if (!metaData.blend) {
+                                frameGraphics.setComposite(AlphaComposite.Clear);
+                                frameGraphics.fillRect(metaData.bounds.x, metaData.bounds.y, imageFrame.getWidth(), imageFrame.getHeight());
+                                frameGraphics.setComposite(AlphaComposite.SrcOver);
+                            }
+                            frameGraphics.drawImage(imageFrame, metaData.bounds.x, metaData.bounds.y, null);
+                            frameGraphics.dispose();
+                            imageFrame = lastFrame;
+                        }
+                        lastFrame = imageFrame;
+
                         g.drawImage(imageFrame,
-                                0, parsedFrame * canvasH, imageFrame.getWidth(), parsedFrame * canvasH + Math.min(imageFrame.getHeight(), canvasH),
-                                0, 0,                     imageFrame.getWidth(), Math.min(imageFrame.getHeight(), canvasH),
+                                0, frame * canvasH, imageFrame.getWidth(), frame * canvasH + Math.min(imageFrame.getHeight(), canvasH),
+                                0, 0, imageFrame.getWidth(), Math.min(imageFrame.getHeight(), canvasH),
                                 null);
-                        parsedFrame++;
+
+                        if (metaDataList != null && frame < metaDataList.size()) {
+                            FrameMetaData metaData = metaDataList.get(frame);
+                            Graphics2D frameGraphics = lastFrame.createGraphics();
+
+                            if (metaData.dispose) {
+                                frameGraphics.setComposite(AlphaComposite.Clear);
+                                frameGraphics.fillRect(metaData.bounds.x, metaData.bounds.y, imageFrame.getWidth(), imageFrame.getHeight());
+                            }
+                            frameGraphics.dispose();
+                        }
                     }
                     g.dispose();
                 }

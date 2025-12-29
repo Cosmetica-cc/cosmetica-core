@@ -18,12 +18,12 @@ package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.impl.BlockModelManager;
+import gg.cloaks.javaclient.model.Icon;
 import gg.cloaks.javaclient.model.*;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 import static cc.cosmetica.core.api.NametagConfig.NO_ICON;
