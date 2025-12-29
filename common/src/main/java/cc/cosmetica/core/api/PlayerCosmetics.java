@@ -16,8 +16,6 @@
 
 package cc.cosmetica.core.api;
 
-import cc.cosmetica.core.api.texture.CosmeticaTexture;
-import cc.cosmetica.core.impl.BlockModelManager;
 import gg.cloaks.javaclient.model.Icon;
 import gg.cloaks.javaclient.model.*;
 
@@ -42,23 +40,13 @@ public final class PlayerCosmetics implements Cosmetics {
 							@Nullable ExternalCape externalCape, boolean online) {
 		// nametag
 		ImageCosmetic iconImage = icon == null ? NO_ICON : ImageCosmetic.fromIcon(icon);
-		this.nametag = new NametagConfig("", "", iconImage, false);
+		this.nametag = new NametagConfig("", "", iconImage, !online);
 
 		// lore
 		if (lore == null) {
 			this.lore = null;
 		} else {
-			this.lore = new NametagConfig(
-					lore.getFormatted().replaceAll("&", "§"), "",
-					lore.getIconUrl() == null ? NO_ICON : new ImageCosmetic(
-							CosmeticaModel.getOrCreateCosmeticaImage(
-									new CosmeticaTexture.Builder(lore.getIconUrl(), BlockModelManager.FALLBACK_TEXTURE)
-							),
-							lore.getService(),
-							lore.getService(), // use service as id as well
-							null,
-							lore.getIconUrl(),
-							0), !online);
+			this.lore = NametagConfig.fromLore(lore);
 		}
 
 		// outfit

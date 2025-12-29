@@ -16,6 +16,11 @@
 
 package cc.cosmetica.core.api;
 
+import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import cc.cosmetica.core.impl.BlockModelManager;
+import gg.cloaks.javaclient.model.Lore;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * How cosmetica should decorate a nametag.
  */
@@ -68,4 +73,23 @@ public class NametagConfig {
 	// NOTE: this might change to an Optional or @Nullable field in the future.
 	public static final ImageCosmetic NO_ICON = new ImageCosmetic(CachedImage.NO_TEXTURE, "", "", null, "", 0);
 	public static final NametagConfig EMPTY = new NametagConfig("", "", NO_ICON, false);
+
+	/**
+	 * Convert from javaclient API lore to NametagConfig.
+	 * @param lore the lore to create a nametag config for.
+	 * @return a new nametag config for the given lore.
+	 */
+	public static NametagConfig fromLore(@NotNull Lore lore) {
+		return new NametagConfig(
+				lore.getFormatted().replaceAll("&", "§"), "",
+				lore.getIconUrl() == null ? NO_ICON : new ImageCosmetic(
+						CosmeticaModel.getOrCreateCosmeticaImage(
+								new CosmeticaTexture.Builder(lore.getIconUrl(), BlockModelManager.FALLBACK_TEXTURE)
+						),
+						lore.getService(),
+						lore.getService(), // use service as id as well
+						null,
+						lore.getIconUrl(),
+						0), false);
+	}
 }

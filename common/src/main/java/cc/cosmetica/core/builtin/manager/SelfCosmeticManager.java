@@ -19,6 +19,7 @@ package cc.cosmetica.core.builtin.manager;
 import cc.cosmetica.core.api.*;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.UUIDs;
+import gg.cloaks.javaclient.model.CosmeticaUser;
 import gg.cloaks.javaclient.model.Outfit;
 import gg.cloaks.javaclient.model.PlayerResponse;
 import net.minecraft.client.Minecraft;
@@ -27,6 +28,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.Optional;
+
+import static cc.cosmetica.core.api.NametagConfig.NO_ICON;
 
 /**
  * Cosmetics received from the API for yourself.
@@ -63,6 +66,31 @@ public class SelfCosmeticManager implements CosmeticManager {
 
 		cosmetics = PlayerCosmetics.fromResponse(user);
 		MasterCosmeticManager.post(user, cosmetics);
+	}
+
+	/**
+	 * Update only lore and icon for a cosmetica user.
+	 * @param user the user to update lore and icon for.
+	 */
+	public static void updateLoreAndIcon(CosmeticaUser user) {
+		if (!Minecraft.getInstance().isSameThread()) {
+			throw new IllegalStateException("Cosmetics must be updated from main thread");
+		}
+
+		ImageCosmetic iconImage = user.getIcon() == null ? NO_ICON : ImageCosmetic.fromIcon(user.getIcon());
+		NametagConfig nametag = new NametagConfig("", "", iconImage, !user.isOnline());
+
+		cosmetics = new PlayerCosmetics(
+				cosmetics.getCloak().orElse(null),
+				cosmetics.getElytra().orElse(null),
+				cosmetics.getAccessories(),
+				cosmetics.getOutfitName().orElse(null),
+				cosmetics.getOutfitId().orElse(null),
+				nametag,
+				user.getLore() == null ? null : NametagConfig.fromLore(user.getLore())
+		);
+
+		MasterCosmeticManager.post(new PlayerResponse().isUser(true).user(user), cosmetics);
 	}
 
 	/**
