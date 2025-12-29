@@ -54,6 +54,11 @@ public abstract class ArmourStandMixin extends LivingEntity implements OutfitCos
 		return this.cosmeticacore$armourCosmetics == null ? null : this.cosmeticacore$armourCosmetics.getNow(null);
 	}
 
+	@Override
+	public void cosmeticacore$reloadCosmetics() {
+		this.cosmeticacore$customName = null;
+	}
+
 	@Inject(at = @At("RETURN"), method = "tick")
 	private void onTick(CallbackInfo ci) {
 		if (this.level.isClientSide()) { // don't compute on the server

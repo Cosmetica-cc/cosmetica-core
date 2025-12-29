@@ -25,4 +25,6 @@ import javax.annotation.Nullable;
  */
 public interface OutfitCosmeticsHolder {
 	@Nullable Cosmetics cosmeticacore$getOutfitCosmetics();
+
+	void cosmeticacore$reloadCosmetics();
 }
