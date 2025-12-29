@@ -21,6 +21,7 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.mixin.PlayerModelAccessor;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -49,11 +50,15 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 					   float f, float g, float pitch, float j, float k, float l) {
 		if (entity.isInvisible())return;//don't show cosmetics when invisible
 
+		Minecraft.getInstance().getProfiler().push("accessories");
+
 		Cosmetics.getCosmetics(entity).ifPresent(cosmetics -> {
 			for (Accessory accessory : cosmetics.getAccessories()) {
 				this.renderAccessory(accessory, poseStack, multiBufferSource, light, entity);
 			}
 		});
+
+		Minecraft.getInstance().getProfiler().pop();
 	}
 
 	private void renderAccessory(Accessory accessory, PoseStack stack, MultiBufferSource multiBufferSource, int light, E entity) {
