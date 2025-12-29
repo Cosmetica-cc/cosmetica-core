@@ -38,13 +38,21 @@ public class Accessory implements Cosmetic {
 		this.model = model;
 		this.offset = offset;
 		this.flags = new HashSet<>();
+		// if flags == defaultFlags (objects same) then overrides are not configured
+		this.defaultFlags = flagOverrides.isPresent() ? new HashSet<>() : this.flags;
 
 		// initialise flags
 		int flags = flagOverrides.orElse(accessory.getFlags());
+		int defaultFlags = accessory.getFlags();
 
 		for (Flag flag : Flag.values()) {
 			if (flag.isSet(flags)) {
 				this.flags.add(flag);
+			}
+			if (flagOverrides.isPresent()) {
+				if (flag.isSet(defaultFlags)) {
+					this.defaultFlags.add(flag);
+				}
 			}
 		}
 	}
@@ -56,6 +64,7 @@ public class Accessory implements Cosmetic {
 	protected Vec3 offset;
 	protected boolean mirrored;
 	private final Collection<Flag> flags;
+	private final Collection<Flag> defaultFlags;
 
 	/**
 	 * Get the underlying API Accessory object for this core accessory.
@@ -103,6 +112,10 @@ public class Accessory implements Cosmetic {
 
 	public Collection<Flag> getFlags() {
 		return this.flags;
+	}
+
+	public Collection<Flag> getDefaultFlags() {
+		return this.defaultFlags;
 	}
 
 	public enum Flag {
