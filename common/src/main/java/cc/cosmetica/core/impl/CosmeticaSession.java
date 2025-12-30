@@ -468,6 +468,9 @@ public final class CosmeticaSession {
 				dto.setModpackId(data.packId);
 				dto.setUseCloudSettings(data.useCloudSettings);
 				api.updateSessionOptions(dto);
+				return (Void)null;
+			}).exceptionally(ex -> {
+				Logging.getInstance().error("Failed to update session options", ex);
 				return null;
 			});
 			// Fetch self after both are done
