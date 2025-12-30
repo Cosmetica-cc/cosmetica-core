@@ -80,7 +80,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 		UUID uuid = profile.getId();
 
-		if (textureProperty == null || !textureProperty.hasSignature() || uuid.version() != 4) {
+		if (textureProperty == null || !textureProperty.hasSignature()) {
 			// use request via uuid or name if we cannot use the packet
 			String lookupBy;
 
