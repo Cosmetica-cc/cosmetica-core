@@ -49,6 +49,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 public class CosmeticaTexture extends AbstractTexture {
@@ -135,6 +137,7 @@ public class CosmeticaTexture extends AbstractTexture {
                         final IOException e = e_;
                         final NativeImage directRead = directRead_;
 
+                        // TODO remove this (test issue)
                         Minecraft.getInstance().execute(() -> {
                             if (e == null) {
                                 this.firstUpload(directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? this.tilesheetIncrement : tilesheetFrames);
@@ -170,7 +173,7 @@ public class CosmeticaTexture extends AbstractTexture {
                     httpURLConnection.disconnect();
                 }
             }
-        }, Util.backgroundExecutor());
+        }, BACKGROUND_TASK_EXECUTOR);
     }
 
     private void loadFromPack(ResourceManager resourceManager, ResourceLocation location) throws IOException {
@@ -192,7 +195,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
     private boolean loadCacheFile() throws IOException {
         if (RenderSystem.isOnRenderThread()) {
-            Logging.getInstance().warn("(Cosmetica) loadFromDisk called from render thread! May cause lag!");
+            Logging.getInstance().warn("(Cosmetica) loadCacheFile called from render thread! May cause lag!");
         }
 
         if (this.cacheFile != null && this.cacheFile.isFile()) {
@@ -297,6 +300,8 @@ public class CosmeticaTexture extends AbstractTexture {
         return this.tilesheetFrames;
     }
 
+    private static final ExecutorService BACKGROUND_TASK_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
     private static class AnimatedInputStream {
         AnimatedInputStream(InputStream stream, int frames) {
             this.stream = stream;
@@ -315,6 +320,10 @@ public class CosmeticaTexture extends AbstractTexture {
      * @return an input stream for a PNG image.
      */
     private static AnimatedInputStream readToPNG(InputStream imageSource, String str, int proportionalHeight) throws IOException {
+        if (RenderSystem.isOnRenderThread()) {
+            Logging.getInstance().warn("Converting image formats on render thread! This will cause lag.");
+        }
+
         if (!imageSource.markSupported()) {
             // make mark supported by wrapping in buffered input stream
             imageSource = new BufferedInputStream(imageSource);
