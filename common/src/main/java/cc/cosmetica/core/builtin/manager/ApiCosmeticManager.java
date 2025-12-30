@@ -37,6 +37,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -64,19 +65,22 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 	/**
 	 * Look up and store Cosmetica data for the given game profile.
-	 * @param profile the profile to look up and store data for.
+	 * @param profileIn the profile to look up and store data for.
 	 */
-	public static void lookUpGameProfile(GameProfile profile) {
-		final Property textureProperty = Iterables.getFirst(profile.getProperties().get("textures"), null);
+	public static void lookUpGameProfile(GameProfile profileIn) {
+		final Property textureProperty = Iterables.getFirst(profileIn.getProperties().get("textures"), null);
+
+		final GameProfile profile;
+		if (profileIn.getId() == null) {
+			Logging.getInstance().warn("(Cosmetica) Profile has no uuid, {}", profileIn.getName());
+			// use username to look up
+			profile = new GameProfile(UUID.nameUUIDFromBytes(profileIn.getName().getBytes(StandardCharsets.UTF_8)), profileIn.getName());
+		} else {
+			profile = profileIn;
+		}
 		UUID uuid = profile.getId();
 
-		if (uuid == null) {
-			Logging.getInstance().warn("(Cosmetica) Profile has no uuid, {}", profile.getName());
-			//TODO use username to look up
-			return;
-		}
-
-		if (textureProperty == null || !textureProperty.hasSignature()) {
+		if (textureProperty == null || !textureProperty.hasSignature() || uuid.version() != 4) {
 			// use request via uuid or name if we cannot use the packet
 			String lookupBy;
 
@@ -113,7 +117,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 			}).exceptionally(e -> {
 				Logging.getInstance().error("Error fetching player data by name/id.", e);
 				return null;
-			}).thenAccept(r -> {if (r != null)Minecraft.getInstance().execute(() -> updatePlayer(profile, r));}); // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
+			}).thenAcceptAsync(r -> {if (r != null) updatePlayer(profile, r, uuid.version() == 3);}, Minecraft.getInstance()); // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
 		} else {
 			// In order to take the load off the servers (and avoid rate limits), we forward the mojang api response used in
 			// game instead of using a network of workers. This is a more long-term sustainable approach to fetching username
@@ -133,7 +137,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 					}
 					return null;
 				}
-			}).thenAccept(r -> Minecraft.getInstance().execute(() -> updatePlayer(profile, r)));
+			}).thenAcceptAsync(r -> updatePlayer(profile, r, false), Minecraft.getInstance());
 		}
 	}
 
@@ -141,8 +145,13 @@ public class ApiCosmeticManager implements CosmeticManager {
 	 * Save cosmetics on the player given the given response. Please run this on the render thread.
 	 * @param profile the profile for which to update the player.
 	 * @param response the response received from the server.
+	 * @param creaked whether the player was looked up with username.
 	 */
-	private static void updatePlayer(GameProfile profile, @Nullable PlayerResponse response) {
+	private static void updatePlayer(GameProfile profile, @Nullable PlayerResponse response, boolean creaked) {
+		if (!Minecraft.getInstance().isSameThread()) {
+			throw new IllegalStateException("Cannot call updatePlayer() off the render thread!");
+		}
+
 		if (response == null) {
 			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Skipping update for {} (no data)", profile);
 			return;
@@ -181,7 +190,11 @@ public class ApiCosmeticManager implements CosmeticManager {
 				ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);
 				holder.cosmeticacore$setApiCosmetics(cosmetics);
 
-				CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, player.getUUID(), API_MANAGER, () -> lookUpGameProfile(profile));
+				if (creaked) {
+					CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER_CREAKED, profile.getName(), API_MANAGER, () -> lookUpGameProfile(profile));
+				} else {
+					CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, player.getUUID(), API_MANAGER, () -> lookUpGameProfile(profile));
+				}
 			}
 		}
 	}
