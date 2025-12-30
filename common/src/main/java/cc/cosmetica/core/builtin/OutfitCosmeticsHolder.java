@@ -19,12 +19,15 @@ package cc.cosmetica.core.builtin;
 import cc.cosmetica.core.api.Cosmetics;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 
 /**
  * Duck interface to access the outfit cosmetics on armour stands.
  */
 public interface OutfitCosmeticsHolder {
 	@Nullable Cosmetics cosmeticacore$getOutfitCosmetics();
+	@Nullable UUID cosmeticacore$getSubscribedID();
 
 	void cosmeticacore$reloadCosmetics();
+	void cosmeticacore$setSubscribedID(UUID uuid);
 }

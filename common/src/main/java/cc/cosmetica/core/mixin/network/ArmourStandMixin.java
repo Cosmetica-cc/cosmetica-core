@@ -34,6 +34,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(ArmorStand.class)
@@ -47,6 +48,9 @@ public abstract class ArmourStandMixin extends LivingEntity implements OutfitCos
 	@Unique
 	@Nullable
 	private CompletableFuture<? extends Cosmetics> cosmeticacore$armourCosmetics;
+	@Unique
+	@Nullable
+	private UUID cosmeticacore$subscribedID;
 
 	@Nullable
 	@Override
@@ -57,6 +61,16 @@ public abstract class ArmourStandMixin extends LivingEntity implements OutfitCos
 	@Override
 	public void cosmeticacore$reloadCosmetics() {
 		this.cosmeticacore$customName = null;
+	}
+
+	@Override
+	public @Nullable UUID cosmeticacore$getSubscribedID() {
+		return this.cosmeticacore$subscribedID;
+	}
+
+	@Override
+	public void cosmeticacore$setSubscribedID(UUID uuid) {
+		this.cosmeticacore$subscribedID = uuid;
 	}
 
 	@Inject(at = @At("RETURN"), method = "tick")

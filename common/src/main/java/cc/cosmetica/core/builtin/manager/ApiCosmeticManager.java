@@ -57,6 +57,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 	@Override
 	public void onRevoke(LivingEntity entity) {
+		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Unsubscribing to player updates for {}", entity.getUUID());
 		CosmeticaAPI.unsubscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, entity.getUUID(), API_MANAGER);
 		// TODO clear built models to store minimal data when not owning a player (in case switch to another manager)
 	}

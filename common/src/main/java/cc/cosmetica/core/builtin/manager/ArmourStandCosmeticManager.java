@@ -17,11 +17,16 @@
 package cc.cosmetica.core.builtin.manager;
 
 import cc.cosmetica.core.api.CosmeticManager;
+import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.builtin.OutfitCosmeticsHolder;
+import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.impl.LoggingCategory;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
 import javax.annotation.Nullable;
+import java.lang.ref.WeakReference;
 import java.util.UUID;
 
 /**
@@ -36,6 +41,47 @@ public class ArmourStandCosmeticManager implements CosmeticManager {
 	@Override
 	public Cosmetics getCosmetics(LivingEntity entity) {
 		return ((OutfitCosmeticsHolder) entity).cosmeticacore$getOutfitCosmetics();
+	}
+
+	@Override
+	public void onAssign(LivingEntity entity) {
+		Cosmetics outfitCosmetics = ((OutfitCosmeticsHolder) entity).cosmeticacore$getOutfitCosmetics();
+		WeakReference<LivingEntity> entityRef = new WeakReference<>(entity);
+
+		if (outfitCosmetics != null && outfitCosmetics.getOutfitId().isPresent()) {
+			try {
+				UUID uuid = UUID.fromString(outfitCosmetics.getOutfitId().get());
+				((OutfitCosmeticsHolder) entity).cosmeticacore$setSubscribedID(uuid);
+
+				Logging.getInstance().debug(LoggingCategory.LOOKUP, "Subscribing to outfit updates for {}", uuid);
+
+				CosmeticaAPI.subscribe(
+						CosmeticaAPI.SubscriptionEvent.OUTFIT,
+						uuid,
+						ARMOUR_STAND_MANAGER,
+						() -> {
+							// this is probably over-cautious. onRevoke() should always be called before the LE is removed
+							LivingEntity entity_ = entityRef.get();
+							if (entity_ != null) {
+								((OutfitCosmeticsHolder) entity_).cosmeticacore$reloadCosmetics();
+							}
+						});
+			} catch (IllegalArgumentException e) {
+				Logging.getInstance().warn(
+						"Could not subscribe to outfit {}: {}: {}",
+						outfitCosmetics.getOutfitId().get(),
+						e.getClass().getName(), e.getMessage());
+			}
+		}
+	}
+
+	@Override
+	public void onRevoke(LivingEntity entity) {
+		UUID uuid = ((OutfitCosmeticsHolder)entity).cosmeticacore$getSubscribedID();
+		if (uuid != null) {
+			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Unsubscribing from outfit updates for {}", uuid);
+			CosmeticaAPI.unsubscribe(CosmeticaAPI.SubscriptionEvent.OUTFIT, uuid, ARMOUR_STAND_MANAGER);
+		}
 	}
 
 	/**
@@ -66,4 +112,6 @@ public class ArmourStandCosmeticManager implements CosmeticManager {
 			return null; // Invalid UUID format
 		}
 	}
+
+	private static final ResourceLocation ARMOUR_STAND_MANAGER = new ResourceLocation("cosmetica", "outfits");
 }
