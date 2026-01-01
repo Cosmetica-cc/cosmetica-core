@@ -134,6 +134,9 @@ public class OutfitCosmetics implements Cosmetics {
 		return CosmeticaAPI.outfits().requestAsync(api -> api.get(outfitId))
 				.thenApply(OutfitCosmetics::new)
 				.exceptionally(e -> {
+					if (e.getCause() instanceof ApiException && ((ApiException) e.getCause()).getCode() == 404)
+						e = e.getCause();
+
 					/* probably no outfit exists */
 					if (!(e instanceof ApiException && ((ApiException) e).getCode() == 404)) {
 						Logging.getInstance().error("Error looking up outfit {}", e, outfitId);

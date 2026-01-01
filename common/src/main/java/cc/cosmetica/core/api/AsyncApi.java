@@ -44,6 +44,9 @@ public final class AsyncApi<API> {
     public <T> CompletableFuture<T> requestAsync(Function<API, T> request) {
         return CompletableFuture.supplyAsync(() -> request.apply(this.api), MasterCosmeticManager.HTTP_THREAD_POOL)
                 .exceptionally(t -> {
+                    if (t.getCause() instanceof ApiException && ((ApiException) t.getCause()).getCode() == 401)
+                        t = t.getCause();
+
                     if (t instanceof ApiException && ((ApiException) t).getCode() == 401) {
                         CosmeticaSession.deauthenticate(CosmeticaAPI.AuthChangeReason.ERROR_401);
                     }
