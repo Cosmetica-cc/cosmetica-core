@@ -40,7 +40,7 @@ public final class PlayerCosmetics implements Cosmetics {
 							@Nullable ExternalCape externalCape, String prefix, String suffix, boolean online) {
 		// nametag
 		ImageCosmetic iconImage = icon == null ? NO_ICON : ImageCosmetic.fromIcon(icon);
-		this.nametag = new NametagConfig("", "", iconImage, !online);
+		this.nametag = new NametagConfig(prefix, suffix, iconImage, !online);
 
 		// lore
 		if (lore == null) {
