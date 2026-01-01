@@ -37,7 +37,7 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @param icon the icon on the player.
 	 */
 	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon,
-							@Nullable ExternalCape externalCape, boolean online) {
+							@Nullable ExternalCape externalCape, String prefix, String suffix, boolean online) {
 		// nametag
 		ImageCosmetic iconImage = icon == null ? NO_ICON : ImageCosmetic.fromIcon(icon);
 		this.nametag = new NametagConfig("", "", iconImage, !online);
@@ -169,14 +169,13 @@ public final class PlayerCosmetics implements Cosmetics {
 
 			// read data from the response
 			assert user != null; // response.isIsUser()
-
-			return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.getExternalCape(), user.isOnline());
+			return fromUser(user);
 		} else {
 			CosmeticaPlayer player = response.getPlayer();
 
 			assert player != null; // !response.isIsUser()
 
-			return new PlayerCosmetics(null, null, null, player.getExternalCape(), false);
+			return new PlayerCosmetics(null, null, null, player.getExternalCape(), "", "", false);
 		}
 	}
 
@@ -186,6 +185,6 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @return the cosmetics object from the data in the user object.
 	 */
 	public static PlayerCosmetics fromUser(CosmeticaUser user) {
-		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.getExternalCape(), user.isOnline());
+		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.getExternalCape(), user.getPrefix() == null ? "" : user.getPrefix(), user.getSuffix() == null ? "" : user.getSuffix(), user.isOnline());
 	}
 }
