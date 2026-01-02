@@ -11,7 +11,7 @@
     "cape.ElytraLayerMixin",
     "cosmetics.ArmourStandModelMixin",
     "cosmetics.LivingEntityRendererMixin",
-    "equipper.ClientLevelMixin",
+    "equipper.EntityMixin",
     "nametags.FontStringRenderOutputMixin",
     "nametags.InventoryScreenMixin",
     "nametags.LivingEntityRendererMixin",

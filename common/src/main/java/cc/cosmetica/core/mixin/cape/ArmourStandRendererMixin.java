@@ -18,9 +18,9 @@ package cc.cosmetica.core.mixin.cape;
 
 import cc.cosmetica.core.render.NonHumanCapeLayer;
 import net.minecraft.client.model.ArmorStandArmorModel;
-import net.minecraft.client.model.ArmorStandModel;
+import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.ArmorStandRenderer;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,12 +33,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(ArmorStandRenderer.class)
 public abstract class ArmourStandRendererMixin extends LivingEntityRenderer<ArmorStand, ArmorStandArmorModel> {
-	public ArmourStandRendererMixin(EntityRenderDispatcher entityRenderDispatcher, ArmorStandModel entityModel, float f) {
-		super(entityRenderDispatcher, entityModel, f);
+	public ArmourStandRendererMixin(EntityRendererProvider.Context context, ArmorStandArmorModel entityModel, float f) {
+		super(context, entityModel, f);
 	}
 
 	@Inject(at = @At("RETURN"), method="<init>")
-	private void addCapesToArmourStands(EntityRenderDispatcher entityRenderDispatcher, CallbackInfo ci) {
-		this.addLayer(new NonHumanCapeLayer<>(this, this.model));
+	private void addCapesToArmourStands(EntityRendererProvider.Context context, CallbackInfo ci) {
+		// TODO is this right
+		this.addLayer(new NonHumanCapeLayer<>(this, context.bakeLayer(ModelLayers.PLAYER)));
 	}
 }

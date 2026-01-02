@@ -17,7 +17,6 @@
 package cc.cosmetica.core.mixin.equipper;
 
 import cc.cosmetica.core.impl.CosmeticEquipper;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,10 +27,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Manages revoking removed entities from Cosmetic managers.
  */
-@Mixin(ClientLevel.class)
-public class ClientLevelMixin {
-	@Inject(at = @At("HEAD"), method = "onEntityRemoved")
-	public void onEntityRemoved(Entity entity, CallbackInfo ci) {
+@Mixin(Entity.class)
+public class EntityMixin {
+	@Inject(at = @At("HEAD"), method = "onClientRemoval")
+	public void onEntityRemoved(CallbackInfo ci) {
+		Entity entity = (Entity) (Object) this;
 		if (entity instanceof LivingEntity) {
 			((CosmeticEquipper) entity).cosmeticacore$onEntityRemoved();
 		}

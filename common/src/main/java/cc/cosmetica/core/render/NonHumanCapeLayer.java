@@ -18,6 +18,8 @@ package cc.cosmetica.core.render;
 
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.ImageCosmetic;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Vector3f;
@@ -44,12 +46,17 @@ import java.util.Optional;
 public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 		extends RenderLayer<T, M> {
 
-	public NonHumanCapeLayer(RenderLayerParent<T, M> renderLayerParent, M parentModel) {
+	public NonHumanCapeLayer(RenderLayerParent<T, M> renderLayerParent, ModelPart cloak) {
 		super(renderLayerParent);
-
-		this.cloak = new ModelPart(parentModel, 0, 0);
-		this.cloak.setTexSize(64, 32);
-		this.cloak.addBox(-5.0f, 0.0f, -1.0f, 10.0f, 16.0f, 1.0f, 0.0f);// f);
+		this.cloak = cloak;
+//		this.cloak = new ModelPart(
+//				ImmutableList.of(
+//						new ModelPart.Cube()
+//				),
+//				ImmutableMap.of()
+//		);
+//		this.cloak.setTexSize(64, 32);
+//		this.cloak.addBox(-5.0f, 0.0f, -1.0f, 10.0f, 16.0f, 1.0f, 0.0f);// f);
 	}
 
 	private final ModelPart cloak;

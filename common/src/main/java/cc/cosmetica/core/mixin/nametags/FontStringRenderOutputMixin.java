@@ -44,8 +44,6 @@ public class FontStringRenderOutputMixin {
 
 	@Shadow @Final MultiBufferSource bufferSource;
 
-	@Shadow @Final private boolean seeThrough;
-
 	@Shadow private float y;
 
 	@Shadow @Final private int packedLightCoords;
@@ -55,7 +53,7 @@ public class FontStringRenderOutputMixin {
 
 	@Inject(at = @At("RETURN"), method="<init>")
 	private void accept(Font font, MultiBufferSource buf, float initialX, float initialY,
-						int colour, boolean dropShadow, Matrix4f matrix4f, boolean seeThrough, int light, CallbackInfo ci) {
+						int colour, boolean dropShadow, Matrix4f matrix4f, Font.DisplayMode displayMode, int light, CallbackInfo ci) {
 		CachedImage icon = NametagRenderer.getPreparedIcon();
 
 		if (icon != null) {
@@ -74,13 +72,14 @@ public class FontStringRenderOutputMixin {
 			BakedGlyph glyph = new BakedGlyph(
 					RenderType.text(icon.location),
 					RenderType.textSeeThrough(icon.location),
+					RenderType.textPolygonOffset(icon.location),
 					// u0 u1 v0 v1
 					0, 1, 0, 1,
 					// left right up down. See RawGlyph
 					0, scale*icon.getWidth(), 3.0f, scale*icon.getHeight() + 3.0f
 			);
 
-			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(this.seeThrough));
+			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(displayMode));
 
 			// italic, x, y, pose, vc, r,g,b,a, light
 			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1,1, this.packedLightCoords);
