@@ -23,6 +23,7 @@ import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -48,7 +49,7 @@ public abstract class LivingEntityRendererMixin {
 
 
 	@Inject(at=@At("TAIL"), method="<init>")
-	private void init(EntityRenderDispatcher entityRenderDispatcher, EntityModel entityModel, float f, CallbackInfo info) {
+	private void init(EntityRendererProvider.Context context, EntityModel entityModel, float f, CallbackInfo ci) {
 		if (entityModel instanceof HumanoidModel) {
 			this.addLayer(new HumanoidAccessoriesLayer((LivingEntityRenderer)(Object)this));
 		}
@@ -69,6 +70,7 @@ public abstract class LivingEntityRendererMixin {
 
 		String deformattedReal = ChatFormatting.stripFormatting(player.getName().getString());
 		boolean real = (deformattedReal.equals("Dinnerbone") || deformattedReal.equals("Grumm")); // if they're dinnerbone or grumm use normal
-		return player.isModelPartShown(part) && (real || (cosmetics.isPresent() && cosmetics.get().isUpsideDown()));
+		boolean realUpsideDown = player.isModelPartShown(part) && real;
+		return realUpsideDown || (cosmetics.isPresent() && cosmetics.get().isUpsideDown());
 	}
 }

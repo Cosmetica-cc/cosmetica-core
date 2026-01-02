@@ -32,6 +32,7 @@ import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -151,7 +152,7 @@ public final class CosmeticaModel {
 		stack.popPose();
 	}
 
-	private static final AABB ZERO_BOUNDS = AABB.ofSize(0, 0, 0);
+	private static final AABB ZERO_BOUNDS = AABB.ofSize(Vec3.ZERO, 0, 0, 0);
 
 	// ==== Direct Model/Image Overloads ==== //
 
