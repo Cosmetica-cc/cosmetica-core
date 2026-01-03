@@ -24,7 +24,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
-@Mod("cosmetica-core")
+@Mod("cosmetica_core")
 public class CosmeticaCoreForge {
 	public CosmeticaCoreForge() {
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);

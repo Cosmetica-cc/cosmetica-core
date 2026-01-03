@@ -4,7 +4,7 @@ loaderVersion = "[36,)"
 license = "Apache 2.0"
 
 [[mods]]
-modId = "cosmetica-core"
+modId = "cosmetica_core"
 version = "${version}"
 displayName = "Cosmetica Core"
 authors = "Valoeghese"
@@ -13,14 +13,14 @@ Authenticates users with the Cosmetica servers and shows cool cosmetics on playe
 '''
 #logoFile = ""
 
-[[dependencies.cosmetica-core]]
+[[dependencies.cosmetica_core]]
 modId = "forge"
 mandatory = true
 versionRange = "[36,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.cosmetica-core]]
+[[dependencies.cosmetica_core]]
 modId = "minecraft"
 mandatory = true
 versionRange = "[1.17,)"
