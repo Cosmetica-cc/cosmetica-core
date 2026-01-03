@@ -70,7 +70,7 @@ public abstract class LivingEntityRendererMixin {
 
 		String deformattedReal = ChatFormatting.stripFormatting(player.getName().getString());
 		boolean real = (deformattedReal.equals("Dinnerbone") || deformattedReal.equals("Grumm")); // if they're dinnerbone or grumm use normal
-		boolean realUpsideDown = player.isModelPartShown(part) && real;
+		boolean realUpsideDown = real && player.isModelPartShown(part);
 		return realUpsideDown || (cosmetics.isPresent() && cosmetics.get().isUpsideDown());
 	}
 }

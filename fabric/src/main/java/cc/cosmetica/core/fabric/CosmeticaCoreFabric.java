@@ -20,6 +20,7 @@ import cc.cosmetica.core.CosmeticaCore;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.builtin.BuiltinManagers;
 import cc.cosmetica.core.impl.CosmeticaSession;
+import cc.cosmetica.core.impl.Logging;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -35,7 +36,15 @@ public class CosmeticaCoreFabric implements ClientModInitializer {
         String devAuth = System.getProperty("cosmetica.token");
 
         if (devAuth != null && FabricLoader.getInstance().isDevelopmentEnvironment()) {
-            CosmeticaSession.authenticate(devAuth, "development", null);
+            String modpackId = System.getProperty("cosmetica.devModpack");
+            boolean useCloud = Boolean.parseBoolean(System.getProperty("cosmetica.devUseCloud", modpackId == null ? "true" : "false"));
+            Logging.getInstance().info("Dev Modpack ID (cosmetica.devModpack): " + modpackId);
+            Logging.getInstance().info("Dev UseCloudSettings (cosmetica.devUseCloud): " + useCloud);
+
+            CosmeticaSession.authenticate(devAuth, "development", new CosmeticaSession.AuthenticationData(
+                    useCloud,
+                    modpackId
+            ));
         }
     }
 }
