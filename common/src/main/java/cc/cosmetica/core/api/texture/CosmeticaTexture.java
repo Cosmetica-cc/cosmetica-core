@@ -51,6 +51,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class CosmeticaTexture extends AbstractTexture {
@@ -479,7 +480,10 @@ public class CosmeticaTexture extends AbstractTexture {
                 AnimationMetadataSection textureMetadataSection = resource.getMetadata(AnimationMetadataSection.SERIALIZER);
                 if (textureMetadataSection == null)
                     textureMetadataSection = AnimationMetadataSection.EMPTY;
-                textureImage.frames = textureMetadataSection.getFrameCount();
+
+                AtomicInteger frameCount = new AtomicInteger(0);
+                textureMetadataSection.forEachFrame((idx, time) -> frameCount.incrementAndGet());
+                textureImage.frames = frameCount.get();
             } catch (RuntimeException ex) {
                 Logging.getInstance().warn("Failed reading metadata of cosmetica texture: {}", resourceLocation, ex);
             }

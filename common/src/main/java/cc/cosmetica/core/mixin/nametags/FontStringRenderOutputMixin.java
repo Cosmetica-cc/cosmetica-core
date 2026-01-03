@@ -38,20 +38,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(Font.StringRenderOutput.class)
 public class FontStringRenderOutputMixin {
-	@Shadow private float x;
+	@Shadow
+    float x;
 
 	@Shadow @Final private Matrix4f pose;
 
 	@Shadow @Final MultiBufferSource bufferSource;
 
-	@Shadow private float y;
+	@Shadow
+    float y;
 
 	@Shadow @Final private int packedLightCoords;
 
 	@Unique
 	private Float cosmeticacore$advance = null;
 
-	@Inject(at = @At("RETURN"), method="<init>")
+	@Inject(at = @At("RETURN"), method="<init>(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/MultiBufferSource;FFIZLcom/mojang/math/Matrix4f;Lnet/minecraft/client/gui/Font$DisplayMode;I)V")
 	private void accept(Font font, MultiBufferSource buf, float initialX, float initialY,
 						int colour, boolean dropShadow, Matrix4f matrix4f, Font.DisplayMode displayMode, int light, CallbackInfo ci) {
 		CachedImage icon = NametagRenderer.getPreparedIcon();

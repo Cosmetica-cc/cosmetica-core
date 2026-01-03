@@ -48,7 +48,7 @@ public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 
 	public NonHumanCapeLayer(RenderLayerParent<T, M> renderLayerParent, ModelPart cloak) {
 		super(renderLayerParent);
-		this.cloak = cloak;
+		this.cloak = cloak.getChild("cloak");
 //		this.cloak = new ModelPart(
 //				ImmutableList.of(
 //						new ModelPart.Cube()
