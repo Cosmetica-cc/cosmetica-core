@@ -78,7 +78,7 @@ public class SelfCosmeticManager implements CosmeticManager {
 		}
 
 		ImageCosmetic iconImage = user.getIcon() == null ? NO_ICON : ImageCosmetic.fromIcon(user.getIcon());
-		NametagConfig nametag = new NametagConfig("", "", iconImage, !user.isOnline());
+		NametagConfig nametag = new NametagConfig(user.getPrefix(), user.getSuffix(), iconImage, !user.isOnline());
 
 		cosmetics = new PlayerCosmetics(
 				cosmetics.getCloak().orElse(null),
@@ -87,7 +87,8 @@ public class SelfCosmeticManager implements CosmeticManager {
 				cosmetics.getOutfitName().orElse(null),
 				cosmetics.getOutfitId().orElse(null),
 				nametag,
-				user.getLore() == null ? null : NametagConfig.fromLore(user.getLore())
+				user.getLore() == null ? null : NametagConfig.fromLore(user.getLore()),
+				user.isUpsideDown()
 		);
 
 		MasterCosmeticManager.post(new PlayerResponse().isUser(true).user(user), cosmetics);
@@ -118,7 +119,8 @@ public class SelfCosmeticManager implements CosmeticManager {
 					outfitCosmetics.getOutfitName().orElseThrow(() -> new IllegalStateException("Outfit cosmetics with no outfit name")),
 					outfitCosmetics.getOutfitId().orElseThrow(() -> new IllegalStateException("Outfit cosmetics with no outfit name")),
 					cosmetics.getNametag(),
-					cosmetics.getLore().orElse(null)
+					cosmetics.getLore().orElse(null),
+					cosmetics.isUpsideDown()
 			);
 			MasterCosmeticManager.post((PlayerResponse) null, cosmetics);
 			shouldFetchSelf = !cosmetics.getCloak().isPresent() || !cosmetics.getElytra().isPresent();

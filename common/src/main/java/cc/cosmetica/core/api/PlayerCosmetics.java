@@ -37,7 +37,7 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @param icon the icon on the player.
 	 */
 	private PlayerCosmetics(@Nullable Outfit outfit, @Nullable Lore lore, @Nullable Icon icon,
-							@Nullable ExternalCape externalCape, String prefix, String suffix, boolean online) {
+							@Nullable ExternalCape externalCape, String prefix, String suffix, boolean upsideDown, boolean online) {
 		// nametag
 		ImageCosmetic iconImage = icon == null ? NO_ICON : ImageCosmetic.fromIcon(icon);
 		this.nametag = new NametagConfig(prefix, suffix, iconImage, !online);
@@ -79,6 +79,8 @@ public final class PlayerCosmetics implements Cosmetics {
 			this.cloak = externalCape == null ? Optional.empty() : Optional.of(ImageCosmetic.fromExternalCape(externalCape));
 			this.elytra = externalCape == null || !externalCape.isHasElytra() ? Optional.empty() : Optional.of(ImageCosmetic.fromExternalCape(externalCape));
 		}
+
+		this.upsideDown = upsideDown;
 	}
 
 	/**
@@ -88,7 +90,8 @@ public final class PlayerCosmetics implements Cosmetics {
 			@Nullable ImageCosmetic cloak, @Nullable ImageCosmetic elytra,
 			Collection<Accessory> accessories,
 			String outfitName, String outfitId,
-			NametagConfig nametag, @Nullable NametagConfig lore) {
+			NametagConfig nametag, @Nullable NametagConfig lore,
+			boolean upsideDown) {
 		this.cloak = Optional.ofNullable(cloak);
 		this.elytra = Optional.ofNullable(elytra);
 		this.accessories = accessories;
@@ -96,6 +99,7 @@ public final class PlayerCosmetics implements Cosmetics {
 		this.outfitId = outfitId;
 		this.nametag = nametag;
 		this.lore = lore;
+		this.upsideDown = upsideDown;
 	}
 
 	private final Optional<ImageCosmetic> cloak;
@@ -104,6 +108,7 @@ public final class PlayerCosmetics implements Cosmetics {
 	private final @Nullable String outfitName, outfitId;
 	private final NametagConfig nametag;
 	private final @Nullable NametagConfig lore;
+	private final boolean upsideDown;
 
 	// TODO I might not use Optional to prevent this constant object creation
 	@Override
@@ -143,7 +148,7 @@ public final class PlayerCosmetics implements Cosmetics {
 
 	@Override
 	public boolean isUpsideDown() {
-		return false;
+		return this.upsideDown;
 	}
 
 	@Override
@@ -175,7 +180,7 @@ public final class PlayerCosmetics implements Cosmetics {
 
 			assert player != null; // !response.isIsUser()
 
-			return new PlayerCosmetics(null, null, null, player.getExternalCape(), "", "", false);
+			return new PlayerCosmetics(null, null, null, player.getExternalCape(), "", "", false, false);
 		}
 	}
 
@@ -185,6 +190,6 @@ public final class PlayerCosmetics implements Cosmetics {
 	 * @return the cosmetics object from the data in the user object.
 	 */
 	public static PlayerCosmetics fromUser(CosmeticaUser user) {
-		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.getExternalCape(), user.getPrefix() == null ? "" : user.getPrefix(), user.getSuffix() == null ? "" : user.getSuffix(), user.isOnline());
+		return new PlayerCosmetics(user.getOutfit(), user.getLore(), user.getIcon(), user.getExternalCape(), user.getPrefix() == null ? "" : user.getPrefix(), user.getSuffix() == null ? "" : user.getSuffix(), user.isUpsideDown(), user.isOnline());
 	}
 }
