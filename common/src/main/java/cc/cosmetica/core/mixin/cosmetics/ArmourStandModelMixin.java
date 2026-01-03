@@ -21,6 +21,7 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import net.minecraft.client.model.ArmorStandArmorModel;
 import net.minecraft.client.model.ArmorStandModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,8 +37,8 @@ import java.util.Optional;
  */
 @Mixin(ArmorStandModel.class)
 public abstract class ArmourStandModelMixin extends ArmorStandArmorModel {
-	public ArmourStandModelMixin(float f) {
-		super(f);
+	public ArmourStandModelMixin(ModelPart modelPart) {
+		super(modelPart);
 	}
 
 	@Inject(at = @At("RETURN"), method="setupAnim(Lnet/minecraft/world/entity/decoration/ArmorStand;FFFFF)V")

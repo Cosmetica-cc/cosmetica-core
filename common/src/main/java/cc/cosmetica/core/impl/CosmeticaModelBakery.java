@@ -37,6 +37,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
@@ -186,7 +187,7 @@ public final class CosmeticaModelBakery {
 
 		// just in case
 		if (allCorners.isEmpty()) {
-			return AABB.ofSize(0, 0, 0);
+			return AABB.ofSize(Vec3.ZERO, 0, 0, 0);
 		}
 
 		// Calculate the bounding box from the corners
