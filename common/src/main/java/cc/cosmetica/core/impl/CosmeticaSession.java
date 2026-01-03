@@ -458,10 +458,13 @@ public final class CosmeticaSession {
 
 				// Submit texture packet to website to update skin etc
 				TexturePacketDto dto = new TexturePacketDto();
-				dto.setSignature(textureProperty.getValue());
+				dto.setValue(textureProperty.getValue());
 				dto.setSignature(textureProperty.getSignature());
 
 				return api.submitTexturePacket(dto);
+			}).exceptionally(ex -> {
+				Logging.getInstance().error("Failed to submit texture packet after authentication", ex);
+				return null;
 			});
 			CompletableFuture<Void> updateSettings = CosmeticaAPI.auth().requestAsync(api -> {
 				UpdateSessionDto dto = new UpdateSessionDto();
