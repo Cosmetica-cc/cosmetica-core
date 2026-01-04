@@ -22,6 +22,7 @@ import net.minecraft.client.model.ShieldModel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Final;
@@ -36,8 +37,7 @@ public class BlockEntityWithoutLevelRendererMixin {
     @Shadow @Final private ShieldModel shieldModel;
 
     @Inject(method = "renderByItem", at = @At("HEAD"), cancellable = true)
-    private void onRenderByItem(ItemStack itemStack, ItemTransforms.TransformType transformType, PoseStack poseStack,
-                                MultiBufferSource multiBufferSource, int i, int j, CallbackInfo info) {
+    private void onRenderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, CallbackInfo info) {
         boolean cosmeticaShield = itemStack.getItem() == Items.SHIELD;
         boolean banner = itemStack.getTagElement("BlockEntityTag") != null;
 

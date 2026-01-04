@@ -1,4 +1,4 @@
 accessWidener   v2  named
 accessible   method  net/minecraft/client/renderer/texture/TextureManager safeClose (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/renderer/texture/AbstractTexture;)V
 accessible   class   net/minecraft/client/gui/Font$StringRenderOutput
-extendable	method	net/minecraft/client/renderer/texture/TextureAtlasSprite	getFrameCount	()I
+extendable	method	net/minecraft/client/renderer/texture/SpriteContents	getFrameCount	()I

@@ -20,26 +20,25 @@ import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockElement;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.BlockModelRotation;
-import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -72,11 +71,23 @@ public final class CosmeticaModelBakery {
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});
 
-			return model.bake(
-					bakery,
-					l -> sprite,
-					BlockModelRotation.X0_Y0,
-					location /*this resource location in bake is just used for debugging in the case of errors*/);
+			ModelBaker ratatouille = new ModelBaker() {
+				@Override
+				public UnbakedModel getModel(ResourceLocation resourceLocation) {
+					return model;
+				}
+
+				@Override
+				@Nullable
+				public BakedModel bake(ResourceLocation resourceLocation, ModelState modelState) {
+					return this.getModel(resourceLocation).bake(this, l -> sprite, modelState, resourceLocation);
+				}
+			};
+
+			return ratatouille.bake(
+					location /*this resource location in bake is just used for debugging in the case of errors*/,
+					BlockModelRotation.X0_Y0
+			);
 		}
 
 		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
@@ -89,7 +100,7 @@ public final class CosmeticaModelBakery {
 		boolean isGUI3D = model.isGui3d();
 		float transformStrength = 0.25F;
 		float rotation = 0.0f;
-		float transform = model.getTransforms().getTransform(ItemTransforms.TransformType.GROUND).scale.y();
+		float transform = model.getTransforms().getTransform(ItemDisplayContext.GROUND).scale.y();
 		stack.translate(0.0D, rotation + transformStrength * transform, 0.0D);
 		float xScale = model.getTransforms().ground.scale.x();
 		float yScale = model.getTransforms().ground.scale.y();
@@ -97,7 +108,7 @@ public final class CosmeticaModelBakery {
 
 		stack.pushPose();
 
-		final ItemTransforms.TransformType transformType = ItemTransforms.TransformType.FIXED;
+		final ItemDisplayContext transformType = ItemDisplayContext.FIXED;
 		int overlayTyp = OverlayTexture.NO_OVERLAY;
 		// ItemRenderer#render start
 		stack.pushPose();
@@ -169,14 +180,14 @@ public final class CosmeticaModelBakery {
 				Collection<Vector3f> rotated = new HashSet<>();
 
 				for (Vector3f corner : corners) {
-					Vector3f origin = element.rotation.origin.copy();
+					Vector3f origin = new Vector3f(element.rotation.origin());
 					origin.mul(16);
 					rotated.add(
 							rotateCorner(
 									corner,
 									origin,
-									element.rotation.axis,
-									element.rotation.angle
+									element.rotation.axis(),
+									element.rotation.angle()
 							));
 				}
 

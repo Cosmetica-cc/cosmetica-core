@@ -39,7 +39,6 @@ public abstract class ArmourStandRendererMixin extends LivingEntityRenderer<Armo
 
 	@Inject(at = @At("RETURN"), method="<init>")
 	private void addCapesToArmourStands(EntityRendererProvider.Context context, CallbackInfo ci) {
-		// TODO is this right
 		this.addLayer(new NonHumanCapeLayer<>(this, context.bakeLayer(ModelLayers.PLAYER)));
 	}
 }

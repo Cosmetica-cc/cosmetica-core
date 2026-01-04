@@ -38,8 +38,8 @@ import java.util.Optional;
  */
 @Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientPlayerMixin extends Player {
-	public AbstractClientPlayerMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile, ProfilePublicKey ppk) {
-		super(level, blockPos, f, gameProfile, ppk);
+	public AbstractClientPlayerMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
+		super(level, blockPos, f, gameProfile);
 	}
 
 	// Capes

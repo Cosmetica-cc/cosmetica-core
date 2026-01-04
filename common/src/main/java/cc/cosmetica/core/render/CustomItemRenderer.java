@@ -18,8 +18,6 @@ package cc.cosmetica.core.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector4f;
 import net.minecraft.client.model.ShieldModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -28,14 +26,12 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
-
-import java.util.Random;
 
 /**
  * Render utilities for items modified by cosmetica cosmetics.
  */
 public class CustomItemRenderer {
+    // TODO check if this works
     public static void renderShield(PoseStack stack, MultiBufferSource multiBufferSource, ShieldModel model, int i, int j, boolean glint) {
         final Material shieldMaterial = ModelBakery.NO_PATTERN_SHIELD;
 
@@ -47,34 +43,17 @@ public class CustomItemRenderer {
 
         model.plate().render(stack, vertexConsumer, i, j, 1.0F, 1.0F, 1.0F, 1.0F);
 
+        // TODO add glint
         VertexConsumer texture = multiBufferSource.getBuffer(RenderType.entityTranslucent(new ResourceLocation("cosmetica-core", "test.png")));
 
         // draw texture
         ModelPart part = model.plate();
 
-       try {
-           Matrix4f m4f = stack.last().pose();
-           RandomSource random = RandomSource.create(0);
-           ModelPart.Cube cube = part.getRandomCube(random);
-
-           Vector4f vector4f = new Vector4f(cube.minX/16f, cube.minY/16f, cube.minZ/16f - 0.01f, 1.0F);
-           vector4f.transform(m4f);
-           texture.vertex(vector4f.x(), vector4f.y(), vector4f.z(), 1, 1, 1, 1, 0, 0, j, i, 1, 1, 1);
-
-           vector4f = new Vector4f(cube.maxX/16f, cube.minY/16f, cube.minZ/16f - 0.01f, 1.0F);
-           vector4f.transform(m4f);
-           texture.vertex(vector4f.x(), vector4f.y(), vector4f.z(), 1, 1, 1, 1, 1, 0, j, i, 1, 1, 1);
-
-           vector4f = new Vector4f(cube.maxX/16f, cube.maxY/16f, cube.minZ/16f - 0.01f, 1.0F);
-           vector4f.transform(m4f);
-           texture.vertex(vector4f.x(), vector4f.y(), vector4f.z(), 1, 1, 1, 1, 1, 1, j, i, 1, 1, 1);
-
-           vector4f = new Vector4f(cube.minX/16f, cube.maxY/16f, cube.minZ/16f - 0.01f, 1.0F);
-           vector4f.transform(m4f);
-           texture.vertex(vector4f.x(), vector4f.y(), vector4f.z(), 1, 1, 1, 1, 0, 1, j, i, 1, 1, 1);
-       }catch (RuntimeException e) {
-           e.printStackTrace();
-       }
+        try {
+            part.render(stack, texture, i, j);
+        }catch (RuntimeException e) {
+            e.printStackTrace();
+        }
 
 //        BannerRenderer.renderPatterns(stack, multiBufferSource, i, j, model.plate(), shieldMaterial,
 //                false, list, itemStack.hasFoil());

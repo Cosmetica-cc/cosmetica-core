@@ -16,18 +16,22 @@
 
 package cc.cosmetica.core.render.texture;
 
-import cc.cosmetica.core.CosmeticaCore;
 import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.impl.Logging;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.platform.NativeImage;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.client.renderer.texture.SpriteTicker;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
+import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
+
+import javax.annotation.Nullable;
+import java.util.stream.IntStream;
 
 /**
  * Sprite that references a Cosmetica texture instead of a section of the block atlas.
@@ -45,45 +49,34 @@ public class ModelSprite extends TextureAtlasSprite {
 		// textureAtlas, info, mipLevels, uScale (atlasTextureWidth), vScale (atlasTextureHeight), width, height, image
 		super(null,
 				// dummy data for the animation metadata: we want to handle the animation ourselves.
-				new Info(location, image.getWidth(), height, new AnimationMetadataSection(ImmutableList.of(new AnimationFrame(0)), image.getWidth(), height, 69, false)),
-				Math.min(4, getMaximumMipmapLevels(image)),
+				new ModelSpriteContents(
+						location,
+						new FrameSize(image.getWidth(), height),
+						image,
+						frames,
+						onClose,
+						new AnimationMetadataSection(ImmutableList.of(new AnimationFrame(0)), image.getWidth(), height, 69, false)),
 				image.getWidth(),
 				height,
-				image.getWidth(),
-				height,
-				image
+				0, 0
 		);
 
-		this.onClose = onClose;
-		this.frames = frames;
+		this.location = location;
 	}
 
-	private final Runnable onClose;
-	private final int frames;
-
-	@Override
-	public int getFrameCount() {
-		return this.frames;
-	}
-
-	@Override
-	public void close() {
-		this.onClose.run();
-	}
+	private final ResourceLocation location;
 
 	@Override
 	public String toString() {
 		return "ModelSprite{" +
-				"imageCount=" + this.mainImage.length +
-				", image0=" + this.mainImage[0] +
-				", resourceLocation=" + this.getName() +
+				"location=" + this.location +
 				", u=[" + this.getU0() + "," + this.getU1() + "]" +
 				", v=[" + this.getV0() + ", " + this.getV1() + "]" +
 				'}';
 	}
 
 	@Override
-	public TextureAtlas atlas() {
+	public ResourceLocation atlasLocation() {
 		if (CosmeticaCoreExpectPlatform.isDev()) {
 			throw new UnsupportedOperationException("I am a teapot. Tried to call atlas() on cosmetica ModelSprite.");
 		}
@@ -91,15 +84,10 @@ public class ModelSprite extends TextureAtlasSprite {
 			// fix compat with ModelGapFix (modelfix)
 			// pretend to be the block atlas
 			Logging.getInstance().warnOnce("UnsafeAtlasAccess", "A mod called atlas() on a cosmetica ModelSprite. Behaviour could be unpredictable.");
-			return Minecraft.getInstance().getModelManager().getAtlas(BLOCK_ATLAS);
+			return BLOCK_ATLAS;
 		}
 	}
 	private static final ResourceLocation BLOCK_ATLAS = new ResourceLocation("textures/atlas/blocks.png");
-
-	@Override
-	public boolean isTransparent(int i, int j, int k) {
-		throw new UnsupportedOperationException("I am a teapot. Tried to call isTransparent() on cosmetica ModelSprite.");
-	}
 
 	@Override
 	public void uploadFirstFrame() {
@@ -120,5 +108,40 @@ public class ModelSprite extends TextureAtlasSprite {
 		}
 
 		return i;
+	}
+
+	public static class ModelSpriteContents extends SpriteContents {
+		public ModelSpriteContents(ResourceLocation resourceLocation, FrameSize frameSize, NativeImage image, int frames, Runnable onClose, AnimationMetadataSection animationMetadataSection) {
+			super(resourceLocation, frameSize, image, animationMetadataSection);
+			this.frames = frames;
+			this.onClose = onClose;
+		}
+
+		private final int frames;
+		private final Runnable onClose;
+
+		@Override
+		protected int getFrameCount() {
+			return this.frames;
+		}
+
+		@Override
+		public IntStream getUniqueFrames() {
+			return IntStream.range(0, getFrameCount());
+		}
+
+		// TODO what are these two close() functions for?
+		// This one seems to close the image in vanilla, whereas ticker/close seems to close the interpolation data object
+		// the latter does effectively the same thing but whatever texture is currently active in the interpolation data object
+		@Override
+		public void close() {
+			this.onClose.run();
+		}
+
+		@Nullable
+		@Override
+		public SpriteTicker createTicker() {
+			return null;
+		}
 	}
 }

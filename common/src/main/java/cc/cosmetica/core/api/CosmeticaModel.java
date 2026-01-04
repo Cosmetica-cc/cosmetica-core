@@ -23,8 +23,6 @@ import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -33,6 +31,9 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.AxisAngle4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -139,7 +140,7 @@ public final class CosmeticaModel {
 		modelPart.translateAndRotate(stack);
 		stack.scale(o, -o, -o);
 		if (mirror) stack.scale(-1, 1, 1);
-		stack.mulPose(new Quaternion(Vector3f.YP, (float)Math.PI, false)); // pi radians on y axis
+		stack.mulPose(new Quaternionf(new AxisAngle4f((float)Math.PI, YP))); // pi radians on y axis
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 
 		CosmeticaModelBakery.renderModel(
@@ -152,6 +153,7 @@ public final class CosmeticaModel {
 		stack.popPose();
 	}
 
+	private static final Vector3f YP = new Vector3f(0, 1, 0);
 	private static final AABB ZERO_BOUNDS = AABB.ofSize(Vec3.ZERO, 0, 0, 0);
 
 	// ==== Direct Model/Image Overloads ==== //

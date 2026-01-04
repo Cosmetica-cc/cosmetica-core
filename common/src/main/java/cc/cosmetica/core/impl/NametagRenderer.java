@@ -21,8 +21,6 @@ import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.NametagConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Quaternion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -34,6 +32,8 @@ import net.minecraft.world.entity.player.Player;
 
 import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.gui.Font;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
@@ -165,7 +165,7 @@ public final class NametagRenderer {
 	/**
 	 * Render lore, but not necessarily bound to a player.
 	 */
-	public static void renderLore(PoseStack stack, Quaternion cameraOrientation, Font font,
+	public static void renderLore(PoseStack stack, Quaternionf cameraOrientation, Font font,
 								  MultiBufferSource multiBufferSource, @Nullable NametagConfig lore, Collection<Accessory> hats,
 								  boolean wearingHelmet, boolean doNametagShift, boolean discrete, boolean upsideDown,
 								  float playerHeight, float xRotHead, int packedLight) {
@@ -228,11 +228,11 @@ public final class NametagRenderer {
 			float xOffset = (float) (-font.width(component) / 2);
 
 			if (showLoreIcon) prepareIcon(loreIcon, true);
-			font.drawInBatch(component, xOffset, 0, 553648127, false, textModel, multiBufferSource, fullyRender, alphaARGB, packedLight);
+			font.drawInBatch(component, xOffset, 0, 0x20FFFFFF, false, textModel, multiBufferSource, fullyRender ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, alphaARGB, packedLight);
 
 			if (fullyRender) {
 				if (showLoreIcon) prepareIcon(loreIcon, true);
-				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, false, 0, packedLight);
+				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, Font.DisplayMode.NORMAL, 0, packedLight);
 			}
 
 			stack.popPose();
@@ -241,7 +241,7 @@ public final class NametagRenderer {
 
 	public static int debug(Font instance, Component component, float offsetX, float offsetY, int color, boolean bl, Matrix4f transform, MultiBufferSource mbs, boolean bl2, int k, int i) {
 		k = 0;
-		instance.drawInBatch(component, offsetX, offsetY, color, bl, transform, mbs, bl2, k, i);
+		instance.drawInBatch(component, offsetX, offsetY, color, bl, transform, mbs, bl2 ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, k, i);
 		return 0;
 	}
 }

@@ -54,7 +54,7 @@ public class PlayerTabOverlayMixin {
 	@Inject(method="render",
 			at= @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/client/gui/components/PlayerTabOverlay;getNameForDisplay(Lnet/minecraft/client/multiplayer/PlayerInfo;)Lnet/minecraft/network/chat/Component;"),
 			locals = LocalCapture.CAPTURE_FAILHARD)
-	private void capturePlayerInfo(PoseStack poseStack, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci, ClientPacketListener clientPacketListener, List list, int j, int k, Iterator var9, PlayerInfo playerInfo) {
+	private void capturePlayerInfo(PoseStack poseStack, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci, List list, int j, int k, Iterator var8, PlayerInfo playerInfo) {
 		this.cosmeticacore$tempPassInfo = playerInfo;
 	}
 
@@ -94,7 +94,7 @@ public class PlayerTabOverlayMixin {
 	@Inject(method = "render",
 			at = @At(value="INVOKE", target="Lnet/minecraft/client/gui/Font;drawShadow(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/network/chat/Component;FFI)I"),
 			locals= LocalCapture.CAPTURE_FAILHARD)
-	private void beforeRenderName(PoseStack poseStack, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci, ClientPacketListener clientPacketListener, List list, int j, int k, int m, int n, int l, boolean bl, int o, int p, int q, int r, int s, List list2, List list3, int u, int v, int t, int w, int x, int y, PlayerInfo playerInfo2, GameProfile gameProfile) {
+	private void beforeRenderName(PoseStack poseStack, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci, List list, int j, int k, int m, int n, int l, boolean bl, int o, int p, int q, int r, int s, List list2, List list3, int u, int v, int t, int w, int x, int y, PlayerInfo playerInfo2, GameProfile gameProfile) {
 		Level level = Minecraft.getInstance().level;
 
 		if (level != null && gameProfile.getId() != null) {

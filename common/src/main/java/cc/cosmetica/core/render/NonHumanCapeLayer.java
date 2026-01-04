@@ -17,14 +17,9 @@
 package cc.cosmetica.core.render;
 
 import cc.cosmetica.core.api.Cosmetics;
-import cc.cosmetica.core.api.ImageCosmetic;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Vector3f;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -37,6 +32,9 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import org.joml.AxisAngle4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.Optional;
 
@@ -49,14 +47,6 @@ public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 	public NonHumanCapeLayer(RenderLayerParent<T, M> renderLayerParent, ModelPart cloak) {
 		super(renderLayerParent);
 		this.cloak = cloak.getChild("cloak");
-//		this.cloak = new ModelPart(
-//				ImmutableList.of(
-//						new ModelPart.Cube()
-//				),
-//				ImmutableMap.of()
-//		);
-//		this.cloak.setTexSize(64, 32);
-//		this.cloak.addBox(-5.0f, 0.0f, -1.0f, 10.0f, 16.0f, 1.0f, 0.0f);// f);
 	}
 
 	private final ModelPart cloak;
@@ -111,9 +101,9 @@ public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 		if (livingEntity.isCrouching()) {
 			q += 25.0f;
 		}
-		poseStack.mulPose(Vector3f.XP.rotationDegrees(6.0f + r / 2.0f + q));
-		poseStack.mulPose(Vector3f.ZP.rotationDegrees(s / 2.0f));
-		poseStack.mulPose(Vector3f.YP.rotationDegrees(180.0f - s / 2.0f));
+		poseStack.mulPose(createRotation(XP, (6.0f + r / 2.0f + q)));
+		poseStack.mulPose(createRotation(ZP, (s / 2.0f)));
+		poseStack.mulPose(createRotation(YP, (180.0f - s / 2.0f)));
 		// cosmetica start
 		ResourceLocation cloakLocation = cosmetics.getCloak().get().getImage().location;
 		RenderType type = RenderType.entityTranslucent(cloakLocation);
@@ -121,5 +111,13 @@ public class NonHumanCapeLayer<T extends LivingEntity, M extends EntityModel<T>>
 		VertexConsumer vertexConsumer = multiBufferSource.getBuffer(type);
 		this.cloak.render(poseStack, vertexConsumer, i, OverlayTexture.NO_OVERLAY);
 		poseStack.popPose();
+	}
+
+	private static final Vector3f XP = new Vector3f(1, 0, 0);
+	private static final Vector3f YP = new Vector3f(0, 1, 0);
+	private static final Vector3f ZP = new Vector3f(0, 0, 1);
+
+	private static Quaternionf createRotation(Vector3f axis, float degrees) {
+		return new Quaternionf(new AxisAngle4f((float)Math.toRadians(degrees), axis));
 	}
 }

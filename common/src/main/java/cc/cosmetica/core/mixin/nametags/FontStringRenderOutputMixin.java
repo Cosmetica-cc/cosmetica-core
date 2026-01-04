@@ -19,11 +19,11 @@ package cc.cosmetica.core.mixin.nametags;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -53,7 +53,7 @@ public class FontStringRenderOutputMixin {
 	@Unique
 	private Float cosmeticacore$advance = null;
 
-	@Inject(at = @At("RETURN"), method="<init>(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/MultiBufferSource;FFIZLcom/mojang/math/Matrix4f;Lnet/minecraft/client/gui/Font$DisplayMode;I)V")
+	@Inject(at = @At("RETURN"), method="<init>(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/MultiBufferSource;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/gui/Font$DisplayMode;I)V")
 	private void accept(Font font, MultiBufferSource buf, float initialX, float initialY,
 						int colour, boolean dropShadow, Matrix4f matrix4f, Font.DisplayMode displayMode, int light, CallbackInfo ci) {
 		CachedImage icon = NametagRenderer.getPreparedIcon();
