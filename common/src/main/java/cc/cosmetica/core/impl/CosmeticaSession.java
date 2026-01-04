@@ -111,7 +111,7 @@ public final class CosmeticaSession {
 	public final String sessionToken;
 	private final @Nullable UUID user;
 	private final String clientName;
-	private Websocket websocket;
+	private volatile Websocket websocket;
 	private boolean isScheduled;
 
 	public boolean isAuthenticated() {
@@ -128,6 +128,10 @@ public final class CosmeticaSession {
 				.thenApply(africaSession -> {
 					Logging.getInstance().info("Connecting to {}", africaSession.getName());
 					Logging.getInstance().info(africaSession.getMessage());
+
+					if (this.websocket != null) {
+						this.websocket.closeFuture();
+					}
 
 					Websocket websocket1 = createWebsocket(africaSession);
 

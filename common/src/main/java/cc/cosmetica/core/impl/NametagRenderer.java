@@ -29,7 +29,6 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 
@@ -206,7 +205,7 @@ public final class NametagRenderer {
 
 		// render lore
 		if (lore != null) {
-			Component component = new TextComponent(lore.getPrefix() /* Prefix doubles as main text */);
+			Component component = Component.literal(lore.getPrefix() /* Prefix doubles as main text */);
 			CachedImage loreIcon = lore.getIcon().getImage();
 			boolean showLoreIcon = loreIcon.isLoaded();
 

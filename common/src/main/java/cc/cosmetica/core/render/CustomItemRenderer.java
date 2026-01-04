@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
 
 import java.util.Random;
 
@@ -53,7 +54,7 @@ public class CustomItemRenderer {
 
        try {
            Matrix4f m4f = stack.last().pose();
-           Random random = new Random(0);
+           RandomSource random = RandomSource.create(0);
            ModelPart.Cube cube = part.getRandomCube(random);
 
            Vector4f vector4f = new Vector4f(cube.minX/16f, cube.minY/16f, cube.minZ/16f - 0.01f, 1.0F);

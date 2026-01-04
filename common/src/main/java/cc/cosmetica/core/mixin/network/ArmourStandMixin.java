@@ -21,13 +21,12 @@ import cc.cosmetica.core.api.OutfitCosmetics;
 import cc.cosmetica.core.builtin.OutfitCosmeticsHolder;
 import cc.cosmetica.core.builtin.manager.ArmourStandCosmeticManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.contents.LiteralContents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -44,7 +43,7 @@ public abstract class ArmourStandMixin extends LivingEntity implements OutfitCos
 	}
 
 	@Unique
-	private TextComponent cosmeticacore$customName;
+	private Component cosmeticacore$customName;
 	@Unique
 	@Nullable
 	private CompletableFuture<? extends Cosmetics> cosmeticacore$armourCosmetics;
@@ -79,10 +78,10 @@ public abstract class ArmourStandMixin extends LivingEntity implements OutfitCos
 			Component customName = this.getCustomName();
 
 			if (this.cosmeticacore$customName != customName) { // assuming name instance won't be changed
-				String text = customName instanceof TextComponent ? ((TextComponent) customName).getText() : null;
+				String text = customName.getContents() instanceof LiteralContents ? ((LiteralContents) customName.getContents()).text() : null;
 
 				if (text != null) {
-					this.cosmeticacore$customName = (TextComponent) customName;
+					this.cosmeticacore$customName = customName;
 
 					// try look up cosmetics
 					String uuid = ArmourStandCosmeticManager.isOutfitUuid(text);

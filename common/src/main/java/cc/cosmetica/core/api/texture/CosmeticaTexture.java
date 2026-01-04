@@ -473,24 +473,25 @@ public class CosmeticaTexture extends AbstractTexture {
     private static TextureImage load(ResourceManager resourceManager, ResourceLocation resourceLocation) throws IOException {
         TextureImage textureImage = new TextureImage();
 
-        try (Resource resource = resourceManager.getResource(resourceLocation)) {
-            NativeImage nativeImage = NativeImage.read(resource.getInputStream());
-
-            try {
-                AnimationMetadataSection textureMetadataSection = resource.getMetadata(AnimationMetadataSection.SERIALIZER);
-                if (textureMetadataSection == null)
-                    textureMetadataSection = AnimationMetadataSection.EMPTY;
-
-                AtomicInteger frameCount = new AtomicInteger(0);
-                textureMetadataSection.forEachFrame((idx, time) -> frameCount.incrementAndGet());
-                textureImage.frames = frameCount.get();
-            } catch (RuntimeException ex) {
-                Logging.getInstance().warn("Failed reading metadata of cosmetica texture: {}", resourceLocation, ex);
-            }
-
-            textureImage.image = nativeImage;
+        Resource resource = resourceManager.getResourceOrThrow(resourceLocation);
+        NativeImage nativeImage;
+        try (InputStream stream = resource.open()) {
+            nativeImage = NativeImage.read(stream);
         }
 
+        try {
+            AnimationMetadataSection textureMetadataSection = resource.metadata()
+                    .getSection(AnimationMetadataSection.SERIALIZER)
+                    .orElse(AnimationMetadataSection.EMPTY);
+
+            AtomicInteger frameCount = new AtomicInteger(0);
+            textureMetadataSection.forEachFrame((idx, time) -> frameCount.incrementAndGet());
+            textureImage.frames = frameCount.get();
+        } catch (RuntimeException ex) {
+            Logging.getInstance().warn("Failed reading metadata of cosmetica texture: {}", resourceLocation, ex);
+        }
+
+        textureImage.image = nativeImage;
         return textureImage;
     }
 

@@ -36,6 +36,7 @@ import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -122,7 +123,7 @@ public final class CosmeticaModelBakery {
 	// vanilla code that I don't want to rewrite:
 
 	private static void renderModelLists(BakedModel bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer) {
-		Random random = new Random();
+		RandomSource random = RandomSource.create();
 		final long seed = 42L;
 		Direction[] var10 = Direction.values();
 		int var11 = var10.length;
