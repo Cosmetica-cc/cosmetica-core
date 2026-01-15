@@ -20,6 +20,7 @@ import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.font.GlyphRenderTypes;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -72,9 +73,7 @@ public class FontStringRenderOutputMixin {
 
 			// see FontTexture#add
 			BakedGlyph glyph = new BakedGlyph(
-					RenderType.text(icon.location),
-					RenderType.textSeeThrough(icon.location),
-					RenderType.textPolygonOffset(icon.location),
+					GlyphRenderTypes.createForColorTexture(icon.location),
 					// u0 u1 v0 v1
 					0, 1, 0, 1,
 					// left right up down. See RawGlyph

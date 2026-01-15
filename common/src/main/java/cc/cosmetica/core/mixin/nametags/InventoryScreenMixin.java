@@ -18,6 +18,7 @@ package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Quaternionf;
@@ -30,12 +31,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(InventoryScreen.class)
 public class InventoryScreenMixin {
 	@Inject(at = @At("HEAD"), method = "renderEntityInInventory")
-	private static void disableOwnNametagTemporarilyIfShown(PoseStack poseStack, int i, int j, int k, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
+	private static void disableOwnNametagTemporarilyIfShown(GuiGraphics guiGraphics, int i, int j, int k, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
 		NametagRenderer.setRenderingInventoryEntity(true);
 	}
 
 	@Inject(at = @At("RETURN"), method = "renderEntityInInventory")
-	private static void reenableNametag(PoseStack poseStack, int i, int j, int k, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
+	private static void reenableNametag(GuiGraphics guiGraphics, int i, int j, int k, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
 		NametagRenderer.setRenderingInventoryEntity(false);
 	}
 }

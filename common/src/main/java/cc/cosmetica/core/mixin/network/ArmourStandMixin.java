@@ -74,7 +74,7 @@ public abstract class ArmourStandMixin extends LivingEntity implements OutfitCos
 
 	@Inject(at = @At("RETURN"), method = "tick")
 	private void onTick(CallbackInfo ci) {
-		if (this.level.isClientSide()) { // don't compute on the server
+		if (this.level().isClientSide()) { // don't compute on the server
 			Component customName = this.getCustomName();
 
 			if (this.cosmeticacore$customName != customName) { // assuming name instance won't be changed

@@ -127,7 +127,7 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 
 	@Inject(method = "tick", at = @At("RETURN"))
 	private void onTick(CallbackInfo ci) {
-		if (this.level.isClientSide()) {
+		if (this.level().isClientSide()) {
 			MasterCosmeticManager.pollCosmetics((LivingEntity)(Object)this, this.cosmeticacore$manager);
 		}
 	}
