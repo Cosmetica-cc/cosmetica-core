@@ -32,6 +32,12 @@ dependencies {
 
     // bundle javaclient
     shadow "gg.cloaks:javaclient:${cosmetica_java_client_version}"
+    // Not bundled with java 11+
+
+    // Source: https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api
+    // Source: https://mvnrepository.com/artifact/javax.activation/javax.activation-api
+    shadow "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
+    shadow "javax.activation:javax.activation-api:1.2.0"
 }
 
 processResources {
