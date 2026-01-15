@@ -62,13 +62,13 @@ public final class NametagRenderer {
 
 	// don't prevent the cached image being Garbage Collected
 	@Nullable
-	private static WeakReference<CachedImage> preparedIcon;
+	private static Icon preparedIcon;
 	private static int iconDrawCount;
 	private static boolean readjustNametagPosition;
 
-	public static @Nullable CachedImage getPreparedIcon() {
+	public static @Nullable Icon getPreparedIcon() {
 		try {
-			return preparedIcon == null ? null : preparedIcon.get();
+			return preparedIcon == null ? null : preparedIcon;
 		} finally {
 			if (iconDrawCount > 0) {
 				if (--iconDrawCount <= 0) {
@@ -85,22 +85,24 @@ public final class NametagRenderer {
 	/**
 	 * Prepare an icon to render it at the front of the next font draw call.
 	 * @param icon the icon to render.
+	 * @param transparent whether to render the icon transparent.
 	 * @param readjustTextPosition whether to shift the text left accordingly.
 	 */
-	public static void prepareIcon(CachedImage icon, boolean readjustTextPosition) {
-		prepareIcon(icon, 1, readjustTextPosition);
+	public static void prepareIcon(CachedImage icon, boolean transparent, boolean readjustTextPosition) {
+		prepareIcon(icon, 1, transparent, readjustTextPosition);
 	}
 
 	/**
 	 * Prepare an icon to render it at the front of the next font draw call.
 	 * @param icon the icon to render.
 	 * @param count the number of font renders to add the icon to  Typically two for shadow.
+	 * @param transparent whether to render the icon transparent.
 	 * @param readjustTextPosition whether to shift the text left accordingly.
 	 */
-	public static void prepareIcon(CachedImage icon, int count, boolean readjustTextPosition) {
+	public static void prepareIcon(CachedImage icon, int count, boolean transparent, boolean readjustTextPosition) {
 		iconDrawCount = count;
 		readjustNametagPosition = readjustTextPosition;
-		preparedIcon = new WeakReference<>(icon);
+		preparedIcon = new Icon(new WeakReference<>(icon), transparent);
 	}
 
 	// ================ //
@@ -228,11 +230,11 @@ public final class NametagRenderer {
 
 			float xOffset = (float) (-font.width(component) / 2);
 
-			if (showLoreIcon) prepareIcon(loreIcon, true);
-			font.drawInBatch(component, xOffset, 0, 553648127, false, textModel, multiBufferSource, fullyRender, alphaARGB, packedLight);
+			if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
+			font.drawInBatch(component, xOffset, 0, 0x20FFFFFF, false, textModel, multiBufferSource, fullyRender, alphaARGB, packedLight);
 
 			if (fullyRender) {
-				if (showLoreIcon) prepareIcon(loreIcon, true);
+				if (showLoreIcon) prepareIcon(loreIcon, false, true);
 				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, false, 0, packedLight);
 			}
 
@@ -244,5 +246,15 @@ public final class NametagRenderer {
 		k = 0;
 		instance.drawInBatch(component, offsetX, offsetY, color, bl, transform, mbs, bl2, k, i);
 		return 0;
+	}
+
+	public static final class Icon {
+		public Icon(WeakReference<CachedImage> image, boolean transparent) {
+			this.image = image;
+			this.transparent = transparent;
+		}
+
+		public final WeakReference<CachedImage> image;
+		public final boolean transparent;
 	}
 }
