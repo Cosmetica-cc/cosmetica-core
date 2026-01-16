@@ -18,6 +18,7 @@ package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.NametagConfig;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -102,10 +103,11 @@ public class PlayerTabOverlayMixin {
 
 			if (player != null) {
 				Cosmetics.getCosmetics(player).ifPresent(cosmetics -> {
-					CachedImage icon = cosmetics.getNametag().getIcon().getImage();
+					NametagConfig nametagConfig = cosmetics.getNametag();
+					CachedImage icon = nametagConfig.getIcon().getImage();
 
 					if (icon.isLoaded()) {
-						NametagRenderer.prepareIcon(icon, 2, false);
+						NametagRenderer.prepareIcon(icon, 2, nametagConfig.isTransparentIcon(), false);
 					}
 				});
 			}
