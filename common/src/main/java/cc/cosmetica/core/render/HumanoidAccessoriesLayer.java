@@ -84,7 +84,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 			}
 		}
 		if (entity instanceof AbstractClientPlayer &&
-				((AbstractClientPlayer)entity).getCloakTextureLocation() != null &&
+				((AbstractClientPlayer)entity).getSkin().capeTexture() != null &&
 				(!entity.hasItemInSlot(EquipmentSlot.CHEST) || !(entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem))
 		) {
 			if (flags.contains(Accessory.Flag.HIDE_WITH_CLOAK)) {

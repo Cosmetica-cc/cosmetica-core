@@ -39,11 +39,11 @@ public class BlockEntityWithoutLevelRendererMixin {
     @Inject(method = "renderByItem", at = @At("HEAD"), cancellable = true)
     private void onRenderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, CallbackInfo info) {
         boolean cosmeticaShield = itemStack.getItem() == Items.SHIELD;
-        boolean banner = itemStack.getTagElement("BlockEntityTag") != null;
+//        boolean banner = itemStack.getTagElement("BlockEntityTag") != null;
 
-        if (!banner && cosmeticaShield) {
-            CustomItemRenderer.renderShield(poseStack, multiBufferSource, this.shieldModel, i, j, itemStack.hasFoil());
-            info.cancel();
-        }
+//        if (!banner && cosmeticaShield) {
+//            CustomItemRenderer.renderShield(poseStack, multiBufferSource, this.shieldModel, i, j, itemStack.hasFoil());
+//            info.cancel();
+//        }
     }
 }

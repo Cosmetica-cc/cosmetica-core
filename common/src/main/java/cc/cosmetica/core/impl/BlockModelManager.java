@@ -49,7 +49,7 @@ public class BlockModelManager {
 	private static final WeakCache<CachedImage> IMAGE_CACHE = new WeakCache<>();
 
 	private static final Path CACHE_DIRECTORY;
-	public static final ResourceLocation FALLBACK_TEXTURE = new ResourceLocation("cosmetica-core", "icon.png");
+	public static final ResourceLocation FALLBACK_TEXTURE = ResourceLocation.fromNamespaceAndPath("cosmetica-core", "icon.png");
 	public static final ImageCacheManager IMAGE_CACHE_MANAGER;
 
 	static {
@@ -338,7 +338,7 @@ public class BlockModelManager {
 	 * @return the location of the model's texture.
 	 */
 	public static ResourceLocation getLocation(String id) {
-		return new ResourceLocation("cosmetica-core", pathify(id));
+		return ResourceLocation.fromNamespaceAndPath("cosmetica-core", pathify(id));
 	}
 
 	/**
@@ -412,7 +412,7 @@ public class BlockModelManager {
 
 				// free the texture
 				ResourceLocation textureLocation = getLocation(id);
-				AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getLocation(id));
+				AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getLocation(id), null);
 				if (texture != null) Minecraft.getInstance().getTextureManager().safeClose(textureLocation, texture);
 			} else {
 				gcIndex++; // check the next one.

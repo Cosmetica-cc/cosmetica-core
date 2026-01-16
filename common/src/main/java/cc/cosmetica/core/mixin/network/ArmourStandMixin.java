@@ -21,7 +21,7 @@ import cc.cosmetica.core.api.OutfitCosmetics;
 import cc.cosmetica.core.builtin.OutfitCosmeticsHolder;
 import cc.cosmetica.core.builtin.manager.ArmourStandCosmeticManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -78,7 +78,8 @@ public abstract class ArmourStandMixin extends LivingEntity implements OutfitCos
 			Component customName = this.getCustomName();
 
 			if (this.cosmeticacore$customName != customName) { // assuming name instance won't be changed
-				String text = customName.getContents() instanceof LiteralContents ? ((LiteralContents) customName.getContents()).text() : null;
+				// FIXME should this null check be back-ported?
+				String text = customName == null ? null : customName.getContents() instanceof PlainTextContents ? ((PlainTextContents) customName.getContents()).text() : null;
 
 				if (text != null) {
 					this.cosmeticacore$customName = customName;

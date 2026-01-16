@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "cc.cosmetica.core.fabric.mixin",
+  "package": "cc.cosmetica.core.neoforge.mixin",
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [

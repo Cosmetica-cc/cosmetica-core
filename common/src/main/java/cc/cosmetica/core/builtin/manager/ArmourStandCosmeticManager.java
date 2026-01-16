@@ -113,5 +113,5 @@ public class ArmourStandCosmeticManager implements CosmeticManager {
 		}
 	}
 
-	private static final ResourceLocation ARMOUR_STAND_MANAGER = new ResourceLocation("cosmetica", "outfits");
+	private static final ResourceLocation ARMOUR_STAND_MANAGER = ResourceLocation.fromNamespaceAndPath("cosmetica", "outfits");
 }

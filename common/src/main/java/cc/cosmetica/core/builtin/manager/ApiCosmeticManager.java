@@ -129,8 +129,8 @@ public class ApiCosmeticManager implements CosmeticManager {
 				try {
 					return api.submitTexturePacket(
 							new TexturePacketDto()
-									.value(textureProperty.getValue())
-									.signature(textureProperty.getSignature())
+									.value(textureProperty.value())
+									.signature(textureProperty.signature())
 					);
 				} catch (ApiException e) {
 					if (e.getCode() != 404) {
@@ -159,7 +159,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 
 		// check if game profile id matches user's id
-		if (profile.equals(Minecraft.getInstance().getUser().getGameProfile())) {
+		if (profile.equals(Minecraft.getInstance().getGameProfile())) {
 			// configure own cosmetics
 			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Updating cosmetics for self, {}", profile);
 			SelfCosmeticManager.update(response);
@@ -200,5 +200,5 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 	}
 
-	private static ResourceLocation API_MANAGER = new ResourceLocation("cosmetica", "api");
+	private static ResourceLocation API_MANAGER = ResourceLocation.fromNamespaceAndPath("cosmetica", "api");
 }

@@ -1,6 +1,6 @@
 modLoader = "javafml"
-loaderVersion = "[36,)"
-#issueTrackerURL = ""
+loaderVersion = "[1,)"
+issueTrackerURL = "https://github.com/Cosmetica-cc/cosmetica-core/issues"
 license = "Apache 2.0"
 
 [[mods]]
@@ -14,15 +14,21 @@ Authenticates users with the Cosmetica servers and shows cool cosmetics on playe
 #logoFile = ""
 
 [[dependencies.cosmetica_core]]
-modId = "forge"
-mandatory = true
-versionRange = "[36,)"
+modId = "neoforge"
+type = "required"
+versionRange = "[20.4,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.cosmetica_core]]
 modId = "minecraft"
-mandatory = true
+type = "required"
 versionRange = "[1.21,1.21.4)"
 ordering = "NONE"
 side = "BOTH"
+
+[[mixins]]
+config = "cosmetica-core-common.mixins.json"
+
+[[mixins]]
+config = "cosmetica-core-neoforge.mixins.json"

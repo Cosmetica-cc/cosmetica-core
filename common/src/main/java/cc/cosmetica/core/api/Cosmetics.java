@@ -48,13 +48,13 @@ public interface Cosmetics {
 	Optional<String> getOutfitId();
 
 	/**
-	 * Get the cloak texture. {@link CachedImage#NO_TEXTURE} if no texture.
+	 * Get the cloak texture.
 	 * @return the cloak texture.
 	 */
 	Optional<ImageCosmetic> getCloak();
 
 	/**
-	 * Get the elytra texture. {@link CachedImage#NO_TEXTURE} if no texture.
+	 * Get the elytra texture.
 	 * @return the elytra texture.
 	 */
 	Optional<ImageCosmetic> getElytra();

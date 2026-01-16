@@ -20,17 +20,22 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.ImageCosmetic;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import javax.annotation.Nullable;
+import java.lang.ref.WeakReference;
 import java.util.Optional;
 
 /**
@@ -38,29 +43,54 @@ import java.util.Optional;
  */
 @Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientPlayerMixin extends Player {
+	@Shadow @org.jetbrains.annotations.Nullable protected abstract PlayerInfo getPlayerInfo();
+
 	public AbstractClientPlayerMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
 		super(level, blockPos, f, gameProfile);
 	}
 
 	// Capes
+	@Unique
+	@Nullable WeakReference<PlayerSkin> cosmeticacore$vanillaSkin = new WeakReference<>(null);
+	@Unique
+	@Nullable PlayerSkin cosmeticacore$modifiedSkin = null;
+	@Unique
+	@Nullable
+	private static final ResourceLocation cosmeticacore$VANILLA_WINGS = ResourceLocation.withDefaultNamespace("textures/entity/elytra.png");
 
-	@Inject(at = @At("HEAD"), method = "isCapeLoaded", cancellable = true)
-	private void isCosmeticaCloakLoaded(CallbackInfoReturnable<Boolean> info) {
-		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
-		info.setReturnValue(cosmetics.isPresent() && cosmetics.get().getCloak().isPresent() && cosmetics.get().getCloak().get().getImage().isLoaded());
-	}
+	@Inject(at = @At("RETURN"), method = "getSkin", cancellable = true)
+	private void addCosmeticaCapes(CallbackInfoReturnable<PlayerSkin> info) {
+		@Nullable PlayerInfo playerInfo = this.getPlayerInfo();
 
-	@Inject(at = @At("HEAD"), method = "getCloakTextureLocation", cancellable = true)
-	private void addCosmeticaCloaks(CallbackInfoReturnable<ResourceLocation> info) {
-		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
+		if (playerInfo != null) {
+			Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
 
-		if (cosmetics.isPresent()) {
-			Optional<ImageCosmetic> cloak = cosmetics.get().getCloak();
+			if (cosmetics.isPresent()) {
+				final @Nullable PlayerSkin cachedVanilla = this.cosmeticacore$vanillaSkin.get();
+				final PlayerSkin existing = info.getReturnValue();
 
-			if (cloak.isPresent()) {
-				info.setReturnValue(cloak.get().getImage().location); // set the return value to our one
-			} else if (MasterCosmeticManager.hideVanillaCapes) {
-				info.setReturnValue(null);
+				if (cachedVanilla == existing) {
+					info.setReturnValue(cosmeticacore$modifiedSkin);
+				} else {
+					Optional<ImageCosmetic> cloak = cosmetics.get().getCloak();
+					Optional<ImageCosmetic> elytra = cosmetics.get().getElytra();
+
+					ResourceLocation cloakLocation = cloak.isPresent()   ?  cloak.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.capeTexture();
+					ResourceLocation elytraLocation = elytra.isPresent() ? elytra.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? cosmeticacore$VANILLA_WINGS : existing.elytraTexture();
+
+					PlayerSkin modified = new PlayerSkin(
+							existing.texture(),
+							existing.textureUrl(),
+							cloakLocation,
+							elytraLocation,
+							existing.model(),
+							existing.secure()
+					);
+
+					this.cosmeticacore$vanillaSkin = new WeakReference<>(existing);
+					this.cosmeticacore$modifiedSkin = modified;
+					info.setReturnValue(modified);
+				}
 			}
 		}
 	}

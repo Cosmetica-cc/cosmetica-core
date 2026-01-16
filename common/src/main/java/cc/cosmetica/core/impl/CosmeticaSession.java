@@ -22,11 +22,10 @@ import cc.cosmetica.core.api.LoginResult;
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.util.Response;
 import cc.cosmetica.core.util.Websocket;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.gson.*;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.yggdrasil.ProfileResult;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.Configuration;
@@ -233,7 +232,7 @@ public final class CosmeticaSession {
 
 					// run callbacks
 					synchronized (WEBSOCKET_SUBSCRIPTIONS) {
-						WEBSOCKET_SUBSCRIPTIONS.getOrDefault(eventId, ImmutableMap.of()).forEach((rl, run) -> {
+						WEBSOCKET_SUBSCRIPTIONS.getOrDefault(eventId, Map.of()).forEach((rl, run) -> {
 							run.run();
 						});
 					}
@@ -450,20 +449,30 @@ public final class CosmeticaSession {
 
 			// from authenticate() or core's debug
 			CompletableFuture<PlayerResponse> texturePacket = CosmeticaAPI.players().requestAsync(api -> {
-				// Make a copy of the profile and get texture packet data
-				GameProfile userProfile = Minecraft.getInstance().getUser().getGameProfile();
-				GameProfile profileCopy = new GameProfile(userProfile.getId(), userProfile.getName());
+				// Get texture packet data
+				GameProfile userProfile = Minecraft.getInstance().getGameProfile();
 
-				Minecraft.getInstance().getMinecraftSessionService().fillProfileProperties(profileCopy, true);
-				final Property textureProperty = Iterables.getFirst(profileCopy.getProperties().get("textures"), null);
+				Property textureProperty = Minecraft.getInstance().getMinecraftSessionService().getPackedTextures(userProfile);
+
+				if (textureProperty == null) {
+					ProfileResult profileLookup = Minecraft.getInstance().getMinecraftSessionService().fetchProfile(userProfile.getId(), true);
+
+					if (profileLookup == null) {
+						// NOTE this can trigger in development if you don't specify a valid uuid (e.g. with --uuid) but provide a token
+						throw new IllegalStateException("Should not be an invalid minecraft user if authentication completes.");
+					}
+
+					textureProperty = Minecraft.getInstance().getMinecraftSessionService().getPackedTextures(profileLookup.profile());
+				}
+
 				if (textureProperty == null) {
 					throw new IllegalStateException("Should not have no texture property after filling profile properties");
 				}
 
 				// Submit texture packet to website to update skin etc
 				TexturePacketDto dto = new TexturePacketDto();
-				dto.setValue(textureProperty.getValue());
-				dto.setSignature(textureProperty.getSignature());
+				dto.setValue(textureProperty.value());
+				dto.setSignature(textureProperty.signature());
 
 				return api.submitTexturePacket(dto);
 			}).exceptionally(ex -> {

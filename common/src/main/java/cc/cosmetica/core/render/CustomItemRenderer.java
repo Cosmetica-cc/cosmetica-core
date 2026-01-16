@@ -18,6 +18,7 @@ package cc.cosmetica.core.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.model.ShieldModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -32,19 +33,20 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class CustomItemRenderer {
     // TODO check if this works
-    public static void renderShield(PoseStack stack, MultiBufferSource multiBufferSource, ShieldModel model, int i, int j, boolean glint) {
+    public static void renderShield(GuiGraphics graphics, MultiBufferSource multiBufferSource, ShieldModel model, int i, int j, boolean glint) {
         final Material shieldMaterial = ModelBakery.NO_PATTERN_SHIELD;
+        final var stack = graphics.pose();
 
         stack.pushPose();
         stack.scale(1.0F, -1.0F, -1.0F);
         VertexConsumer vertexConsumer = shieldMaterial.sprite()
                 .wrap(ItemRenderer.getFoilBufferDirect(multiBufferSource, model.renderType(shieldMaterial.atlasLocation()), true, glint));
-        model.handle().render(stack, vertexConsumer, i, j, 1.0F, 1.0F, 1.0F, 1.0F);
+        model.handle().render(stack, vertexConsumer, i, j);
 
-        model.plate().render(stack, vertexConsumer, i, j, 1.0F, 1.0F, 1.0F, 1.0F);
+        model.plate().render(stack, vertexConsumer, i, j);
 
         // TODO add glint
-        VertexConsumer texture = multiBufferSource.getBuffer(RenderType.entityTranslucent(new ResourceLocation("cosmetica-core", "test.png")));
+        VertexConsumer texture = multiBufferSource.getBuffer(RenderType.entityTranslucent(ResourceLocation.fromNamespaceAndPath("cosmetica-core", "test.png")));
 
         // draw texture
         ModelPart part = model.plate();
@@ -58,6 +60,6 @@ public class CustomItemRenderer {
 //        BannerRenderer.renderPatterns(stack, multiBufferSource, i, j, model.plate(), shieldMaterial,
 //                false, list, itemStack.hasFoil());
 
-        stack.popPose();
+        graphics.pose().popPose();
     }
 }

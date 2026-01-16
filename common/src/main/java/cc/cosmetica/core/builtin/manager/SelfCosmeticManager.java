@@ -38,8 +38,8 @@ public class SelfCosmeticManager implements CosmeticManager {
 	public SelfCosmeticManager() {
 		CosmeticaAPI.subscribe(
 				CosmeticaAPI.SubscriptionEvent.PLAYER,
-				UUIDs.fromString(Minecraft.getInstance().getUser().getUuid()),
-				SELF_MANAGER, () -> ApiCosmeticManager.lookUpGameProfile(Minecraft.getInstance().getUser().getGameProfile()));
+				Minecraft.getInstance().getUser().getProfileId(),
+				SELF_MANAGER, () -> ApiCosmeticManager.lookUpGameProfile(Minecraft.getInstance().getGameProfile()));
 	}
 
 	private static Cosmetics cosmetics = NoneCosmetics.NONE;
@@ -143,5 +143,5 @@ public class SelfCosmeticManager implements CosmeticManager {
 		return cosmetics == NoneCosmetics.NONE ? Optional.empty() : Optional.of(cosmetics);
 	}
 
-	private static final ResourceLocation SELF_MANAGER = new ResourceLocation("cosmetica", "self");
+	private static final ResourceLocation SELF_MANAGER = ResourceLocation.fromNamespaceAndPath("cosmetica", "self");
 }

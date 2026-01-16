@@ -271,8 +271,8 @@ public final class CosmeticaAPI {
 	public static LoginResult login(String client, boolean useCloudSettings, @Nullable String modpackId) throws IOException {
 		User user = Minecraft.getInstance().getUser();
 		return CosmeticaSession.login(
-				user.getGameProfile().getId(),
-				user.getGameProfile().getName(),
+				user.getProfileId(),
+				user.getName(),
 				user.getAccessToken(),
 				client, useCloudSettings, modpackId);
 	}

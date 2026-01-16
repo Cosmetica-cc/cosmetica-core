@@ -19,16 +19,23 @@ package cc.cosmetica.core.mixin.network;
 import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.resources.SkinManager;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(SkinManager.class)
-public class SkinManagerMixin {
+@Mixin(ClientboundPlayerInfoUpdatePacket.Action.class)
+public class ClientboundPlayerInfoUpdatePacketActionMixin {
+	// This captures only other players
 	// See comment in Cosmetica.forwardPublicUserInfoToNametag
-	@Inject(at = @At("RETURN"), method = "method_4653")
-	public void afterFillProfileProperties(GameProfile profile, boolean bl, SkinManager.SkinTextureCallback skinTextureCallback, CallbackInfo ci) {
-		ApiCosmeticManager.lookUpGameProfile(profile);
+	@Inject(at = @At("RETURN"), method = "method_46342")
+	private static void afterAddPlayer(ClientboundPlayerInfoUpdatePacket.EntryBuilder entryBuilder, RegistryFriendlyByteBuf registryFriendlyByteBuf, CallbackInfo ci) {
+		final GameProfile profile = entryBuilder.profile;
+
+		if (profile != null) {
+			ApiCosmeticManager.lookUpGameProfile(profile);
+		}
 	}
 }

@@ -80,7 +80,7 @@ public final class CosmeticaModelBakery {
 				@Override
 				@Nullable
 				public BakedModel bake(ResourceLocation resourceLocation, ModelState modelState) {
-					return this.getModel(resourceLocation).bake(this, l -> sprite, modelState, resourceLocation);
+					return this.getModel(resourceLocation).bake(this, l -> sprite, modelState);
 				}
 			};
 
@@ -160,7 +160,7 @@ public final class CosmeticaModelBakery {
 			float f = (float)(k >> 16 & 255) / 255.0F;
 			float g = (float)(k >> 8 & 255) / 255.0F;
 			float h = (float)(k & 255) / 255.0F;
-			vertexConsumer.putBulkData(pose, bakedQuad, f, g, h, i, j);
+			vertexConsumer.putBulkData(pose, bakedQuad, f, g, h, 1.0f, i, j);
 		}
 	}
 

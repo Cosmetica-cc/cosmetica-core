@@ -18,19 +18,18 @@ package cc.cosmetica.core.render.texture;
 
 import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.impl.Logging;
-import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.SpriteTicker;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceMetadata;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.stream.IntStream;
 
 /**
@@ -55,7 +54,7 @@ public class ModelSprite extends TextureAtlasSprite {
 						image,
 						frames,
 						onClose,
-						new AnimationMetadataSection(ImmutableList.of(new AnimationFrame(0)), image.getWidth(), height, 69, false)),
+						new AnimationMetadataSection(List.of(new AnimationFrame(0)), image.getWidth(), height, 69, false)),
 				image.getWidth(),
 				height,
 				0, 0
@@ -87,7 +86,7 @@ public class ModelSprite extends TextureAtlasSprite {
 			return BLOCK_ATLAS;
 		}
 	}
-	private static final ResourceLocation BLOCK_ATLAS = new ResourceLocation("textures/atlas/blocks.png");
+	private static final ResourceLocation BLOCK_ATLAS = ResourceLocation.withDefaultNamespace("textures/atlas/blocks.png");
 
 	@Override
 	public void uploadFirstFrame() {
@@ -112,7 +111,9 @@ public class ModelSprite extends TextureAtlasSprite {
 
 	public static class ModelSpriteContents extends SpriteContents {
 		public ModelSpriteContents(ResourceLocation resourceLocation, FrameSize frameSize, NativeImage image, int frames, Runnable onClose, AnimationMetadataSection animationMetadataSection) {
-			super(resourceLocation, frameSize, image, animationMetadataSection);
+			super(resourceLocation, frameSize, image, new ResourceMetadata.Builder()
+					.put(AnimationMetadataSection.SERIALIZER, animationMetadataSection)
+					.build());
 			this.frames = frames;
 			this.onClose = onClose;
 		}
