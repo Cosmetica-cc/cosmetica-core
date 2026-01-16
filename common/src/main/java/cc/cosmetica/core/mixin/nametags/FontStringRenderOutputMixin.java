@@ -56,7 +56,10 @@ public class FontStringRenderOutputMixin {
 	@Inject(at = @At("RETURN"), method="<init>(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/MultiBufferSource;FFIZLcom/mojang/math/Matrix4f;Lnet/minecraft/client/gui/Font$DisplayMode;I)V")
 	private void accept(Font font, MultiBufferSource buf, float initialX, float initialY,
 						int colour, boolean dropShadow, Matrix4f matrix4f, Font.DisplayMode displayMode, int light, CallbackInfo ci) {
-		CachedImage icon = NametagRenderer.getPreparedIcon();
+		NametagRenderer.Icon iconData = NametagRenderer.getPreparedIcon();
+
+		if (iconData == null) return;
+		CachedImage icon = iconData.image.get();
 
 		if (icon != null) {
 			// see BitmapProvider$Builder.create for how this is scaled
@@ -84,7 +87,7 @@ public class FontStringRenderOutputMixin {
 			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(displayMode));
 
 			// italic, x, y, pose, vc, r,g,b,a, light
-			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1,1, this.packedLightCoords);
+			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1, iconData.transparent ? (0x20 / 255.0f) : 1, this.packedLightCoords);
 
 			// + advance
 			this.x += advance;

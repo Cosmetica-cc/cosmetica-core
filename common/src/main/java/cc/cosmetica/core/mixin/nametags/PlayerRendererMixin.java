@@ -18,6 +18,7 @@ package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.NametagConfig;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.PlayerModel;
@@ -28,8 +29,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -55,10 +54,11 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 
 		// add nametag icons
 		Cosmetics.getCosmetics(entity).ifPresent(c -> {
-			CachedImage icon = c.getNametag().getIcon().getImage();
+			NametagConfig iconCosmetic = c.getNametag();
+			CachedImage icon = iconCosmetic.getIcon().getImage();
 
 			if (icon.isLoaded()) {
-				NametagRenderer.prepareIcon(icon, entity.isDiscrete() ? 1 : 2, true);
+				NametagRenderer.prepareIcon(icon, entity.isDiscrete() ? 1 : 2, entity.isDiscrete() || iconCosmetic.isTransparentIcon(), true);
 			}
 		});
 	}
