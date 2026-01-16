@@ -412,7 +412,7 @@ public class BlockModelManager {
 
 				// free the texture
 				ResourceLocation textureLocation = getLocation(id);
-				AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getLocation(id));
+				AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getLocation(id), null);
 				if (texture != null) Minecraft.getInstance().getTextureManager().safeClose(textureLocation, texture);
 			} else {
 				gcIndex++; // check the next one.
