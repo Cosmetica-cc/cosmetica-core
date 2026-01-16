@@ -21,17 +21,17 @@ import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.NametagConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
+import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
-
-import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
-import net.minecraft.client.gui.Font;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
@@ -145,10 +145,13 @@ public final class NametagRenderer {
 		if (squaredDistance <= 4096.0D) {
 			Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(player);
 
+			Quaternionf fixedCameraOrientation = new Quaternionf(entityRenderDispatcher.cameraOrientation());
+			fixedCameraOrientation.rotateY(Mth.DEG_TO_RAD * 180);
+
 			if (cosmetics.isPresent()) {
 				renderLore(
 						stack,
-						entityRenderDispatcher.cameraOrientation(),
+						fixedCameraOrientation,
 						font,
 						multiBufferSource,
 						cosmetics.get().getLore().orElse(null),
