@@ -20,6 +20,8 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -180,17 +182,10 @@ public class BlockModelManager {
 					.build();
 
 			// upload texture
-			// don't use isOnRenderThreadOrInit
-			if (RenderSystem.isOnRenderThread()) {
+			Minecraft.getInstance().execute(() -> {
 				Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture {} for cosmetic {}", textureId, modelId);
 				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
-			}
-			else {
-				RenderSystem.recordRenderCall(() -> {
-					Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture {} for cosmetic {}", textureId, modelId);
-					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
-				});
-			}
+			});
 
 			// load model
 			final CosmeticaModel lambdaHack = model;
@@ -206,7 +201,7 @@ public class BlockModelManager {
 							BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
 
 							// calculate bounds
-							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
+							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(JsonParser.parseString(json));
 							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", modelId, aabb);
 
 							lambdaHack.setModel(blockModel, aabb);
@@ -264,16 +259,11 @@ public class BlockModelManager {
 
 			// upload texture
 			// don't use isOnRenderThreadOrInit because we spawn other threads on init.
-			if (RenderSystem.isOnRenderThread()) {
+			// note: can just use Minecraft.getInstance().execute for this behaviour
+			Minecraft.getInstance().execute(() -> {
 				Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture for cosmetic {} at {}", id, textureLocation);
 				Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
-			}
-			else {
-				RenderSystem.recordRenderCall(() -> {
-					Logging.getInstance().debug(LoggingCategory.ASSETS, "Registering texture for cosmetic {} at {}", id, textureLocation);
-					Minecraft.getInstance().getTextureManager().register(textureLocation, texture);
-				});
-			}
+			});
 		}
 
 		return image;

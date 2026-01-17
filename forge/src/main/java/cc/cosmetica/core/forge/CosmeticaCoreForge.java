@@ -19,6 +19,7 @@ package cc.cosmetica.core.forge;
 import cc.cosmetica.core.CosmeticaCore;
 import cc.cosmetica.core.builtin.BuiltinManagers;
 import cc.cosmetica.core.impl.CosmeticaSession;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -27,7 +28,8 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 @Mod("cosmetica_core")
 public class CosmeticaCoreForge {
 	public CosmeticaCoreForge(FMLJavaModLoadingContext context) {
-		context.getModEventBus().addListener(this::onClientSetup);
+		BusGroup modBusGroup = context.getModBusGroup();
+		FMLClientSetupEvent.getBus(modBusGroup).addListener(this::onClientSetup);
 	}
 
 	private void onClientSetup(FMLClientSetupEvent event) {

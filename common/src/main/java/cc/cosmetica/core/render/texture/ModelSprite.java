@@ -85,10 +85,10 @@ public class ModelSprite extends TextureAtlasSprite {
 	}
 	private static final ResourceLocation BLOCK_ATLAS = ResourceLocation.withDefaultNamespace("textures/atlas/blocks.png");
 
-	@Override
-	public void uploadFirstFrame() {
-		throw new UnsupportedOperationException("I am a teapot. Tried to call uploadFirstFrame() on cosmetica ModelSprite.");
-	}
+//	@Override
+//	public void uploadFirstFrame() {
+//		throw new UnsupportedOperationException("I am a teapot. Tried to call uploadFirstFrame() on cosmetica ModelSprite.");
+//	}
 
 	private static int getMaximumMipmapLevels(NativeImage image) {
 		return log2(Math.min(image.getWidth(), image.getHeight()));

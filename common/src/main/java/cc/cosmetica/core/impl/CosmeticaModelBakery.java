@@ -18,30 +18,37 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockElement;
-import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Brightness;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.EmptyBlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -64,7 +71,7 @@ public final class CosmeticaModelBakery {
 	 *                 Must refer to an {@link CosmeticaTexture}.
 	 * @param model the model to bake.
 	 */
-	public static BakedModel bakeModel(ResourceLocation location, BlockModel model) {
+	public static BlockModelPart bakeModel(ResourceLocation location, BlockModel model) {
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
@@ -73,156 +80,251 @@ public final class CosmeticaModelBakery {
 			ModelSprite sprite = new ModelSprite(location, texture.getCurrentImage(),
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});
+			final String debugName = location.toString();
 
-//			{
-//				@Override
-//				public UnbakedModel getModel(ResourceLocation resourceLocation) {
-//				return model;
-//			}
-//
-//				@Override
-//				@Nullable
-//				public BakedModel bake(ResourceLocation resourceLocation, ModelState modelState) {
-//				return this.getModel(resourceLocation).bake(this, l -> sprite, modelState);
-//			}
-//			};
-			ModelBakery.TextureGetter linguini = new ModelBakery.TextureGetter() {
+			return new Variant(location).bake(new ModelBaker() {
 				@Override
-				public TextureAtlasSprite get(ModelDebugName modelDebugName, Material material) {
-					return sprite;
+				public ResolvedModel getModel(ResourceLocation resourceLocation) {
+					return new ResolvedModel() {
+						@Override
+						public UnbakedModel wrapped() {
+							return model;
+						}
+
+						@Override
+						public @Nullable ResolvedModel parent() {
+							return null;
+						}
+
+						@Override
+						public String debugName() {
+							return debugName;
+						}
+					};
 				}
 
 				@Override
-				public TextureAtlasSprite reportMissingReference(ModelDebugName modelDebugName, String string) {
-					return sprite;
-				}
-			};
-			ModelDebugName name = location::toString;
-			SpriteGetter kitchen = linguini.bind(name);
-
-			ModelBaker ratatouille = new ModelBaker() {
 				public SpriteGetter sprites() {
-					return kitchen;
+					return new SpriteGetter() {
+						@Override
+						public TextureAtlasSprite get(Material material, ModelDebugName modelDebugName) {
+							return sprite;
+						}
+
+						@Override
+						public TextureAtlasSprite reportMissingReference(String string, ModelDebugName modelDebugName) {
+							return sprite;
+						}
+					};
 				}
 
-				private UnbakedModel getModel(ResourceLocation resourceLocation) {
-					return model;
+				@Override
+				public <T> T compute(SharedOperationKey<T> sharedOperationKey) {
+					return sharedOperationKey.compute(this);
 				}
-
-				public BakedModel bake(ResourceLocation resourceLocation, ModelState modelState) {
-					UnbakedModel unbakedModel = this.getModel(resourceLocation);
-					return UnbakedModel.bakeWithTopModelValues(unbakedModel, this, modelState);
-				}
-
-				public ModelDebugName rootName() {
-					return name;
-				}
-			};
-
-			return ratatouille.bake(
-					location /*this resource location in bake is just used for debugging in the case of errors*/,
-					BlockModelRotation.X0_Y0
-			);
+			});
 		}
 
 		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
 	}
 
 	// render
-
-	public static void renderModel(BakedModel model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
-		stack.pushPose();
-		boolean isGUI3D = model.isGui3d();
-		float transformStrength = 0.25F;
-		float rotation = 0.0f;
-		float transform = model.getTransforms().getTransform(ItemDisplayContext.GROUND).scale.y();
-		stack.translate(0.0D, rotation + transformStrength * transform, 0.0D);
-		float xScale = model.getTransforms().ground().scale.x();
-		float yScale = model.getTransforms().ground().scale.y();
-		float zScale = model.getTransforms().ground().scale.z();
-
-		stack.pushPose();
-
-		final ItemDisplayContext transformType = ItemDisplayContext.FIXED;
-		int overlayTyp = OverlayTexture.NO_OVERLAY;
-		// ItemRenderer#render start
-		stack.pushPose();
-
-		model.getTransforms().getTransform(transformType).apply(false, stack);
-		stack.translate(-0.5D, -0.5D, -0.5D);
-
-		RenderType renderType = RenderType.entityTranslucent(texture); // hopefully this is the right one
-		VertexConsumer vertexConsumer4 = multiBufferSource.getBuffer(renderType);
-		renderModelLists(model, packedLight, overlayTyp, stack, vertexConsumer4);
-
-		stack.popPose();
-		// ItemRenderer#render end
-
-		stack.popPose();
-		if (!isGUI3D) {
-			stack.translate(0.0F * xScale, 0.0F * yScale, 0.09375F * zScale);
-		}
-
-		stack.popPose();
+	public static void renderModel(BlockModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
+		tesselateWithoutAO(
+				EmptyBlockAndTintGetter.INSTANCE,
+				List.of(model),
+				stack,
+				multiBufferSource.getBuffer(RenderType.armorTranslucent(texture)),
+				packedLight
+		);
 	}
 
-	// vanilla code that I don't want to rewrite:
+	// Adapted from ModelBlockRenderer
+	private static void tesselateWithoutAO(
+			BlockAndTintGetter blockAndTintGetter,
+			List<BlockModelPart> list,
+			PoseStack poseStack,
+			VertexConsumer vertexConsumer,
+			int i
+	) {
+		int j = 0;
+		int k = 0;
+		CommonRenderStorage renderStorage = new CommonRenderStorage();
 
-	private static void renderModelLists(BakedModel bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer) {
-		RandomSource random = RandomSource.create();
-		final long seed = 42L;
-		Direction[] var10 = Direction.values();
-		int var11 = var10.length;
+		for (BlockModelPart blockModelPart : list) {
+			for (Direction direction : Direction.values()) {
+				int l = 1 << direction.ordinal();
+				boolean bl2 = (j & l) == 1;
+				boolean bl3 = (k & l) == 1;
+				if (!bl2 || bl3) {
+					List<BakedQuad> list2 = blockModelPart.getQuads(direction);
+					if (!list2.isEmpty()) {
+						if (!bl2) {
+							j |= l;
+							k |= l;
+						}
 
-		for(int var12 = 0; var12 < var11; ++var12) {
-			Direction direction = var10[var12];
-			random.setSeed(seed);
-			renderQuadList(poseStack, vertexConsumer, bakedModel.getQuads(null, direction, random), packedLight, overlayType);
+						if (bl3) {
+							// lighting m -> -1
+							renderModelFaceFlat(blockAndTintGetter, -1, i, false, poseStack, vertexConsumer, list2, renderStorage);
+						}
+					}
+				}
+			}
+
+			List<BakedQuad> list3 = blockModelPart.getQuads(null);
+			if (!list3.isEmpty()) {
+				renderModelFaceFlat(blockAndTintGetter, -1, i, true, poseStack, vertexConsumer, list3, renderStorage);
+			}
 		}
-
-		random.setSeed(seed);
-		renderQuadList(poseStack, vertexConsumer, bakedModel.getQuads(null, null, random), packedLight, overlayType);
 	}
 
-	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> list, int i, int j) {
-		PoseStack.Pose pose = poseStack.last();
-		Iterator var9 = list.iterator();
+	private static void renderModelFaceFlat(
+			BlockAndTintGetter blockAndTintGetter,
+			int i,
+			int j,
+			boolean bl,
+			PoseStack poseStack,
+			VertexConsumer vertexConsumer,
+			List<BakedQuad> list,
+			CommonRenderStorage storage
+	) {
+		for (BakedQuad bakedQuad : list) {
+			if (bl) {
+				calculateShape(bakedQuad.vertices(), bakedQuad.direction(), storage);
+				i = -1; //Brightness.pack(0xF, 0xF);
+			}
 
-		while(var9.hasNext()) {
-			BakedQuad bakedQuad = (BakedQuad)var9.next();
-			int k = -1;
-
-			float f = (float)(k >> 16 & 255) / 255.0F;
-			float g = (float)(k >> 8 & 255) / 255.0F;
-			float h = (float)(k & 255) / 255.0F;
-			vertexConsumer.putBulkData(pose, bakedQuad, f, g, h, 1.0f, i, j);
+			float f = blockAndTintGetter.getShade(bakedQuad.direction(), bakedQuad.shade());
+			storage.brightness[0] = f;
+			storage.brightness[1] = f;
+			storage.brightness[2] = f;
+			storage.brightness[3] = f;
+			storage.lightmap[0] = j;//i;
+			storage.lightmap[1] = j;//i;
+			storage.lightmap[2] = j;//i;
+			storage.lightmap[3] = j;//i;
+			putQuadData(vertexConsumer, poseStack.last(), bakedQuad, storage, j);
 		}
+	}
+
+	private static void putQuadData(
+			VertexConsumer vertexConsumer,
+			PoseStack.Pose pose,
+			BakedQuad bakedQuad,
+			CommonRenderStorage commonRenderStorage,
+			int i
+	) {
+		// tint
+		float tintRed = 1.0F;
+		float tintGreen = 1.0F;
+		float tintBlue = 1.0F;
+
+		vertexConsumer.putBulkData(pose, bakedQuad, commonRenderStorage.brightness, tintRed, tintGreen, tintBlue, 1.0F, commonRenderStorage.lightmap, i, true);
+	}
+
+	private static void calculateShape(
+			int[] is,
+			Direction direction,
+			CommonRenderStorage commonRenderStorage
+	) {
+		float f = 32.0F;
+		float g = 32.0F;
+		float h = 32.0F;
+		float i = -32.0F;
+		float j = -32.0F;
+		float k = -32.0F;
+
+		for (int l = 0; l < 4; l++) {
+			float m = Float.intBitsToFloat(is[l * 8]);
+			float n = Float.intBitsToFloat(is[l * 8 + 1]);
+			float o = Float.intBitsToFloat(is[l * 8 + 2]);
+			f = Math.min(f, m);
+			g = Math.min(g, n);
+			h = Math.min(h, o);
+			i = Math.max(i, m);
+			j = Math.max(j, n);
+			k = Math.max(k, o);
+		}
+
+		commonRenderStorage.facePartial = switch (direction) {
+			case DOWN, UP -> f >= 1.0E-4F || h >= 1.0E-4F || i <= 0.9999F || k <= 0.9999F;
+			case NORTH, SOUTH -> f >= 1.0E-4F || g >= 1.0E-4F || i <= 0.9999F || j <= 0.9999F;
+			case WEST, EAST -> g >= 1.0E-4F || h >= 1.0E-4F || j <= 0.9999F || k <= 0.9999F;
+		};
+
+		commonRenderStorage.faceCubic = switch (direction) {
+			// With "blockState.isCollisionShapeFullBlock" assumed false
+			case DOWN -> g == j && (g < 1.0E-4F);
+			case UP -> g == j && (j > 0.9999F);
+			case NORTH -> h == k && (h < 1.0E-4F);
+			case SOUTH -> h == k && (k > 0.9999F);
+			case WEST -> f == i && (f < 1.0E-4F);
+			case EAST -> f == i && (i > 0.9999F);
+		};
+	}
+
+	private static class CommonRenderStorage {
+		public final BlockPos.MutableBlockPos scratchPos = new BlockPos.MutableBlockPos();
+		public boolean faceCubic;
+		public boolean facePartial;
+		public final float[] brightness = new float[4];
+		public final int[] lightmap = new int[4];
+		public int tintCacheIndex = -1;
+		public int tintCacheValue;
 	}
 
 	// ======================== //
 	// Bounding Box calculation //
 	// ======================== //
 
-	public static AABB calculateBoundingBox(BlockModel model) {
+	public static AABB calculateBoundingBox(JsonElement model) {
 		// Find all corners
 		Collection<Vector3f> allCorners = new ArrayList<>();
 
-		for (BlockElement element : model.getElements()) {
-			Collection<Vector3f> corners = getUniqueCorners(element.from, element.to);
+		for (JsonElement e : model.getAsJsonObject().get("elements").getAsJsonArray()) {
+			JsonObject element = e.getAsJsonObject();
+
+			JsonArray from = element.getAsJsonArray("from");
+			JsonArray to = element.getAsJsonArray("to");
+
+			Collection<Vector3f> corners = getUniqueCorners(
+					new Vector3f(from.get(0).getAsFloat(), from.get(1).getAsFloat(), from.get(2).getAsFloat()),
+					new Vector3f(to.get(0).getAsFloat(), to.get(1).getAsFloat(), to.get(2).getAsFloat())
+			);
 
 			// rotate corners if on a rotated element
-			if (element.rotation != null) {
+			if (element.has("rotation")) {
 				Collection<Vector3f> rotated = new HashSet<>();
 
+				JsonObject rotation = element.getAsJsonObject("rotation");
+
 				for (Vector3f corner : corners) {
-					Vector3f origin = new Vector3f(element.rotation.origin());
-					origin.mul(16);
+					JsonArray originJson = rotation.get("origin").getAsJsonArray();
+					Vector3f origin = new Vector3f(
+							originJson.get(0).getAsFloat(),
+							originJson.get(1).getAsFloat(),
+							originJson.get(2).getAsFloat()
+					);
+
+					String axisJson = rotation.get("axis").getAsString();
+					Direction.Axis axis = switch (axisJson.toLowerCase(Locale.ROOT)) {
+						case "x" -> Direction.Axis.X;
+						case "y" -> Direction.Axis.Y;
+						case "z" -> Direction.Axis.Z;
+						default -> {
+							Logging.getInstance().warn("Bad axis for model element. Got " + axisJson);
+							yield Direction.Axis.Y;
+						}
+					};
+
+//					origin.mul(16);
 					rotated.add(
 							rotateCorner(
 									corner,
 									origin,
-									element.rotation.axis(),
-									element.rotation.angle()
+									axis,
+									rotation.get("angle").getAsFloat()
 							));
 				}
 

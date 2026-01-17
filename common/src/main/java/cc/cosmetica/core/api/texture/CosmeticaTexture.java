@@ -22,7 +22,10 @@ import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
 import cc.cosmetica.core.util.VP8X;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.TextureUtil;
+import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.TextureFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.Tickable;
@@ -196,9 +199,9 @@ public class CosmeticaTexture extends AbstractTexture {
         final boolean usedCache = false;
 
         // upload call
-        if (!RenderSystem.isOnRenderThreadOrInit()) {
+        if (!RenderSystem.isOnRenderThread()) {
             if (this.image == null) this.image = nativeImage; // just in case
-            RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc));
+            Minecraft.getInstance().execute(() -> this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc));
         } else {
             this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc);
         }
@@ -236,7 +239,7 @@ public class CosmeticaTexture extends AbstractTexture {
                 final int nextFrameInc = trueFrames == 1 ? this.tilesheetIncrement : tilesheetFrames;
 
                 // upload
-                RenderSystem.recordRenderCall(() -> this.firstUpload(nativeImage, true, nextFrames, nextFrameInc));
+                Minecraft.getInstance().execute(() -> this.firstUpload(nativeImage, true, nextFrames, nextFrameInc));
                 return true;
             }
         }
@@ -252,6 +255,12 @@ public class CosmeticaTexture extends AbstractTexture {
         this.autoFrameInc = nextFrameInc;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
+
+        GpuDevice gpuDevice = RenderSystem.getDevice();
+        this.texture = gpuDevice.createTexture((String)null, 5, TextureFormat.RGBA8, this.image.getWidth(), this.frameHeight, 1, 1);
+        this.texture.setTextureFilter(FilterMode.NEAREST, false);
+        this.textureView = gpuDevice.createTextureView(this.texture);
+
         this.upload(image, false);
         if (trueImage) {
             this.future = null;
@@ -260,8 +269,16 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     private void upload(NativeImage image, boolean close) {
-        TextureUtil.prepareImage(this.getId(), 0, image.getWidth(), this.frameHeight);
-        image.upload(0, 0, 0, 0, this.frameHeight * this.frame, image.getWidth(), this.frameHeight, close);
+        if (this.texture == null) {
+            Logging.getInstance().warnOnce("texture upload", "Tried to upload texture but no texture");
+        } else {
+            GpuDevice gpuDevice = RenderSystem.getDevice();
+            gpuDevice.createCommandEncoder().writeToTexture(this.texture, image, 0, 0, 0, 0, image.getWidth(), this.frameHeight, 0, this.frameHeight * this.frame);
+
+            if (close) {
+                this.image.close();
+            }
+        }
     }
 
     void doTick() {
@@ -283,8 +300,8 @@ public class CosmeticaTexture extends AbstractTexture {
     public void loadFrame(int frame) {
         if (frame < 0 || frame >= this.currentFrames)
             throw new IllegalArgumentException("Frame out of bounds for " + this.currentFrames + ": " + frame);
-        if (!RenderSystem.isOnRenderThreadOrInit())
-            throw new IllegalStateException("Not on render thread or init!");
+        if (!RenderSystem.isOnRenderThread())
+            throw new IllegalStateException("Not on render thread!");
         this.frame = frame;
         this.upload(this.image, false);
     }

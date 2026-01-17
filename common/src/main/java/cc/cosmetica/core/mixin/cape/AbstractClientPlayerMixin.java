@@ -45,8 +45,8 @@ import java.util.Optional;
 public abstract class AbstractClientPlayerMixin extends Player {
 	@Shadow @org.jetbrains.annotations.Nullable protected abstract PlayerInfo getPlayerInfo();
 
-	public AbstractClientPlayerMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
-		super(level, blockPos, f, gameProfile);
+	public AbstractClientPlayerMixin(Level level, GameProfile gameProfile) {
+		super(level, gameProfile);
 	}
 
 	// Capes

@@ -18,43 +18,33 @@ package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.impl.NametagRenderer;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.GlyphRenderTypes;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Style;
-import org.joml.Matrix4f;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Add Cosmetica Icon.
  */
-@Mixin(Font.StringRenderOutput.class)
-public class FontStringRenderOutputMixin {
+@Mixin(Font.PreparedTextBuilder.class)
+public abstract class FontStringRenderOutputMixin {
 	@Shadow
-    float x;
-
-	@Shadow @Final private Matrix4f pose;
-
-	@Shadow @Final MultiBufferSource bufferSource;
+	float x;
 
 	@Shadow
-    float y;
+	float y;
 
-	@Shadow @Final private int packedLightCoords;
+	@Shadow protected abstract void addGlyph(BakedGlyph.GlyphInstance arg);
 
-	@Shadow @Final private Font.DisplayMode mode;
-	@Unique
-	private Float cosmeticacore$advance = null;
+	@Shadow protected abstract void markBackground(float f, float g, float h);
+
 	@Unique
 	private boolean cosmeticacore$drawnIcon = false;
 
@@ -79,22 +69,20 @@ public class FontStringRenderOutputMixin {
 			float advance = scale*icon.getWidth() + 2.0f;
 
 			if (NametagRenderer.shouldReadjustNametagPosition()) {
-				this.cosmeticacore$advance = advance;
 				this.x -= advance/1.5f;
 			}
 
 			// see FontTexture#add
 			BakedGlyph glyph = new BakedGlyph(
 					GlyphRenderTypes.createForColorTexture(icon.location),
+					Minecraft.getInstance().getTextureManager().getTexture(icon.location).getTextureView(),
 					// u0 u1 v0 v1
 					0, 1, 0, 1,
 					// left right up down. See RawGlyph
 					0, scale*icon.getWidth(), 0.0f, scale*icon.getHeight()
 			);
 
-			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(this.mode));
-
-			glyph.renderChar(new BakedGlyph.GlyphInstance(
+			this.addGlyph(new BakedGlyph.GlyphInstance(
 					this.x,
 					this.y,
 					iconData.transparent ? 0x20FFFFFF : -1,
@@ -102,33 +90,11 @@ public class FontStringRenderOutputMixin {
 					glyph,
 					style,
 					0, 0 // no bold or shadow
-			), this.pose, consumer, this.packedLightCoords);
-
-			/*
-			// italic, x, y, pose, vc, r,g,b,a, light
-			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1, iconData.transparent ? (0x20 / 255.0f) : 1, this.packedLightCoords);
-			 */
+			));
+			this.markBackground(this.x, this.y, advance);
 
 			// + advance
 			this.x += advance;
 		}
-	}
-
-	@Inject(at = @At("RETURN"), method = "finish")
-	private void onFinish(float f, CallbackInfoReturnable<Float> cir) {
-		// reset captured
-		this.cosmeticacore$drawnIcon = false;
-	}
-
-	@ModifyArg(
-			method = "finish",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/font/glyphs/BakedGlyph$Effect;<init>(FFFFFI)V"),
-			index = 0
-	)
-	private float adjustBackgroundStart(float f) {
-		if (this.cosmeticacore$advance != null) {
-			f -= this.cosmeticacore$advance/1.5f;
-		}
-		return f;
 	}
 }

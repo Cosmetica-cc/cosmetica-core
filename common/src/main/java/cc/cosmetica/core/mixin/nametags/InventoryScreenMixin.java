@@ -32,12 +32,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(InventoryScreen.class)
 public class InventoryScreenMixin {
 	@Inject(at = @At("HEAD"), method = "renderEntityInInventory")
-	private static void disableOwnNametagTemporarilyIfShown(GuiGraphics guiGraphics, float f, float g, float h, Vector3f vector3f, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
+	private static void disableOwnNametagTemporarilyIfShown(GuiGraphics guiGraphics, int i, int j, int k, int l, float f, Vector3f vector3f, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
 		NametagRenderer.setRenderingInventoryEntity(true);
 	}
 
 	@Inject(at = @At("RETURN"), method = "renderEntityInInventory")
-	private static void reenableNametag(GuiGraphics guiGraphics, float f, float g, float h, Vector3f vector3f, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
+	private static void reenableNametag(GuiGraphics guiGraphics, int i, int j, int k, int l, float f, Vector3f vector3f, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
 		NametagRenderer.setRenderingInventoryEntity(false);
 	}
 }

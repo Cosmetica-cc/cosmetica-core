@@ -24,10 +24,11 @@ import cc.cosmetica.core.impl.LoggingCategory;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -51,7 +52,7 @@ public final class CosmeticaModel {
 	}
 
 	private final ResourceLocation texture;
-	private BakedModel model;
+	private BlockModelPart model;
 	private BlockModel unbakedModel; // cleared when the model is baked!
 	private AABB boundingBox;
 	private boolean textureLoaded;
@@ -89,7 +90,7 @@ public final class CosmeticaModel {
 		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Scheduling baking for {}", this.texture);
 
-		RenderSystem.recordRenderCall(() -> {
+		Minecraft.getInstance().schedule(() -> {
 			this.model = CosmeticaModelBakery.bakeModel(this.texture, model);
 			this.unbakedModel = null; // free memory
 			Logging.getInstance().debug(LoggingCategory.ASSETS, "Baked model {}", this.texture);
@@ -109,7 +110,7 @@ public final class CosmeticaModel {
 	 * @return the baked model for this cosmetic model, or null if it has not been baked yet.
 	 */
 	@Nullable
-	public BakedModel getBakedModel() {
+	public BlockModelPart getBakedModel() {
 		return this.model;
 	}
 
@@ -133,7 +134,7 @@ public final class CosmeticaModel {
 	 * @param mirror whether to mirror the model.
 	 */
 	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
-		BakedModel model = this.getBakedModel();
+		BlockModelPart model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.0f;
@@ -142,6 +143,7 @@ public final class CosmeticaModel {
 		if (mirror) stack.scale(-1, 1, 1);
 		stack.mulPose(new Quaternionf(new AxisAngle4f((float)Math.PI, YP))); // pi radians on y axis
 		stack.translate(x, y, z); // vanilla: 0.0 second param
+		stack.translate(-0.5, -0.25, -0.5);
 
 		CosmeticaModelBakery.renderModel(
 				model,
