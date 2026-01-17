@@ -28,6 +28,7 @@ import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.PlayerRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -132,18 +133,18 @@ public final class NametagRenderer {
 	/**
 	 * Render lore on a player.
 	 * @param entityRenderDispatcher the entity render dispatcher.
-	 * @param player the player to render the lore for and on.
+	 * @param playerRenderState the render state for the player on which to render the lore.
 	 * @param playerModel the model of said player
 	 * @param stack the pose stack for rendering.
 	 * @param multiBufferSource the buffer source for rendering.
 	 * @param font the font to draw text with.
 	 * @param packedLight the environment light.
 	 */
-	public static void renderLore(EntityRenderDispatcher entityRenderDispatcher, Player player, PlayerModel<AbstractClientPlayer> playerModel, PoseStack stack, MultiBufferSource multiBufferSource, Font font, int packedLight) {
-		double squaredDistance = entityRenderDispatcher.distanceToSqr(player);
+	public static void renderLore(EntityRenderDispatcher entityRenderDispatcher, PlayerRenderState playerRenderState, PlayerModel playerModel, PoseStack stack, MultiBufferSource multiBufferSource, Font font, int packedLight) {
+		double squaredDistance = playerRenderState.distanceToCameraSq; //entityRenderDispatcher.distanceToSqr(player);
 
 		if (squaredDistance <= 4096.0D) {
-			Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(player);
+			Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(playerRenderState);
 
 			Quaternionf fixedCameraOrientation = new Quaternionf(entityRenderDispatcher.cameraOrientation());
 			fixedCameraOrientation.rotateY(Mth.DEG_TO_RAD * 180);
@@ -156,11 +157,11 @@ public final class NametagRenderer {
 						multiBufferSource,
 						cosmetics.get().getLore().orElse(null),
 						cosmetics.get().getAccessories(),
-						player.hasItemInSlot(EquipmentSlot.HEAD),
-						!player.isSleeping(), // doNametagShift
-						player.isDiscrete(), // sneaking
+						!playerRenderState.headEquipment.isEmpty(), //player.hasItemInSlot(EquipmentSlot.HEAD),
+						playerRenderState.bedOrientation == null, // !player.isSleeping(), // doNametagShift
+						playerRenderState.isDiscrete, // sneaking
 						false, // upside down
-						player.getBbHeight(),
+						playerRenderState.boundingBoxHeight, // player.getBbHeight(),
 						playerModel.head.xRot,
 						packedLight);
 			}
@@ -204,7 +205,7 @@ public final class NametagRenderer {
 					lookAngleMultiplier = normalizedAngleMultiplier;
 				}
 
-				stack.translate(0, Math.max(hatTopY * lookAngleMultiplier, torsoFixedHatTopY)/ 16, 0);
+				stack.translate(0, Math.max(hatTopY * lookAngleMultiplier, torsoFixedHatTopY) / 16.0, 0);
 			}
 		}
 

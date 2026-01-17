@@ -19,7 +19,7 @@ package cc.cosmetica.core.mixin.cosmetics;
 import cc.cosmetica.core.render.CustomItemRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.ShieldModel;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+//import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -31,19 +31,19 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-@Mixin(value = BlockEntityWithoutLevelRenderer.class, priority = 999)
-public class BlockEntityWithoutLevelRendererMixin {
-    @Shadow @Final private ShieldModel shieldModel;
-
-    @Inject(method = "renderByItem", at = @At("HEAD"), cancellable = true)
-    private void onRenderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, CallbackInfo info) {
-        boolean cosmeticaShield = itemStack.getItem() == Items.SHIELD;
+//
+//@Mixin(value = BlockEntityWithoutLevelRenderer.class, priority = 999)
+//public class BlockEntityWithoutLevelRendererMixin {
+//    @Shadow @Final private ShieldModel shieldModel;
+//
+//    @Inject(method = "renderByItem", at = @At("HEAD"), cancellable = true)
+//    private void onRenderByItem(ItemStack itemStack, ItemDisplayContext itemDisplayContext, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, CallbackInfo info) {
+//        boolean cosmeticaShield = itemStack.getItem() == Items.SHIELD;
 //        boolean banner = itemStack.getTagElement("BlockEntityTag") != null;
 
 //        if (!banner && cosmeticaShield) {
 //            CustomItemRenderer.renderShield(poseStack, multiBufferSource, this.shieldModel, i, j, itemStack.hasFoil());
 //            info.cancel();
 //        }
-    }
-}
+//    }
+//}

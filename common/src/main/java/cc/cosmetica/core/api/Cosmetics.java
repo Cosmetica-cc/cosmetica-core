@@ -18,9 +18,11 @@ package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.impl.CosmeticEquipper;
+import cc.cosmetica.core.impl.HasCosmeticsRenderState;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.NametagRenderer;
 import gg.cloaks.javaclient.model.PlayerResponse;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +99,16 @@ public interface Cosmetics {
 	static Optional<Cosmetics> getCosmetics(LivingEntity entity) {
 		CosmeticEquipper equipper = (CosmeticEquipper) entity;
 		return equipper.cosmeticacore$getCosmetics();
+	}
+
+	/**
+	 * Get the cosmetics to render on a given entity during a render pass.
+	 * @param state the render state for which to get the container.
+	 * @return the cosmetics to render.
+	 */
+	static Optional<Cosmetics> getCosmetics(LivingEntityRenderState state) {
+		HasCosmeticsRenderState cosmeticsRenderState = (HasCosmeticsRenderState) state;
+		return cosmeticsRenderState.cosmeticacore$getCosmetics();
 	}
 
 	/**

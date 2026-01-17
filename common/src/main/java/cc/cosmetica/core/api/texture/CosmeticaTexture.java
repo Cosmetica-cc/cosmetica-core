@@ -23,7 +23,6 @@ import cc.cosmetica.core.util.VP8X;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.Tickable;
@@ -51,7 +50,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class CosmeticaTexture extends AbstractTexture {
@@ -73,6 +71,8 @@ public class CosmeticaTexture extends AbstractTexture {
         this.loadingTexture = loadingTexture;
         this.errorTexture = errorTexture;
         this.heightDivider = heightDivider;
+
+        Minecraft.getInstance().execute(this::load);
     }
 
     private final File cacheFile;
@@ -92,8 +92,16 @@ public class CosmeticaTexture extends AbstractTexture {
     private int tick;
     private NativeImage image;
 
-    @Override
-    public void load(ResourceManager resourceManager) throws IOException {
+    private void load() {
+        ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
+        try {
+            this.load(resourceManager);
+        } catch (IOException e) {
+            Logging.getInstance().error("Error loading Cosmetica texture", e);
+        }
+    }
+
+    private void load(ResourceManager resourceManager) throws IOException {
         // don't duplicate download requests, silly
         if (this.future != null)
             return;
@@ -253,7 +261,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
     private void upload(NativeImage image, boolean close) {
         TextureUtil.prepareImage(this.getId(), 0, image.getWidth(), this.frameHeight);
-        image.upload(0, 0, 0, 0, this.frameHeight * this.frame, image.getWidth(), this.frameHeight, this.blur, false, false, close);
+        image.upload(0, 0, 0, 0, this.frameHeight * this.frame, image.getWidth(), this.frameHeight, close);
     }
 
     void doTick() {
@@ -480,13 +488,10 @@ public class CosmeticaTexture extends AbstractTexture {
         }
 
         try {
-            AnimationMetadataSection textureMetadataSection = resource.metadata()
-                    .getSection(AnimationMetadataSection.SERIALIZER)
-                    .orElse(AnimationMetadataSection.EMPTY);
+            Optional<AnimationMetadataSection> textureMetadataSection = resource.metadata()
+                    .getSection(AnimationMetadataSection.TYPE);
 
-            AtomicInteger frameCount = new AtomicInteger(0);
-            textureMetadataSection.forEachFrame((idx, time) -> frameCount.incrementAndGet());
-            textureImage.frames = frameCount.get();
+            textureImage.frames = textureMetadataSection.flatMap(AnimationMetadataSection::frames).map(List::size).orElse(1);
         } catch (RuntimeException ex) {
             Logging.getInstance().warn("Failed reading metadata of cosmetica texture: {}", resourceLocation, ex);
         }

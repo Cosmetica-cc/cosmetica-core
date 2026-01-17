@@ -17,12 +17,14 @@
 package cc.cosmetica.core.mixin.cosmetics;
 
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.impl.HasCosmeticsRenderState;
 import cc.cosmetica.core.render.HumanoidAccessoriesLayer;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,6 +37,7 @@ import java.util.Optional;
 
 /**
  * Add the custom layers for rendering cosmetics on humanoid models, and makes australians upside down.
+ * 1.21.4+ : Add cosmetics to the entity render state.
  */
 @Mixin(LivingEntityRenderer.class)
 @SuppressWarnings("rawtypes")
@@ -45,7 +48,7 @@ public abstract class LivingEntityRendererMixin {
 	@Inject(at = @At("TAIL"), method = "<init>")
 	private void init(EntityRendererProvider.Context context, EntityModel entityModel, float f, CallbackInfo ci) {
 		if (entityModel instanceof HumanoidModel) {
-			this.addLayer(new HumanoidAccessoriesLayer((LivingEntityRenderer) (Object) this));
+			this.addLayer(new HumanoidAccessoriesLayer<>((LivingEntityRenderer) (Object) this, context.getEquipmentAssets()));
 		}
 	}
 
@@ -60,5 +63,11 @@ public abstract class LivingEntityRendererMixin {
 		if (cosmetics.isPresent() && cosmetics.get().isUpsideDown()) {
 			info.setReturnValue(true);
 		}
+	}
+
+	@Inject(at = @At("RETURN"), method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V")
+	private void onExtractRenderState(LivingEntity entity, LivingEntityRenderState renderState, float f, CallbackInfo info) {
+		HasCosmeticsRenderState cosmeticsRenderState = (HasCosmeticsRenderState) renderState;
+		cosmeticsRenderState.cosmeticacore$extractCosmeticsOf(entity);
 	}
 }

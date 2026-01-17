@@ -22,6 +22,7 @@ import cc.cosmetica.core.impl.MasterCosmeticManager;
 import net.minecraft.client.model.ArmorStandArmorModel;
 import net.minecraft.client.model.ArmorStandModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.entity.state.ArmorStandRenderState;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -41,8 +42,8 @@ public abstract class ArmourStandModelMixin extends ArmorStandArmorModel {
 		super(modelPart);
 	}
 
-	@Inject(at = @At("RETURN"), method="setupAnim(Lnet/minecraft/world/entity/decoration/ArmorStand;FFFFF)V")
-	private void afterSetupAnim(ArmorStand armorStand, float f, float g, float h, float i, float j, CallbackInfo ci) {
+	@Inject(at = @At("RETURN"), method="setupAnim(Lnet/minecraft/client/renderer/entity/state/ArmorStandRenderState;)V")
+	private void afterSetupAnim(ArmorStandRenderState armorStand, CallbackInfo ci) {
 		// only run if the feature is enabled.
 		if (!MasterCosmeticManager.armourStandArms) {
 			return;

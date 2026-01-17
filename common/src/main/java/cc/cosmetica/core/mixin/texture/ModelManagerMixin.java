@@ -16,12 +16,16 @@
 
 package cc.cosmetica.core.mixin.texture;
 
-import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.SpecialBlockModelRenderer;
+import net.minecraft.client.resources.model.AtlasSet;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelManager;
-import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -31,8 +35,8 @@ import java.util.Map;
 
 @Mixin(ModelManager.class)
 public class ModelManagerMixin {
-	@Inject(at = @At("RETURN"), method = "method_45884(Lnet/minecraft/util/profiling/ProfilerFiller;Ljava/util/Map;Ljava/util/Map;)Lnet/minecraft/client/resources/model/ModelBakery;")
-	private void captureBakery(ProfilerFiller profilerFiller, Map map, Map map2, CallbackInfoReturnable<ModelBakery> info) {
-		CosmeticaModelBakery.bakery = info.getReturnValue();
+	@Inject(at = @At("HEAD"), method="loadModels")
+	private static void captureBakery(ProfilerFiller profilerFiller, Map<ResourceLocation, AtlasSet.StitchResult> map, ModelBakery modelBakery, Object2IntMap<BlockState> object2IntMap, EntityModelSet entityModelSet, SpecialBlockModelRenderer specialBlockModelRenderer, CallbackInfoReturnable cir) {
+		CosmeticaModelBakery.bakery = modelBakery;
 	}
 }

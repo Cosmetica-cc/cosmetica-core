@@ -23,7 +23,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.GlyphRenderTypes;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Style;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,6 +33,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Add Cosmetica Icon.
@@ -51,12 +52,20 @@ public class FontStringRenderOutputMixin {
 
 	@Shadow @Final private int packedLightCoords;
 
+	@Shadow @Final private Font.DisplayMode mode;
 	@Unique
 	private Float cosmeticacore$advance = null;
+	@Unique
+	private boolean cosmeticacore$drawnIcon = false;
 
-	@Inject(at = @At("RETURN"), method="<init>(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/MultiBufferSource;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/gui/Font$DisplayMode;I)V")
-	private void accept(Font font, MultiBufferSource buf, float initialX, float initialY,
-						int colour, boolean dropShadow, Matrix4f matrix4f, Font.DisplayMode displayMode, int light, CallbackInfo ci) {
+	@Inject(at = @At("HEAD"), method="accept")
+	private void accept(int i, Style style, int j, CallbackInfoReturnable<Boolean> cir) {
+		// check for first render pass
+		if (this.cosmeticacore$drawnIcon) {
+			return;
+		}
+		this.cosmeticacore$drawnIcon = true;
+
 		NametagRenderer.Icon iconData = NametagRenderer.getPreparedIcon();
 
 		if (iconData == null) return;
@@ -83,19 +92,37 @@ public class FontStringRenderOutputMixin {
 					0, scale*icon.getWidth(), 0.0f, scale*icon.getHeight()
 			);
 
-			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(displayMode));
+			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(this.mode));
 
+			glyph.renderChar(new BakedGlyph.GlyphInstance(
+					this.x,
+					this.y,
+					iconData.transparent ? 0x20FFFFFF : -1,
+					0, // no shadow
+					glyph,
+					style,
+					0, 0 // no bold or shadow
+			), this.pose, consumer, this.packedLightCoords);
+
+			/*
 			// italic, x, y, pose, vc, r,g,b,a, light
 			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1, iconData.transparent ? (0x20 / 255.0f) : 1, this.packedLightCoords);
+			 */
 
 			// + advance
 			this.x += advance;
 		}
 	}
 
+	@Inject(at = @At("RETURN"), method = "finish")
+	private void onFinish(float f, CallbackInfoReturnable<Float> cir) {
+		// reset captured
+		this.cosmeticacore$drawnIcon = false;
+	}
+
 	@ModifyArg(
 			method = "finish",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/font/glyphs/BakedGlyph$Effect;<init>(FFFFFFFFF)V"),
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/font/glyphs/BakedGlyph$Effect;<init>(FFFFFI)V"),
 			index = 0
 	)
 	private float adjustBackgroundStart(float f) {

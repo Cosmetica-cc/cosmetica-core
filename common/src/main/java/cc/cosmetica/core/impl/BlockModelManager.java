@@ -204,11 +204,10 @@ public class BlockModelManager {
 
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
 							BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
-							blockModel.name = modelId;
 
 							// calculate bounds
 							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
-							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", blockModel.name, aabb);
+							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", modelId, aabb);
 
 							lambdaHack.setModel(blockModel, aabb);
 						} catch (IOException | RuntimeException e) {
@@ -412,8 +411,7 @@ public class BlockModelManager {
 
 				// free the texture
 				ResourceLocation textureLocation = getLocation(id);
-				AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(getLocation(id), null);
-				if (texture != null) Minecraft.getInstance().getTextureManager().safeClose(textureLocation, texture);
+				Minecraft.getInstance().getTextureManager().release(textureLocation);
 			} else {
 				gcIndex++; // check the next one.
 				// not necessary if removed as the next item shifts back

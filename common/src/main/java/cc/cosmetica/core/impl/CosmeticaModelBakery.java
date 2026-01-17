@@ -20,6 +20,8 @@ import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -28,6 +30,7 @@ import net.minecraft.client.renderer.block.model.BlockElement;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -71,16 +74,48 @@ public final class CosmeticaModelBakery {
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});
 
-			ModelBaker ratatouille = new ModelBaker() {
+//			{
+//				@Override
+//				public UnbakedModel getModel(ResourceLocation resourceLocation) {
+//				return model;
+//			}
+//
+//				@Override
+//				@Nullable
+//				public BakedModel bake(ResourceLocation resourceLocation, ModelState modelState) {
+//				return this.getModel(resourceLocation).bake(this, l -> sprite, modelState);
+//			}
+//			};
+			ModelBakery.TextureGetter linguini = new ModelBakery.TextureGetter() {
 				@Override
-				public UnbakedModel getModel(ResourceLocation resourceLocation) {
-					return model;
+				public TextureAtlasSprite get(ModelDebugName modelDebugName, Material material) {
+					return sprite;
 				}
 
 				@Override
-				@Nullable
+				public TextureAtlasSprite reportMissingReference(ModelDebugName modelDebugName, String string) {
+					return sprite;
+				}
+			};
+			ModelDebugName name = location::toString;
+			SpriteGetter kitchen = linguini.bind(name);
+
+			ModelBaker ratatouille = new ModelBaker() {
+				public SpriteGetter sprites() {
+					return kitchen;
+				}
+
+				private UnbakedModel getModel(ResourceLocation resourceLocation) {
+					return model;
+				}
+
 				public BakedModel bake(ResourceLocation resourceLocation, ModelState modelState) {
-					return this.getModel(resourceLocation).bake(this, l -> sprite, modelState);
+					UnbakedModel unbakedModel = this.getModel(resourceLocation);
+					return UnbakedModel.bakeWithTopModelValues(unbakedModel, this, modelState);
+				}
+
+				public ModelDebugName rootName() {
+					return name;
 				}
 			};
 
@@ -102,9 +137,9 @@ public final class CosmeticaModelBakery {
 		float rotation = 0.0f;
 		float transform = model.getTransforms().getTransform(ItemDisplayContext.GROUND).scale.y();
 		stack.translate(0.0D, rotation + transformStrength * transform, 0.0D);
-		float xScale = model.getTransforms().ground.scale.x();
-		float yScale = model.getTransforms().ground.scale.y();
-		float zScale = model.getTransforms().ground.scale.z();
+		float xScale = model.getTransforms().ground().scale.x();
+		float yScale = model.getTransforms().ground().scale.y();
+		float zScale = model.getTransforms().ground().scale.z();
 
 		stack.pushPose();
 

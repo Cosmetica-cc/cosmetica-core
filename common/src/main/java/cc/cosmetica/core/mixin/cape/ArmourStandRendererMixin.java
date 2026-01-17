@@ -18,10 +18,12 @@ package cc.cosmetica.core.mixin.cape;
 
 import cc.cosmetica.core.render.NonHumanCapeLayer;
 import net.minecraft.client.model.ArmorStandArmorModel;
+import net.minecraft.client.model.PlayerCapeModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.ArmorStandRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.state.ArmorStandRenderState;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -32,13 +34,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Adds capes to armour stands.
  */
 @Mixin(ArmorStandRenderer.class)
-public abstract class ArmourStandRendererMixin extends LivingEntityRenderer<ArmorStand, ArmorStandArmorModel> {
+public abstract class ArmourStandRendererMixin extends LivingEntityRenderer<ArmorStand, ArmorStandRenderState, ArmorStandArmorModel> {
 	public ArmourStandRendererMixin(EntityRendererProvider.Context context, ArmorStandArmorModel entityModel, float f) {
 		super(context, entityModel, f);
 	}
 
 	@Inject(at = @At("RETURN"), method="<init>")
 	private void addCapesToArmourStands(EntityRendererProvider.Context context, CallbackInfo ci) {
-		this.addLayer(new NonHumanCapeLayer<>(this, context.bakeLayer(ModelLayers.PLAYER)));
+		this.addLayer(new NonHumanCapeLayer<>(this, context.getModelSet().bakeLayer(ModelLayers.PLAYER_CAPE).getChild("body"), context.getEquipmentAssets()));
 	}
 }

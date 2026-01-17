@@ -21,18 +21,22 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.mixin.PlayerModelAccessor;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.resources.model.EquipmentAssetManager;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.util.profiling.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ElytraItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
@@ -40,40 +44,59 @@ import java.util.Collection;
 /**
  * Renderer for Cosmetic models on humanoid entities.
  */
-public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends HumanoidModel<E>> extends RenderLayer<E, M> {
-	public HumanoidAccessoriesLayer(RenderLayerParent<E, M> renderLayerParent) {
+public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends HumanoidModel<? super S>> extends RenderLayer<S, M> {
+	public HumanoidAccessoriesLayer(RenderLayerParent<S, M> renderLayerParent, EquipmentAssetManager equipmentAssets) {
 		super(renderLayerParent);
+		this.equipmentAssets = equipmentAssets;
 	}
 
+	private final EquipmentAssetManager equipmentAssets;
+
 	@Override
-	public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int light, E entity,
-					   float f, float g, float pitch, float j, float k, float l) {
-		if (entity.isInvisible())return;//don't show cosmetics when invisible
+	public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int light, HumanoidRenderState state, float a, float b) {
+		if (state.isInvisibleToPlayer) return;//don't show cosmetics when invisible
 
-		Minecraft.getInstance().getProfiler().push("accessories");
+		ProfilerFiller profilerFiller = Profiler.get();
+		profilerFiller.push("accessories");
 
-		Cosmetics.getCosmetics(entity).ifPresent(cosmetics -> {
+		Cosmetics.getCosmetics(state).ifPresent(cosmetics -> {
+			boolean cloak = (cosmetics.getCloak().isPresent() || (state instanceof PlayerRenderState prs && prs.skin.capeTexture() != null)) &&
+				(!(state instanceof PlayerRenderState prs) || prs.showCape);
+
 			for (Accessory accessory : cosmetics.getAccessories()) {
-				this.renderAccessory(accessory, poseStack, multiBufferSource, light, entity);
+				this.renderAccessory(accessory, poseStack, multiBufferSource, light, cloak, state);
 			}
 		});
 
-		Minecraft.getInstance().getProfiler().pop();
+		profilerFiller.pop();
 	}
 
-	private void renderAccessory(Accessory accessory, PoseStack stack, MultiBufferSource multiBufferSource, int light, E entity) {
+	// Vanilla method for checking whether elytra renders or for humanoid models
+	private boolean hasLayer(ItemStack itemStack, EquipmentClientInfo.LayerType layerType) {
+		Equippable equippable = itemStack.get(DataComponents.EQUIPPABLE);
+		if (equippable != null && !equippable.assetId().isEmpty()) {
+			EquipmentClientInfo equipmentClientInfo = this.equipmentAssets.get(equippable.assetId().get());
+			return !equipmentClientInfo.getLayers(layerType).isEmpty();
+		} else {
+			return false;
+		}
+	}
+
+	private void renderAccessory(Accessory accessory, PoseStack stack, MultiBufferSource multiBufferSource, int light, boolean cloak, HumanoidRenderState state) {
 		//System.out.println("rendering accessory " + accessory.getName() + " on " + accessory.getAttachment().getValue()	);
 		// Check if accessory can be rendered
 		Collection<Accessory.Flag> flags = accessory.getFlags();
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_HELMET)) {
-			if (entity.hasItemInSlot(EquipmentSlot.HEAD)) {
+			if (!state.headEquipment.isEmpty()) {
 				return;
 			}
 		}
 
-		if (entity.hasItemInSlot(EquipmentSlot.CHEST)) {
-			if (entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem) {
+		boolean hasElytra = hasLayer(state.chestEquipment, EquipmentClientInfo.LayerType.WINGS);
+
+		if (!state.chestEquipment.isEmpty()) {
+			if (hasElytra) {
 				if (flags.contains(Accessory.Flag.HIDE_WITH_ELYTRA)) {
 					return;
 				}
@@ -83,29 +106,26 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 				}
 			}
 		}
-		if (entity instanceof AbstractClientPlayer &&
-				((AbstractClientPlayer)entity).getSkin().capeTexture() != null &&
-				(!entity.hasItemInSlot(EquipmentSlot.CHEST) || !(entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem))
-		) {
+		if (cloak && !hasElytra) {
 			if (flags.contains(Accessory.Flag.HIDE_WITH_CLOAK)) {
 				return;
 			}
 		}
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_LEGGINGS)) {
-			if (entity.hasItemInSlot(EquipmentSlot.LEGS)) {
+			if (!state.legsEquipment.isEmpty()) {
 				return;
 			}
 		}
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_BOOTS)) {
-			if (entity.hasItemInSlot(EquipmentSlot.FEET)) {
+			if (!state.feetEquipment.isEmpty()) {
 				return;
 			}
 		}
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_PARROT)) {
-			if (entity instanceof AbstractClientPlayer) {
+			if (state instanceof PlayerRenderState playerRenderState) {
 				HumanoidArm side = null;
 
 				switch (accessory.getAttachment()) {
@@ -130,12 +150,13 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 				}
 
 				if (side == null || side == HumanoidArm.LEFT) {
-					if (!((AbstractClientPlayer) entity).getShoulderEntityLeft().isEmpty()) {
+					// FIXME compatibility with modded entities?
+					if (playerRenderState.parrotOnLeftShoulder != null) {
 						return;
 					}
 				}
 				if (side == null || side == HumanoidArm.RIGHT) {
-					if (!((AbstractClientPlayer) entity).getShoulderEntityRight().isEmpty()) {
+					if (playerRenderState.parrotOnRightShoulder != null) {
 						return;
 					}
 				}

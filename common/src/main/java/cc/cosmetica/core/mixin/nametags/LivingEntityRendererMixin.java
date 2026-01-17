@@ -34,11 +34,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntityRenderer.class)
 public class LivingEntityRendererMixin {
 	@Inject(
-			method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;)Z",
+			method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z",
 			at = @At("HEAD"),
 			cancellable = true
 	)
-	private void shouldShowName(LivingEntity entity, CallbackInfoReturnable<Boolean> cir) {
+	private void shouldShowName(LivingEntity entity, double d, CallbackInfoReturnable<Boolean> cir) {
 		boolean thirdPerson = Minecraft.getInstance().options.getCameraType() != CameraType.FIRST_PERSON;
 		if (thirdPerson && NametagRenderer.shouldShowOwnNametag()
 				&& entity == Minecraft.getInstance().getCameraEntity()) cir.setReturnValue(Minecraft.renderNames() && !entity.isVehicle());

@@ -34,32 +34,32 @@ import net.minecraft.resources.ResourceLocation;
 public class CustomItemRenderer {
     // TODO check if this works
     public static void renderShield(GuiGraphics graphics, MultiBufferSource multiBufferSource, ShieldModel model, int i, int j, boolean glint) {
-        final Material shieldMaterial = ModelBakery.NO_PATTERN_SHIELD;
-        final var stack = graphics.pose();
-
-        stack.pushPose();
-        stack.scale(1.0F, -1.0F, -1.0F);
-        VertexConsumer vertexConsumer = shieldMaterial.sprite()
-                .wrap(ItemRenderer.getFoilBufferDirect(multiBufferSource, model.renderType(shieldMaterial.atlasLocation()), true, glint));
-        model.handle().render(stack, vertexConsumer, i, j);
-
-        model.plate().render(stack, vertexConsumer, i, j);
-
-        // TODO add glint
-        VertexConsumer texture = multiBufferSource.getBuffer(RenderType.entityTranslucent(ResourceLocation.fromNamespaceAndPath("cosmetica-core", "test.png")));
-
-        // draw texture
-        ModelPart part = model.plate();
-
-        try {
-            part.render(stack, texture, i, j);
-        }catch (RuntimeException e) {
-            e.printStackTrace();
-        }
+//        final Material shieldMaterial = ModelBakery.NO_PATTERN_SHIELD;
+//        final var stack = graphics.pose();
+//
+//        stack.pushPose();
+//        stack.scale(1.0F, -1.0F, -1.0F);
+//        VertexConsumer vertexConsumer = shieldMaterial.sprite()
+//                .wrap(ItemRenderer.getFoilBufferDirect(multiBufferSource, model.renderType(shieldMaterial.atlasLocation()), true, glint));
+//        model.handle().render(stack, vertexConsumer, i, j);
+//
+//        model.plate().render(stack, vertexConsumer, i, j);
+//
+//        // TODO add glint
+//        VertexConsumer texture = multiBufferSource.getBuffer(RenderType.entityTranslucent(ResourceLocation.fromNamespaceAndPath("cosmetica-core", "test.png")));
+//
+//        // draw texture
+//        ModelPart part = model.plate();
+//
+//        try {
+//            part.render(stack, texture, i, j);
+//        }catch (RuntimeException e) {
+//            e.printStackTrace();
+//        }
 
 //        BannerRenderer.renderPatterns(stack, multiBufferSource, i, j, model.plate(), shieldMaterial,
 //                false, list, itemStack.hasFoil());
-
-        graphics.pose().popPose();
+//
+//        graphics.pose().popPose();
     }
 }

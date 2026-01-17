@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.renderer.entity.state.PlayerRenderState;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -38,27 +39,27 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Adds lore to players.
  */
 @Mixin(value = PlayerRenderer.class)
-public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
-	public PlayerRendererMixin(EntityRendererProvider.Context context, PlayerModel<AbstractClientPlayer> entityModel, float f) {
+public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractClientPlayer, PlayerRenderState, PlayerModel> {
+	public PlayerRendererMixin(EntityRendererProvider.Context context, PlayerModel entityModel, float f) {
 		super(context, entityModel, f);
 	}
 
 	@Inject(at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;renderNameTag(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IF)V",
+			target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;renderNameTag(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
 			ordinal = 1
-	), method = "renderNameTag(Lnet/minecraft/client/player/AbstractClientPlayer;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IF)V")
-	protected void onRenderNameTag(AbstractClientPlayer entity, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, float f, CallbackInfo ci) {
+	), method = "renderNameTag(Lnet/minecraft/client/renderer/entity/state/PlayerRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V")
+	protected void onRenderNameTag(PlayerRenderState state, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
 		// add lore
-		NametagRenderer.renderLore(this.entityRenderDispatcher, entity, this.getModel(), stack, buffer, this.getFont(), packedLight);
+		NametagRenderer.renderLore(this.entityRenderDispatcher, state, this.getModel(), stack, buffer, this.getFont(), packedLight);
 
 		// add nametag icons
-		Cosmetics.getCosmetics(entity).ifPresent(c -> {
+		Cosmetics.getCosmetics(state).ifPresent(c -> {
 			NametagConfig iconCosmetic = c.getNametag();
 			CachedImage icon = iconCosmetic.getIcon().getImage();
 
 			if (icon.isLoaded()) {
-				NametagRenderer.prepareIcon(icon, entity.isDiscrete() ? 1 : 2, entity.isDiscrete() || iconCosmetic.isTransparentIcon(), true);
+				NametagRenderer.prepareIcon(icon, state.isDiscrete ? 1 : 2, state.isDiscrete || iconCosmetic.isTransparentIcon(), true);
 			}
 		});
 	}

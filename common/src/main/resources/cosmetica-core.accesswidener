@@ -1,7 +1,7 @@
 accessWidener   v2  named
-accessible   method  net/minecraft/client/renderer/texture/TextureManager safeClose (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/renderer/texture/AbstractTexture;)V
 accessible   class   net/minecraft/client/gui/Font$StringRenderOutput
 accessible	class	net/minecraft/network/protocol/game/ClientboundPlayerInfoUpdatePacket$EntryBuilder
 accessible	field	net/minecraft/network/protocol/game/ClientboundPlayerInfoUpdatePacket$EntryBuilder	profile	Lcom/mojang/authlib/GameProfile;
 accessible	class	net/minecraft/client/gui/components/PlayerTabOverlay$ScoreDisplayEntry
+accessible	 method	net/minecraft/client/renderer/block/model/BlockModel	getElements	()Ljava/util/List;
 extendable	method	net/minecraft/client/renderer/texture/SpriteContents	getFrameCount	()I

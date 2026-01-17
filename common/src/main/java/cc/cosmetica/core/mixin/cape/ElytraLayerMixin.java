@@ -16,55 +16,39 @@
 
 package cc.cosmetica.core.mixin.cape;
 
-import cc.cosmetica.core.api.CachedImage;
-import cc.cosmetica.core.api.Cosmetics;
-import cc.cosmetica.core.api.ImageCosmetic;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.layers.ElytraLayer;
+import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
-import java.util.Optional;
 
 /**
  * Enables partial transparency on Elytras and add cosmetica elyt.
  */
-@Mixin(ElytraLayer.class)
+@Mixin(EquipmentLayerRenderer.class)
 public abstract class ElytraLayerMixin {
-	@Shadow @Final private static ResourceLocation WINGS_LOCATION;
-
 	@Redirect(
-			method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V",
+			method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/resources/ResourceLocation;)V",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderType;armorCutoutNoCull(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/RenderType;")
 	)
 	private RenderType addCosmeticaTransparentElytras(ResourceLocation resourceLocation,
-													  PoseStack poseStack, MultiBufferSource multiBufferSource, int i, LivingEntity livingEntity) {
-		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(livingEntity);
-
-		if (cosmetics.isPresent()) {
-			// set the return value to our elytra
-			CachedImage image = cosmetics.get().getElytra().map(ImageCosmetic::getImage).orElse(CachedImage.NO_TEXTURE);
-			resourceLocation = image.isLoaded() ? image.location : WINGS_LOCATION;
-
-			// use translucent for cosmetica wings
+													  EquipmentClientInfo.LayerType layerType) {
+		if (layerType == EquipmentClientInfo.LayerType.WINGS) {
+			// return value should already be set to our elytra by the new PlayerSkin
+			// use translucent for cosmetica wings. Should not affect existing elytra as it does not use transparency.
 			return RenderType.entityTranslucent(resourceLocation);
 		}
 
-		// default
 		return RenderType.armorCutoutNoCull(resourceLocation);
 	}
 
 	@Redirect(
-			method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V",
+			method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/resources/ResourceLocation;)V",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;getArmorFoilBuffer(Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/RenderType;Z)Lcom/mojang/blaze3d/vertex/VertexConsumer;")
 	)
 	private VertexConsumer readdGlint(MultiBufferSource buffers, RenderType layer, boolean glint) {
