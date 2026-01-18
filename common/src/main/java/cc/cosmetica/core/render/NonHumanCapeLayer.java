@@ -17,19 +17,24 @@
 package cc.cosmetica.core.render;
 
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.player.PlayerCapeModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
@@ -58,11 +63,11 @@ public class NonHumanCapeLayer<T extends LivingEntityRenderState, M extends Enti
 
 	public NonHumanCapeLayer(RenderLayerParent<T, M> renderLayerParent, ModelPart cloak, EquipmentAssetManager equipmentAssetManager) {
 		super(renderLayerParent);
-		this.cloak = cloak.getChild("cape");
+		this.cloak = new PlayerCapeModel(cloak);
 		this.equipmentAssets = equipmentAssetManager;
 	}
 
-	private final ModelPart cloak;
+	private final PlayerCapeModel cloak;
 	private final EquipmentAssetManager equipmentAssets;
 
 	// Vanilla method for checking whether elytra renders or for humanoid models
@@ -109,13 +114,13 @@ public class NonHumanCapeLayer<T extends LivingEntityRenderState, M extends Enti
 		Identifier cloakLocation = cosmetics.getCloak().get().getImage().location;
 		RenderType type = RenderTypes.entityTranslucent(cloakLocation);
 
-		submitNodeCollector.submitModelPart(
+		submitNodeCollector.submitModel(
 				this.cloak,
+				new AvatarRenderState(),
 				stack,
 				type,
 				i,
 				OverlayTexture.NO_OVERLAY,
-				null,
 				renderState.outlineColor,
 				null);
 		stack.popPose();

@@ -49,7 +49,7 @@ public class ModelSprite extends TextureAtlasSprite {
 						frames,
 						onClose),
 //						new AnimationMetadataSection(Optional.empty(), Optional.of(image.getWidth()), Optional.of(height), 69, false)),
-				1, 1,
+				image.getWidth(), height,
 				0, 0, 0
 		);
 

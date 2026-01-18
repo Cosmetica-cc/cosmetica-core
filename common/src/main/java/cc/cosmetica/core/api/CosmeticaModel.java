@@ -183,7 +183,7 @@ public final class CosmeticaModel {
 
 		collector.submitBlockModel(
 				stack,
-				RenderTypes.entityTranslucent(this.getTexture()),
+				RenderTypes.armorTranslucent(this.getTexture()),
 				new SingleVariant(model),
 				// rgb
 				1, 1, 1,
