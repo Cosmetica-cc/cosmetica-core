@@ -19,6 +19,7 @@ package cc.cosmetica.core.mixin.nametags;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.NametagConfig;
+import cc.cosmetica.core.impl.IconSubmitter;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.entity.ClientAvatarEntity;
@@ -60,7 +61,6 @@ public abstract class PlayerRendererMixin<AvatarlikeEntity extends Avatar & Clie
 	), method = "submitNameTag(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V")
 	protected void onRenderNameTag(AvatarRenderState state, PoseStack stack, SubmitNodeCollector collector, CameraRenderState renderState, CallbackInfo ci) {
 		// add lore
-//		NametagRenderer.renderLore(this.entityRenderDispatcher, state, this.getModel(), stack, buffer, this.getFont(), packedLight);
 		NametagRenderer.submitLore(state, stack, collector, renderState);
 
 		// add nametag icons
@@ -69,7 +69,7 @@ public abstract class PlayerRendererMixin<AvatarlikeEntity extends Avatar & Clie
 			CachedImage icon = iconCosmetic.getIcon().getImage();
 
 			if (icon.isLoaded()) {
-				NametagRenderer.prepareIcon(icon, state.isDiscrete ? 1 : 2, state.isDiscrete || iconCosmetic.isTransparentIcon(), true);
+				((IconSubmitter)collector.order(0)).cosmeticacore$submitIcon(icon, state.isDiscrete || iconCosmetic.isTransparentIcon(), true);
 			}
 		});
 	}
