@@ -16,9 +16,7 @@
 
 package cc.cosmetica.core.mixin.cape;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexMultiConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -42,18 +40,17 @@ public abstract class ElytraLayerMixin {
 		if (layerType == EquipmentClientInfo.LayerType.WINGS) {
 			// return value should already be set to our elytra by the new PlayerSkin
 			// use translucent for cosmetica wings. Should not affect existing elytra as it does not use transparency.
-			return RenderTypes.entityTranslucent(resourceLocation);
+			return RenderTypes.armorTranslucent(resourceLocation);
 		}
 
 		return RenderTypes.armorCutoutNoCull(resourceLocation);
 	}
 
-	// TODO test elytra glint still works
 //	@Redirect(
 //			method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;II)V",
-//			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;getArmorFoilBuffer(Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/RenderType;Z)Lcom/mojang/blaze3d/vertex/VertexConsumer;")
+//			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/rendertype/RenderTypes;armorEntityGlint()Lnet/minecraft/client/renderer/rendertype/RenderType;")
 //	)
-//	private VertexConsumer readdGlint(MultiBufferSource buffers, RenderType layer, boolean glint) {
-//		return glint ? VertexMultiConsumer.create(buffers.getBuffer(RenderType.entityGlint()), buffers.getBuffer(layer)) : buffers.getBuffer(layer);
+//	private RenderType readdGlint(EquipmentClientInfo.LayerType layerType) {
+//		return layerType == EquipmentClientInfo.LayerType.WINGS ? ;
 //	}
 }

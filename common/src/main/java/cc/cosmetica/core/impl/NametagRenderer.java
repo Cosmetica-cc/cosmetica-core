@@ -32,6 +32,7 @@ import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
@@ -181,25 +182,27 @@ public final class NametagRenderer {
 
 			if (lore != null) {
 				stack.pushPose();
+				Vec3 zeroedAttachment = new Vec3(state.nameTagAttachment.x, 0, state.nameTagAttachment.z);
+				stack.translate(0, state.nameTagAttachment.y, 0);
 				stack.scale(0.75F, 0.75F, 0.75F);
 
 				Component component = Component.literal(lore.getPrefix());
 				collector.submitNameTag(
 						stack,
-						state.nameTagAttachment,
+						zeroedAttachment,
 						i,
 						component,
 						!state.isDiscrete,
 						state.lightCoords,
 						state.distanceToCameraSq, arg4);
 				stack.popPose();
-				stack.translate(0.0F, 0.25875F, 0.0F);
+				stack.translate(0.0F, 0.15F, 0.0F);
 			}
 		}
 
 	}
 
-	public static void shiftNametags(AvatarRenderState state, PlayerModel model, PoseStack stack) {
+	public static Vec3 shiftNametags(AvatarRenderState state, PlayerModel model, Vec3 position) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
 		boolean wearingHelmet = !state.headEquipment.isEmpty();
 
@@ -225,9 +228,11 @@ public final class NametagRenderer {
 					lookAngleMultiplier = normalizedAngleMultiplier;
 				}
 
-				stack.translate(0, Math.max(hatTopY * lookAngleMultiplier, torsoFixedHatTopY) / 16.0, 0);
+				return position.add(new Vec3(0, Math.max(hatTopY * lookAngleMultiplier, torsoFixedHatTopY) / 16.0, 0));
 			}
 		}
+
+		return position;
 	}
 
 	/**
