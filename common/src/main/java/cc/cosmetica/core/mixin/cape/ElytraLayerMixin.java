@@ -19,10 +19,11 @@ package cc.cosmetica.core.mixin.cape;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -33,25 +34,26 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(EquipmentLayerRenderer.class)
 public abstract class ElytraLayerMixin {
 	@Redirect(
-			method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/resources/ResourceLocation;)V",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderType;armorCutoutNoCull(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/RenderType;")
+			method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;II)V",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/rendertype/RenderTypes;armorCutoutNoCull(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/rendertype/RenderType;")
 	)
-	private RenderType addCosmeticaTransparentElytras(ResourceLocation resourceLocation,
+	private RenderType addCosmeticaTransparentElytras(Identifier resourceLocation,
 													  EquipmentClientInfo.LayerType layerType) {
 		if (layerType == EquipmentClientInfo.LayerType.WINGS) {
 			// return value should already be set to our elytra by the new PlayerSkin
 			// use translucent for cosmetica wings. Should not affect existing elytra as it does not use transparency.
-			return RenderType.entityTranslucent(resourceLocation);
+			return RenderTypes.entityTranslucent(resourceLocation);
 		}
 
-		return RenderType.armorCutoutNoCull(resourceLocation);
+		return RenderTypes.armorCutoutNoCull(resourceLocation);
 	}
 
-	@Redirect(
-			method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/resources/ResourceLocation;)V",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;getArmorFoilBuffer(Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/RenderType;Z)Lcom/mojang/blaze3d/vertex/VertexConsumer;")
-	)
-	private VertexConsumer readdGlint(MultiBufferSource buffers, RenderType layer, boolean glint) {
-		return glint ? VertexMultiConsumer.create(buffers.getBuffer(RenderType.entityGlint()), buffers.getBuffer(layer)) : buffers.getBuffer(layer);
-	}
+	// TODO test elytra glint still works
+//	@Redirect(
+//			method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;II)V",
+//			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;getArmorFoilBuffer(Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/RenderType;Z)Lcom/mojang/blaze3d/vertex/VertexConsumer;")
+//	)
+//	private VertexConsumer readdGlint(MultiBufferSource buffers, RenderType layer, boolean glint) {
+//		return glint ? VertexMultiConsumer.create(buffers.getBuffer(RenderType.entityGlint()), buffers.getBuffer(layer)) : buffers.getBuffer(layer);
+//	}
 }

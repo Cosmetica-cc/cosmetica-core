@@ -20,13 +20,10 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.impl.Logging;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.client.renderer.texture.SpriteTicker;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceMetadata;
+import net.minecraft.resources.Identifier;
 
-import javax.annotation.Nullable;
 import java.util.stream.IntStream;
 
 /**
@@ -41,7 +38,7 @@ public class ModelSprite extends TextureAtlasSprite {
 	 * @param frames the number of frames on the image.
 	 * @param onClose a callback to run when this sprite is closed.
 	 */
-	public ModelSprite(ResourceLocation location, NativeImage image, int height, int frames, Runnable onClose) {
+	public ModelSprite(Identifier location, NativeImage image, int height, int frames, Runnable onClose) {
 		// textureAtlas, info, mipLevels, uScale (atlasTextureWidth), vScale (atlasTextureHeight), width, height, image
 		super(null,
 				// dummy data for the animation metadata: we want to handle the animation ourselves.
@@ -52,15 +49,14 @@ public class ModelSprite extends TextureAtlasSprite {
 						frames,
 						onClose),
 //						new AnimationMetadataSection(Optional.empty(), Optional.of(image.getWidth()), Optional.of(height), 69, false)),
-				image.getWidth(),
-				height,
-				0, 0
+				1, 1,
+				0, 0, 0
 		);
 
 		this.location = location;
 	}
 
-	private final ResourceLocation location;
+	private final Identifier location;
 
 	@Override
 	public String toString() {
@@ -72,18 +68,21 @@ public class ModelSprite extends TextureAtlasSprite {
 	}
 
 	@Override
-	public ResourceLocation atlasLocation() {
-		if (CosmeticaCoreExpectPlatform.isDev()) {
-			throw new UnsupportedOperationException("I am a teapot. Tried to call atlas() on cosmetica ModelSprite.");
-		}
-		else {
-			// fix compat with ModelGapFix (modelfix)
-			// pretend to be the block atlas
-			Logging.getInstance().warnOnce("UnsafeAtlasAccess", "A mod called atlas() on a cosmetica ModelSprite. Behaviour could be unpredictable.");
-			return BLOCK_ATLAS;
-		}
+	public Identifier atlasLocation() {
+		// This is now called on 1.21.11!
+		// pretend to be block atlas
+		return BLOCK_ATLAS;
+//		if (CosmeticaCoreExpectPlatform.isDev()) {
+//			throw new UnsupportedOperationException("I am a teapot. Tried to call atlas() on cosmetica ModelSprite.");
+//		}
+//		else {
+//			// fix compat with ModelGapFix (modelfix)
+//			// pretend to be the block atlas
+//			Logging.getInstance().warnOnce("UnsafeAtlasAccess", "A mod called atlas() on a cosmetica ModelSprite. Behaviour could be unpredictable.");
+//			return BLOCK_ATLAS;
+//		}
 	}
-	private static final ResourceLocation BLOCK_ATLAS = ResourceLocation.withDefaultNamespace("textures/atlas/blocks.png");
+	private static final Identifier BLOCK_ATLAS = Identifier.withDefaultNamespace("textures/atlas/blocks.png");
 
 //	@Override
 //	public void uploadFirstFrame() {
@@ -107,10 +106,8 @@ public class ModelSprite extends TextureAtlasSprite {
 	}
 
 	public static class ModelSpriteContents extends SpriteContents {
-		public ModelSpriteContents(ResourceLocation resourceLocation, FrameSize frameSize, NativeImage image, int frames, Runnable onClose) {
-			super(resourceLocation, frameSize, image, new ResourceMetadata.Builder()
-//					.put(AnimationMetadataSection.SERIALIZER, animationMetadataSection)
-					.build());
+		public ModelSpriteContents(Identifier resourceLocation, FrameSize frameSize, NativeImage image, int frames, Runnable onClose) {
+			super(resourceLocation, frameSize, image);
 			this.frames = frames;
 			this.onClose = onClose;
 		}
@@ -134,12 +131,6 @@ public class ModelSprite extends TextureAtlasSprite {
 		@Override
 		public void close() {
 			this.onClose.run();
-		}
-
-		@Nullable
-		@Override
-		public SpriteTicker createTicker() {
-			return null;
 		}
 	}
 }

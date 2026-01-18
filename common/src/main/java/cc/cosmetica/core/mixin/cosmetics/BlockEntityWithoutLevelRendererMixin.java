@@ -18,7 +18,7 @@ package cc.cosmetica.core.mixin.cosmetics;
 
 import cc.cosmetica.core.render.CustomItemRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.model.ShieldModel;
+//import net.minecraft.client.model.ShieldModel;
 //import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;

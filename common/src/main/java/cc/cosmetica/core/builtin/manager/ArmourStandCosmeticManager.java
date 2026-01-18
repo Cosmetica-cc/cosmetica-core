@@ -22,7 +22,7 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.builtin.OutfitCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 
 import javax.annotation.Nullable;
@@ -113,5 +113,5 @@ public class ArmourStandCosmeticManager implements CosmeticManager {
 		}
 	}
 
-	private static final ResourceLocation ARMOUR_STAND_MANAGER = ResourceLocation.fromNamespaceAndPath("cosmetica", "outfits");
+	private static final Identifier ARMOUR_STAND_MANAGER = Identifier.fromNamespaceAndPath("cosmetica", "outfits");
 }

@@ -24,21 +24,21 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -140,13 +140,14 @@ public final class NametagRenderer {
 	 * @param font the font to draw text with.
 	 * @param packedLight the environment light.
 	 */
-	public static void renderLore(EntityRenderDispatcher entityRenderDispatcher, PlayerRenderState playerRenderState, PlayerModel playerModel, PoseStack stack, MultiBufferSource multiBufferSource, Font font, int packedLight) {
+	public static void renderLore(EntityRenderDispatcher entityRenderDispatcher, AvatarRenderState playerRenderState, PlayerModel playerModel, PoseStack stack, MultiBufferSource multiBufferSource, Font font, int packedLight) {
 		double squaredDistance = playerRenderState.distanceToCameraSq; //entityRenderDispatcher.distanceToSqr(player);
 
 		if (squaredDistance <= 4096.0D) {
 			Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(playerRenderState);
 
-			Quaternionf fixedCameraOrientation = new Quaternionf(entityRenderDispatcher.cameraOrientation());
+			Objects.requireNonNull(entityRenderDispatcher.camera, "entityRenderDispatcher.camera must not be null");
+			Quaternionf fixedCameraOrientation = new Quaternionf(entityRenderDispatcher.camera.rotation());
 			fixedCameraOrientation.rotateY(Mth.DEG_TO_RAD * 180);
 
 			if (cosmetics.isPresent()) {
@@ -160,10 +161,71 @@ public final class NametagRenderer {
 						!playerRenderState.headEquipment.isEmpty(), //player.hasItemInSlot(EquipmentSlot.HEAD),
 						playerRenderState.bedOrientation == null, // !player.isSleeping(), // doNametagShift
 						playerRenderState.isDiscrete, // sneaking
-						false, // upside down
+						playerRenderState.isUpsideDown, // upside down
 						playerRenderState.boundingBoxHeight, // player.getBbHeight(),
 						playerModel.head.xRot,
 						packedLight);
+			}
+		}
+	}
+
+	/**
+	 * Submit lore to render on a player.
+	 */
+	public static void submitLore(AvatarRenderState state, PoseStack stack, SubmitNodeCollector collector, CameraRenderState arg4) {
+		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
+		int i = state.showExtraEars ? -10 : 0;
+
+		if (cosmetics.isPresent()) {
+			NametagConfig lore = cosmetics.get().getLore().orElse(null);
+
+			if (lore != null) {
+				stack.pushPose();
+				stack.scale(0.75F, 0.75F, 0.75F);
+
+				Component component = Component.literal(lore.getPrefix());
+				collector.submitNameTag(
+						stack,
+						state.nameTagAttachment,
+						i,
+						component,
+						!state.isDiscrete,
+						state.lightCoords,
+						state.distanceToCameraSq, arg4);
+				stack.popPose();
+				stack.translate(0.0F, 0.25875F, 0.0F);
+			}
+		}
+
+	}
+
+	public static void shiftNametags(AvatarRenderState state, PlayerModel model, PoseStack stack) {
+		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
+		boolean wearingHelmet = !state.headEquipment.isEmpty();
+
+		if (!state.isUpsideDown && cosmetics.isPresent()) {
+			float hatTopY = 0;
+			float torsoFixedHatTopY = 0;
+
+			for (Accessory accessory : cosmetics.get().getAccessories()) {
+				if (accessory.getAttachment() == AttachmentEnum.HEAD) {
+					if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
+						hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
+					}
+				}
+			}
+
+			if (hatTopY > 0 || torsoFixedHatTopY > 0) {
+				float normalizedAngleMultiplier = (float) -(Math.abs(model.head.xRot) / 1.57 - 1);
+				float lookAngleMultiplier;
+
+				if (normalizedAngleMultiplier == GLIDING_SWIMMING_CROUCHING) { // Gliding with elytra, swimming, or crouching
+					lookAngleMultiplier = 0;
+				} else {
+					lookAngleMultiplier = normalizedAngleMultiplier;
+				}
+
+				stack.translate(0, Math.max(hatTopY * lookAngleMultiplier, torsoFixedHatTopY) / 16.0, 0);
 			}
 		}
 	}

@@ -17,9 +17,8 @@
 package cc.cosmetica.core.mixin.cape;
 
 import cc.cosmetica.core.render.NonHumanCapeLayer;
-import net.minecraft.client.model.ArmorStandArmorModel;
-import net.minecraft.client.model.PlayerCapeModel;
 import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.model.object.armorstand.ArmorStandArmorModel;
 import net.minecraft.client.renderer.entity.ArmorStandRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;

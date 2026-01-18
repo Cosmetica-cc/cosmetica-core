@@ -31,7 +31,7 @@ import gg.cloaks.javaclient.model.PlayerResponse;
 import gg.cloaks.javaclient.model.TexturePacketDto;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.RemotePlayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -69,17 +69,17 @@ public class ApiCosmeticManager implements CosmeticManager {
 	 * @param profileIn the profile to look up and store data for.
 	 */
 	public static void lookUpGameProfile(GameProfile profileIn) {
-		final Property textureProperty = Iterables.getFirst(profileIn.getProperties().get("textures"), null);
+		final Property textureProperty = Iterables.getFirst(profileIn.properties().get("textures"), null);
 
 		final GameProfile profile;
-		if (profileIn.getId() == null) {
-			Logging.getInstance().warn("(Cosmetica) Profile has no uuid, {}", profileIn.getName());
+		if (profileIn.id() == null) {
+			Logging.getInstance().warn("(Cosmetica) Profile has no uuid, {}", profileIn.name());
 			// use username to look up
-			profile = new GameProfile(UUID.nameUUIDFromBytes(profileIn.getName().getBytes(StandardCharsets.UTF_8)), profileIn.getName());
+			profile = new GameProfile(UUID.nameUUIDFromBytes(profileIn.name().getBytes(StandardCharsets.UTF_8)), profileIn.name());
 		} else {
 			profile = profileIn;
 		}
-		UUID uuid = profile.getId();
+		UUID uuid = profile.id();
 
 		if (textureProperty == null || !textureProperty.hasSignature()) {
 			// use request via uuid or name if we cannot use the packet
@@ -87,7 +87,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 			// v3 uuid is for offline players
 			if (uuid.version() == 3) {
-				lookupBy = profile.getName();
+				lookupBy = profile.name();
 
 				// skip names that aren't actual usernames
 				// verify length
@@ -174,10 +174,10 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 
 		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Updating cosmetics for {}", profile);
-		Player player = level.getPlayerByUUID(profile.getId());
+		Player player = level.getPlayerByUUID(profile.id());
 
 		if (player == null) {
-			Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.getName(), profile.getId());
+			Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.name(), profile.id());
 		} else {
 			// catch a case where the game profile is not quite the same, but it's still our player
 			if (player == Minecraft.getInstance().player) {
@@ -192,7 +192,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 				holder.cosmeticacore$setApiCosmetics(cosmetics);
 
 				if (creaked) {
-					CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER_CREAKED, profile.getName(), API_MANAGER, () -> lookUpGameProfile(profile));
+					CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER_CREAKED, profile.name(), API_MANAGER, () -> lookUpGameProfile(profile));
 				} else {
 					CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, player.getUUID(), API_MANAGER, () -> lookUpGameProfile(profile));
 				}
@@ -200,5 +200,5 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 	}
 
-	private static ResourceLocation API_MANAGER = ResourceLocation.fromNamespaceAndPath("cosmetica", "api");
+	private static Identifier API_MANAGER = Identifier.fromNamespaceAndPath("cosmetica", "api");
 }

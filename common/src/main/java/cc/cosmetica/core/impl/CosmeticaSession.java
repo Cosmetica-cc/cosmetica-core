@@ -32,7 +32,8 @@ import gg.cloaks.javaclient.Configuration;
 import gg.cloaks.javaclient.api.*;
 import gg.cloaks.javaclient.model.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import org.apache.hc.core5.http.ParseException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -303,7 +304,7 @@ public final class CosmeticaSession {
 	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
 
 	/* Keep track of subscriptions so we can re-subscribe on reconnect / making a new session */
-	private static final Map<String, Map<ResourceLocation, Runnable>> WEBSOCKET_SUBSCRIPTIONS = new HashMap<>();
+	private static final Map<String, Map<Identifier, Runnable>> WEBSOCKET_SUBSCRIPTIONS = new HashMap<>();
 
 	/* Singleton */
 	private static CosmeticaSession authenticationInstance;
@@ -359,7 +360,7 @@ public final class CosmeticaSession {
 	}
 
 	/* Websocket Events */
-	public static void subscribe(String eventId, ResourceLocation key, Runnable callback) {
+	public static void subscribe(String eventId, Identifier key, Runnable callback) {
 		JsonArray eventIds = new JsonArray();
 		eventIds.add(eventId);
 
@@ -376,7 +377,7 @@ public final class CosmeticaSession {
 		}
 	}
 
-	public static void unsubscribe(String eventId, ResourceLocation key) {
+	public static void unsubscribe(String eventId, Identifier key) {
 		JsonArray eventIds = new JsonArray();
 		eventIds.add(eventId);
 
@@ -384,7 +385,7 @@ public final class CosmeticaSession {
 		data.add("subscriptions", eventIds);
 
 		synchronized (WEBSOCKET_SUBSCRIPTIONS) {
-			Map<ResourceLocation, Runnable> rr = WEBSOCKET_SUBSCRIPTIONS.get(eventId);
+			Map<Identifier, Runnable> rr = WEBSOCKET_SUBSCRIPTIONS.get(eventId);
 
 			// do we actually have subscriptions
 			if (rr != null) {
@@ -452,17 +453,17 @@ public final class CosmeticaSession {
 				// Get texture packet data
 				GameProfile userProfile = Minecraft.getInstance().getGameProfile();
 
-				Property textureProperty = Minecraft.getInstance().getMinecraftSessionService().getPackedTextures(userProfile);
+				Property textureProperty = Minecraft.getInstance().services().sessionService().getPackedTextures(userProfile);
 
 				if (textureProperty == null) {
-					ProfileResult profileLookup = Minecraft.getInstance().getMinecraftSessionService().fetchProfile(userProfile.getId(), true);
+					ProfileResult profileLookup = Minecraft.getInstance().services().sessionService().fetchProfile(userProfile.id(), true);
 
 					if (profileLookup == null) {
 						// NOTE this can trigger in development if you don't specify a valid uuid (e.g. with --uuid) but provide a token
 						throw new IllegalStateException("Should not be an invalid minecraft user if authentication completes.");
 					}
 
-					textureProperty = Minecraft.getInstance().getMinecraftSessionService().getPackedTextures(profileLookup.profile());
+					textureProperty = Minecraft.getInstance().services().sessionService().getPackedTextures(profileLookup.profile());
 				}
 
 				if (textureProperty == null) {
@@ -577,6 +578,8 @@ public final class CosmeticaSession {
 				logBadResponse("Request to key was not successful", response);
 				return new LoginResult(false, GENERIC_KEY_ERROR, "Error fetching Key (error code " + response.getStatusCode() + ")", null);
 			}
+		} catch (ParseException e) {
+			throw new IOException("Error parsing response to /java/key", e);
 		}
 
 		// Generate Shared Secret
@@ -658,11 +661,19 @@ public final class CosmeticaSession {
 				logBadResponse("Cosmetica authentication verification failed", response);
 				return new LoginResult(false, GENERIC_VERIFY_ERROR, "Failed to verify login (error code " + response.getStatusCode() + ")", null);
 			}
+		} catch (ParseException e) {
+			throw new IOException("Error parsing response to /java/verify", e);
 		}
 	}
 
 	private static void logBadResponse(String message, Response response) throws IOException {
-		Logging.getInstance().warn("{}: Error {}, {}", message, response.getStatusCode(), response.getEntity() == null ? "null" : response.readEntityString());
+		String entityString;
+		try {
+			entityString = response.readEntityString();
+		} catch (ParseException e) {
+			entityString = "(ParseException: " + e.getMessage() + ")";
+		}
+		Logging.getInstance().warn("{}: Error {}, {}", message, response.getStatusCode(), response.getEntity() == null ? "null" : entityString);
 	}
 
 	/**

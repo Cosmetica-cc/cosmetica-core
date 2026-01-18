@@ -16,24 +16,24 @@
 
 package cc.cosmetica.core.render;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.model.ShieldModel;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.resources.ResourceLocation;
+//import com.mojang.blaze3d.vertex.PoseStack;
+//import com.mojang.blaze3d.vertex.VertexConsumer;
+//import net.minecraft.client.gui.GuiGraphics;
+//import net.minecraft.client.model.ShieldModel;
+//import net.minecraft.client.model.geom.ModelPart;
+//import net.minecraft.client.renderer.MultiBufferSource;
+//import net.minecraft.client.renderer.RenderType;
+//import net.minecraft.client.renderer.entity.ItemRenderer;
+//import net.minecraft.client.resources.model.Material;
+//import net.minecraft.client.resources.model.ModelBakery;
+//import net.minecraft.resources.ResourceLocation;
 
 /**
  * Render utilities for items modified by cosmetica cosmetics.
  */
 public class CustomItemRenderer {
     // TODO check if this works
-    public static void renderShield(GuiGraphics graphics, MultiBufferSource multiBufferSource, ShieldModel model, int i, int j, boolean glint) {
+//    public static void renderShield(GuiGraphics graphics, MultiBufferSource multiBufferSource, ShieldModel model, int i, int j, boolean glint) {
 //        final Material shieldMaterial = ModelBakery.NO_PATTERN_SHIELD;
 //        final var stack = graphics.pose();
 //
@@ -61,5 +61,5 @@ public class CustomItemRenderer {
 //                false, list, itemStack.hasFoil());
 //
 //        graphics.pose().popPose();
-    }
+//    }
 }

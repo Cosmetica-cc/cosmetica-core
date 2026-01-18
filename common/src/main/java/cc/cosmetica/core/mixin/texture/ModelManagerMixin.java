@@ -20,10 +20,9 @@ import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.SpecialBlockModelRenderer;
-import net.minecraft.client.resources.model.AtlasSet;
+import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelManager;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,12 +30,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 @Mixin(ModelManager.class)
 public class ModelManagerMixin {
 	@Inject(at = @At("HEAD"), method="loadModels")
-	private static void captureBakery(Map<ResourceLocation, AtlasSet.StitchResult> map, ModelBakery modelBakery, Object2IntMap<BlockState> object2IntMap, EntityModelSet entityModelSet, SpecialBlockModelRenderer specialBlockModelRenderer, Executor executor, CallbackInfoReturnable cir) {
+	private static void captureBakery(SpriteLoader.Preparations preparations, SpriteLoader.Preparations preparations2, ModelBakery modelBakery, Object2IntMap<BlockState> object2IntMap, EntityModelSet entityModelSet, SpecialBlockModelRenderer specialBlockModelRenderer, Executor executor, CallbackInfoReturnable<CompletableFuture> cir) {
 		CosmeticaModelBakery.bakery = modelBakery;
 	}
 }

@@ -18,10 +18,13 @@ package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.impl.NametagRenderer;
+import com.mojang.blaze3d.font.GlyphInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.GlyphRenderTypes;
+import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
+import net.minecraft.client.gui.font.glyphs.BakedSheetGlyph;
 import net.minecraft.network.chat.Style;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -41,9 +44,9 @@ public abstract class FontStringRenderOutputMixin {
 	@Shadow
 	float y;
 
-	@Shadow protected abstract void addGlyph(BakedGlyph.GlyphInstance arg);
-
 	@Shadow protected abstract void markBackground(float f, float g, float h);
+
+	@Shadow protected abstract void addGlyph(TextRenderable.Styled arg);
 
 	@Unique
 	private boolean cosmeticacore$drawnIcon = false;
@@ -73,21 +76,21 @@ public abstract class FontStringRenderOutputMixin {
 			}
 
 			// see FontTexture#add
-			BakedGlyph glyph = new BakedGlyph(
+			BakedGlyph glyph = new BakedSheetGlyph(
+                    () -> advance,
 					GlyphRenderTypes.createForColorTexture(icon.location),
 					Minecraft.getInstance().getTextureManager().getTexture(icon.location).getTextureView(),
 					// u0 u1 v0 v1
 					0, 1, 0, 1,
 					// left right up down. See RawGlyph
-					0, scale*icon.getWidth(), 0.0f, scale*icon.getHeight()
+					0, scale * icon.getWidth(), 0.0f, scale * icon.getHeight()
 			);
 
-			this.addGlyph(new BakedGlyph.GlyphInstance(
+			this.addGlyph(glyph.createGlyph(
 					this.x,
 					this.y,
 					iconData.transparent ? 0x20FFFFFF : -1,
 					0, // no shadow
-					glyph,
 					style,
 					0, 0 // no bold or shadow
 			));

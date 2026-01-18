@@ -18,36 +18,34 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.ModelBlockRenderer;
-import net.minecraft.client.renderer.block.model.*;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.Variant;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ARGB;
-import net.minecraft.util.Brightness;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.EmptyBlockAndTintGetter;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.*;
 
@@ -71,7 +69,7 @@ public final class CosmeticaModelBakery {
 	 *                 Must refer to an {@link CosmeticaTexture}.
 	 * @param model the model to bake.
 	 */
-	public static BlockModelPart bakeModel(ResourceLocation location, BlockModel model) {
+	public static BlockModelPart bakeModel(Identifier location, BlockModel model) {
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
@@ -83,8 +81,17 @@ public final class CosmeticaModelBakery {
 			final String debugName = location.toString();
 
 			return new Variant(location).bake(new ModelBaker() {
+				// ModelBakery.PartCacheImpl
+				private final PartCache cache = new PartCache() {
+					private final Interner<Vector3fc> vectors = Interners.newStrongInterner();
+
+					public Vector3fc vector(Vector3fc vector3fc) {
+						return this.vectors.intern(vector3fc);
+					}
+				};
+
 				@Override
-				public ResolvedModel getModel(ResourceLocation resourceLocation) {
+				public ResolvedModel getModel(Identifier resourceLocation) {
 					return new ResolvedModel() {
 						@Override
 						public UnbakedModel wrapped() {
@@ -101,6 +108,17 @@ public final class CosmeticaModelBakery {
 							return debugName;
 						}
 					};
+				}
+
+				@Override
+				public BlockModelPart missingBlockModelPart() {
+					throw new IllegalStateException();
+//					return ((ModelBakeryAccessor) bakery).getMissingModel();
+				}
+
+				@Override
+				public PartCache parts() {
+					return this.cache;
 				}
 
 				@Override
@@ -129,12 +147,12 @@ public final class CosmeticaModelBakery {
 	}
 
 	// render
-	public static void renderModel(BlockModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
+	public static void renderModel(BlockModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, Identifier texture, int packedLight) {
 		tesselateWithoutAO(
 				EmptyBlockAndTintGetter.INSTANCE,
 				List.of(model),
 				stack,
-				multiBufferSource.getBuffer(RenderType.armorTranslucent(texture)),
+				multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture)),
 				packedLight
 		);
 	}
@@ -191,7 +209,7 @@ public final class CosmeticaModelBakery {
 	) {
 		for (BakedQuad bakedQuad : list) {
 			if (bl) {
-				calculateShape(bakedQuad.vertices(), bakedQuad.direction(), storage);
+				calculateShape(bakedQuad, storage);
 				i = -1; //Brightness.pack(0xF, 0xF);
 			}
 
@@ -220,47 +238,47 @@ public final class CosmeticaModelBakery {
 		float tintGreen = 1.0F;
 		float tintBlue = 1.0F;
 
-		vertexConsumer.putBulkData(pose, bakedQuad, commonRenderStorage.brightness, tintRed, tintGreen, tintBlue, 1.0F, commonRenderStorage.lightmap, i, true);
+		vertexConsumer.putBulkData(pose, bakedQuad, tintRed, tintGreen, tintBlue, 1.0F, i, i);
 	}
 
 	private static void calculateShape(
-			int[] is,
-			Direction direction,
+			BakedQuad quad,
 			CommonRenderStorage commonRenderStorage
 	) {
-		float f = 32.0F;
-		float g = 32.0F;
-		float h = 32.0F;
-		float i = -32.0F;
-		float j = -32.0F;
-		float k = -32.0F;
+		float minX = 32.0F;
+		float minY = 32.0F;
+		float minZ = 32.0F;
+		float maxX = -32.0F;
+		float maxY = -32.0F;
+		float maxZ = -32.0F;
 
-		for (int l = 0; l < 4; l++) {
-			float m = Float.intBitsToFloat(is[l * 8]);
-			float n = Float.intBitsToFloat(is[l * 8 + 1]);
-			float o = Float.intBitsToFloat(is[l * 8 + 2]);
-			f = Math.min(f, m);
-			g = Math.min(g, n);
-			h = Math.min(h, o);
-			i = Math.max(i, m);
-			j = Math.max(j, n);
-			k = Math.max(k, o);
+		for(int l = 0; l < 4; ++l) {
+			Vector3fc vertex = quad.position(l);
+			float x = vertex.x();
+			float y = vertex.y();
+			float z = vertex.z();
+			minX = Math.min(minX, x);
+			minY = Math.min(minY, y);
+			minZ = Math.min(minZ, z);
+			maxX = Math.max(maxX, x);
+			maxY = Math.max(maxY, y);
+			maxZ = Math.max(maxZ, z);
 		}
 
-		commonRenderStorage.facePartial = switch (direction) {
-			case DOWN, UP -> f >= 1.0E-4F || h >= 1.0E-4F || i <= 0.9999F || k <= 0.9999F;
-			case NORTH, SOUTH -> f >= 1.0E-4F || g >= 1.0E-4F || i <= 0.9999F || j <= 0.9999F;
-			case WEST, EAST -> g >= 1.0E-4F || h >= 1.0E-4F || j <= 0.9999F || k <= 0.9999F;
+		commonRenderStorage.facePartial = switch (quad.direction()) {
+			case DOWN, UP -> minX >= 1.0E-4F || minZ >= 1.0E-4F || maxX <= 0.9999F || maxZ <= 0.9999F;
+			case NORTH, SOUTH -> minX >= 1.0E-4F || minY >= 1.0E-4F || maxX <= 0.9999F || maxY <= 0.9999F;
+			case WEST, EAST -> minY >= 1.0E-4F || minZ >= 1.0E-4F || maxY <= 0.9999F || maxZ <= 0.9999F;
 		};
 
-		commonRenderStorage.faceCubic = switch (direction) {
+		commonRenderStorage.faceCubic = switch (quad.direction()) {
 			// With "blockState.isCollisionShapeFullBlock" assumed false
-			case DOWN -> g == j && (g < 1.0E-4F);
-			case UP -> g == j && (j > 0.9999F);
-			case NORTH -> h == k && (h < 1.0E-4F);
-			case SOUTH -> h == k && (k > 0.9999F);
-			case WEST -> f == i && (f < 1.0E-4F);
-			case EAST -> f == i && (i > 0.9999F);
+			case DOWN -> minY == maxY && (minY < 1.0E-4F);
+			case UP -> minY == maxY && (maxY > 0.9999F);
+			case NORTH -> minZ == maxZ && (minZ < 1.0E-4F);
+			case SOUTH -> minZ == maxZ && (maxZ > 0.9999F);
+			case WEST -> minX == maxX && (minX < 1.0E-4F);
+			case EAST -> minX == maxX && (maxX > 0.9999F);
 		};
 	}
 

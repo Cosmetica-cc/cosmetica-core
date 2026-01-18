@@ -22,13 +22,13 @@ import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.mixin.PlayerModelAccessor;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.model.player.PlayerModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.component.DataComponents;
@@ -53,18 +53,18 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 	private final EquipmentAssetManager equipmentAssets;
 
 	@Override
-	public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int light, HumanoidRenderState state, float a, float b) {
+	public void submit(PoseStack poseStack, SubmitNodeCollector collector, int light, S state, float a, float b) {
 		if (state.isInvisibleToPlayer) return;//don't show cosmetics when invisible
 
 		ProfilerFiller profilerFiller = Profiler.get();
 		profilerFiller.push("accessories");
 
 		Cosmetics.getCosmetics(state).ifPresent(cosmetics -> {
-			boolean cloak = (cosmetics.getCloak().isPresent() || (state instanceof PlayerRenderState prs && prs.skin.capeTexture() != null)) &&
-				(!(state instanceof PlayerRenderState prs) || prs.showCape);
+			boolean cloak = (cosmetics.getCloak().isPresent() || (state instanceof AvatarRenderState prs && prs.skin.cape() != null)) &&
+					(!(state instanceof AvatarRenderState prs) || prs.showCape);
 
 			for (Accessory accessory : cosmetics.getAccessories()) {
-				this.renderAccessory(accessory, poseStack, multiBufferSource, light, cloak, state);
+				this.renderAccessory(accessory, poseStack, collector, light, cloak, state);
 			}
 		});
 
@@ -82,7 +82,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 		}
 	}
 
-	private void renderAccessory(Accessory accessory, PoseStack stack, MultiBufferSource multiBufferSource, int light, boolean cloak, HumanoidRenderState state) {
+	private void renderAccessory(Accessory accessory, PoseStack stack, SubmitNodeCollector collector, int light, boolean cloak, HumanoidRenderState state) {
 		//System.out.println("rendering accessory " + accessory.getName() + " on " + accessory.getAttachment().getValue()	);
 		// Check if accessory can be rendered
 		Collection<Accessory.Flag> flags = accessory.getFlags();
@@ -125,7 +125,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 		}
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_PARROT)) {
-			if (state instanceof PlayerRenderState playerRenderState) {
+			if (state instanceof AvatarRenderState playerRenderState) {
 				HumanoidArm side = null;
 
 				switch (accessory.getAttachment()) {
@@ -220,8 +220,8 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 		Vec3 offset = accessory.getOffset();
 
 		if (part.visible) {
-			accessory.getModel().renderOnPart(
-					part, stack, multiBufferSource, light,
+			accessory.getModel().submitOnPart(
+					part, stack, collector, light,
 					(float) offset.x + additionalXOffset, (float) offset.y, (float) offset.z,
 					accessory.isMirrored()
 			);

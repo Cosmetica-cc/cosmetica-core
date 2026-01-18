@@ -22,21 +22,24 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.equipment.EquipmentAsset;
@@ -74,7 +77,7 @@ public class NonHumanCapeLayer<T extends LivingEntityRenderState, M extends Enti
 	}
 
 	@Override
-	public void render(PoseStack stack, MultiBufferSource multiBufferSource, int i, LivingEntityRenderState renderState, float a, float b) {
+	public void submit(PoseStack stack, SubmitNodeCollector submitNodeCollector, int i, T renderState, float f, float g) {
 		//cosmetica
 		if (renderState.isInvisible) {
 			return;
@@ -103,44 +106,18 @@ public class NonHumanCapeLayer<T extends LivingEntityRenderState, M extends Enti
 			}
 		}
 
-		// PlayerCapeModel
+		Identifier cloakLocation = cosmetics.getCloak().get().getImage().location;
+		RenderType type = RenderTypes.entityTranslucent(cloakLocation);
 
-		stack.translate(0.0, 0.0, 0.3);
-//			double d = Mth.lerp((double)h, renderState.xCloakO, renderState.xCloak) - Mth.lerp((double)h, renderState.xo, renderState.getX());
-//			double e = Mth.lerp((double)h, renderState.yCloakO, renderState.yCloak) - Mth.lerp((double)h, renderState.yo, renderState.getY());
-//			double m = Mth.lerp((double)h, renderState.zCloakO, renderState.zCloak) - Mth.lerp((double)h, renderState.zo, renderState.getZ());
-
-		//cosmetica start
-		double d = 0;//Mth.lerp((double) h, 0, 0) - Mth.lerp((double) h, renderState.xo, renderState.getX());
-		double e = 0;//Mth.lerp((double) h, 0, 0) - Mth.lerp((double) h, renderState.yo, renderState.getY());
-		double m = 0;//Mth.lerp((double) h, 0, 0) - Mth.lerp((double) h, renderState.zo, renderState.getZ());
-		// cosmetica end
-		float n = renderState.bodyRot;
-		double o = Mth.sin(n * ((float) Math.PI / 180));
-		double p = -Mth.cos(n * ((float) Math.PI / 180));
-		float q = (float) e * 10.0f;
-		q = Mth.clamp(q, -6.0f, 32.0f);
-		float r = (float) (d * o + m * p) * 100.0f;
-		r = Mth.clamp(r, 0.0f, 150.0f);
-		float s = (float) (d * p - m * o) * 100.0f;
-		s = Mth.clamp(s, -20.0f, 20.0f);
-		if (r < 0.0f) {
-			r = 0.0f;
-		}
-		if (renderState instanceof HumanoidRenderState humanoid && humanoid.isCrouching) {
-			q += 25.0f;
-		}
-		stack.mulPose(createRotation(XP, (6.0f + r / 2.0f + q)));
-		stack.mulPose(createRotation(ZP, (s / 2.0f)));
-		stack.mulPose(createRotation(YP, (180.0f - s / 2.0f)));
-		// cosmetica start
-
-		ResourceLocation cloakLocation = cosmetics.getCloak().get().getImage().location;
-		RenderType type = RenderType.entityTranslucent(cloakLocation);
-
-		VertexConsumer vertexConsumer = multiBufferSource.getBuffer(type);
-		// cosmetica end
-		this.cloak.render(stack, vertexConsumer, i, OverlayTexture.NO_OVERLAY);
+		submitNodeCollector.submitModelPart(
+				this.cloak,
+				stack,
+				type,
+				i,
+				OverlayTexture.NO_OVERLAY,
+				null,
+				renderState.outlineColor,
+				null);
 		stack.popPose();
 	}
 

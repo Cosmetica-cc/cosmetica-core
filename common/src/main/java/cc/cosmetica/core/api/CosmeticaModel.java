@@ -21,15 +21,18 @@ import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.block.model.SingleVariant;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.AxisAngle4f;
@@ -46,12 +49,12 @@ import java.util.stream.Collectors;
  * Contains model data for a cosmetica model.
  */
 public final class CosmeticaModel {
-	public CosmeticaModel(ResourceLocation texture) {
+	public CosmeticaModel(Identifier texture) {
 		this.texture = texture;
 		this.boundingBox = ZERO_BOUNDS;
 	}
 
-	private final ResourceLocation texture;
+	private final Identifier texture;
 	private BlockModelPart model;
 	private BlockModel unbakedModel; // cleared when the model is baked!
 	private AABB boundingBox;
@@ -101,7 +104,7 @@ public final class CosmeticaModel {
 	 * Get the location for the texture for this model.
 	 * @return the texture for this model.
 	 */
-	public ResourceLocation getTexture() {
+	public Identifier getTexture() {
 		return this.texture;
 	}
 
@@ -155,6 +158,51 @@ public final class CosmeticaModel {
 		stack.popPose();
 	}
 
+	/**
+	 * Render this model cosmetic on the given part, with the given transform.
+	 * @param modelPart the model part on which to render.
+	 * @param stack the Matrix Stack.
+	 * @param collector the node collector.
+	 * @param packedLight the packed light.
+	 * @param x the x offset.
+	 * @param y the y offset.
+	 * @param z the z offset.
+	 * @param mirror whether to mirror the model.
+	 */
+	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror) {
+		BlockModelPart model = this.getBakedModel();
+		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
+		stack.pushPose();
+		float o = 1.0f;
+		modelPart.translateAndRotate(stack);
+		stack.scale(o, -o, -o);
+		if (mirror) stack.scale(-1, 1, 1);
+		stack.mulPose(new Quaternionf(new AxisAngle4f((float)Math.PI, YP))); // pi radians on y axis
+		stack.translate(x, y, z); // vanilla: 0.0 second param
+		stack.translate(-0.5, -0.25, -0.5);
+
+		collector.submitBlockModel(
+				stack,
+				RenderTypes.entityTranslucent(this.getTexture()),
+				new SingleVariant(model),
+				// rgb
+				1, 1, 1,
+				// light, overlay, outline
+				packedLight, OverlayTexture.NO_OVERLAY, 0
+		);
+
+//		CosmeticaModelBakery.renderModel(
+//				model,
+//				stack,
+//				multiBufferSource,
+//				this.getTexture(),
+//				packedLight);
+
+		stack.popPose();
+	}
+
+
+
 	private static final Vector3f YP = new Vector3f(0, 1, 0);
 	private static final AABB ZERO_BOUNDS = AABB.ofSize(Vec3.ZERO, 0, 0, 0);
 
@@ -164,12 +212,12 @@ public final class CosmeticaModel {
 	 * Get or bake a model for the given id.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
+	 *           {@link Identifier} pathnames.
 	 * @param textureCategory the category to cache the texture in. Rules are the same as textureId.
 	 * @param textureId the id of the model's texture. Should be unique per-texture, per category.
 	 *           It is recommended to use {@link CosmeticaModel#textureId(String)} for cosmetica models.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
+	 *           {@link Identifier} pathnames.
 	 * @param modelURL the url to the Java Block/Item model json to use if the model hasn't been created yet.
 	 * @param textureURL the url for the texture to download, if the model has not been created yet.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
@@ -188,12 +236,12 @@ public final class CosmeticaModel {
 	 * Get or bake a model for the given id, with a model override.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
+	 *           {@link Identifier} pathnames.
 	 * @param textureCategory the category to cache the texture in. Rules are the same as textureId.
 	 * @param textureId the id of the model's texture. Should be unique per-texture, per category.
 	 *           It is recommended to use {@link CosmeticaModel#textureId(String)} for cosmetica models.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
+	 *           {@link Identifier} pathnames.
 	 * @param model an input stream to the Java Block/Item model json to use if the model hasn't been created yet.
 	 * @param textureURL the url for the texture to download, if the model has not been created yet.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
@@ -225,7 +273,7 @@ public final class CosmeticaModel {
 	 * @param category the category of the image. Allowed characters are the same as id.
 	 * @param textureId the id of the image. Should be unique per-image, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
+	 *           {@link Identifier} pathnames.
 	 * @param texture The builder from which to set up the texture. Note! {@code cached} and {@code onLoad} will be overridden.
 	 * @implNote a weak reference to the CachedImage is stored in cache.
 	 * @return a {@link CachedImage}.
@@ -240,7 +288,7 @@ public final class CosmeticaModel {
 	 * Get or bake a cosmetica model for the given id.
 	 * @param id the id of the model. Should be unique per-model, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
+	 *           {@link Identifier} pathnames.
 	 * @param modelURL the url to the Java Block/Item model json to use if the model hasn't been created yet.
 	 * @param textureURL the url for the texture to download, if the model has not been created yet.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.

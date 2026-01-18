@@ -57,7 +57,7 @@ public abstract class LivingEntityRendererMixin {
 	// ========== //
 
 	@Inject(at = @At("HEAD"), method = "isEntityUpsideDown", cancellable = true)
-	private static void checkAustralians(LivingEntity entity, CallbackInfoReturnable<Boolean> info) {
+	private void checkAustralians(LivingEntity entity, CallbackInfoReturnable<Boolean> info) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(entity);
 
 		if (cosmetics.isPresent() && cosmetics.get().isUpsideDown()) {

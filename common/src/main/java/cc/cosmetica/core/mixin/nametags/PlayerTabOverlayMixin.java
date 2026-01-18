@@ -69,8 +69,8 @@ public class PlayerTabOverlayMixin {
 		Level level = Minecraft.getInstance().level;
 		float additionalWidth = 0;
 
-		if (level != null && this.cosmeticacore$tempPassInfo.getProfile().getId() != null) {
-			Player player = level.getPlayerByUUID(this.cosmeticacore$tempPassInfo.getProfile().getId());
+		if (level != null && this.cosmeticacore$tempPassInfo.getProfile().id() != null) {
+			Player player = level.getPlayerByUUID(this.cosmeticacore$tempPassInfo.getProfile().id());
 
 			if (player != null) {
 				Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(player);
@@ -99,8 +99,8 @@ public class PlayerTabOverlayMixin {
 	private void beforeRenderName(GuiGraphics guiGraphics, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci, List list, List list2, int j, int k, int l, int o, int p, int q, boolean bl, int r, int n, int s, int t, int u, List list3, List list4, int w, int x, int v, int y, int z, int aa, PlayerInfo playerInfo2, PlayerTabOverlay.ScoreDisplayEntry scoreDisplayEntry, GameProfile gameProfile) {
 		Level level = Minecraft.getInstance().level;
 
-		if (level != null && gameProfile.getId() != null) {
-			Player player = level.getPlayerByUUID(gameProfile.getId());
+		if (level != null && gameProfile.id() != null) {
+			Player player = level.getPlayerByUUID(gameProfile.id());
 
 			if (player != null) {
 				Cosmetics.getCosmetics(player).ifPresent(cosmetics -> {

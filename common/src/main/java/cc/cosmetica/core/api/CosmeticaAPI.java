@@ -25,7 +25,8 @@ import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.api.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import org.apache.hc.core5.http.ParseException;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -257,6 +258,8 @@ public final class CosmeticaAPI {
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException("Downloading from URL " + url, e);
+			} catch (ParseException e) {
+				throw new RuntimeException("Parsing data from URL " + url, e);
 			}
 		}, MasterCosmeticManager.HTTP_THREAD_POOL);
 	}
@@ -327,7 +330,7 @@ public final class CosmeticaAPI {
 	 * @param owner identifier for the owner of the subscription.
 	 * @param callback the callback to run when the subscription is received.
 	 */
-	public static <T> void subscribe(SubscriptionEvent<T> eventType, T event, ResourceLocation owner, Runnable callback) {
+	public static <T> void subscribe(SubscriptionEvent<T> eventType, T event, Identifier owner, Runnable callback) {
 		CosmeticaSession.subscribe(eventType.name + " " + event.toString(), owner, callback);
 	}
 
@@ -337,7 +340,7 @@ public final class CosmeticaAPI {
 	 * @param event the specific event to subscribe to.
 	 * @param owner the identifier for the owner of the subscription.
 	 */
-	public static <T> void unsubscribe(SubscriptionEvent<T> eventType, T event, ResourceLocation owner) {
+	public static <T> void unsubscribe(SubscriptionEvent<T> eventType, T event, Identifier owner) {
 		CosmeticaSession.unsubscribe(eventType.name + " " + event.toString(), owner);
 	}
 

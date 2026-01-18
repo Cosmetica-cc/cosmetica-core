@@ -31,13 +31,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InventoryScreen.class)
 public class InventoryScreenMixin {
-	@Inject(at = @At("HEAD"), method = "renderEntityInInventory")
-	private static void disableOwnNametagTemporarilyIfShown(GuiGraphics guiGraphics, int i, int j, int k, int l, float f, Vector3f vector3f, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
+	@Inject(at = @At("HEAD"), method = "renderEntityInInventoryFollowsMouse")
+	private static void disableOwnNametagTemporarilyIfShown(GuiGraphics guiGraphics, int i, int j, int k, int l, int m, float f, float g, float h, LivingEntity livingEntity, CallbackInfo ci) {
 		NametagRenderer.setRenderingInventoryEntity(true);
 	}
 
-	@Inject(at = @At("RETURN"), method = "renderEntityInInventory")
-	private static void reenableNametag(GuiGraphics guiGraphics, int i, int j, int k, int l, float f, Vector3f vector3f, Quaternionf quaternionf, Quaternionf quaternionf2, LivingEntity livingEntity, CallbackInfo ci) {
+	@Inject(at = @At("RETURN"), method = "renderEntityInInventoryFollowsMouse")
+	private static void reenableNametag(GuiGraphics guiGraphics, int i, int j, int k, int l, int m, float f, float g, float h, LivingEntity livingEntity, CallbackInfo ci) {
 		NametagRenderer.setRenderingInventoryEntity(false);
 	}
 }

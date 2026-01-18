@@ -34,6 +34,6 @@ public class CosmeticaCoreExpectPlatformImpl {
 	}
 
 	public static boolean isDev() {
-		return !FMLEnvironment.production;
+		return !FMLEnvironment.isProduction();
 	}
 }

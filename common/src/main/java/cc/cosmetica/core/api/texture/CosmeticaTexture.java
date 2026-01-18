@@ -21,20 +21,19 @@ import cc.cosmetica.core.impl.LoggingCategory;
 import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
 import cc.cosmetica.core.util.VP8X;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.Tickable;
+import net.minecraft.client.renderer.texture.TickableTexture;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.client.HttpResponseException;
+import org.apache.hc.client5.http.HttpResponseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +55,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 public class CosmeticaTexture extends AbstractTexture {
-    private CosmeticaTexture(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture,
+    private CosmeticaTexture(File file, String url, Identifier loadingTexture, @Nullable Identifier errorTexture,
                                     int frames, int ticksPerFrame, Consumer<NativeImage> onFirstUpload, int heightDivider)
             throws IllegalArgumentException {
         if (frames > 1 && ticksPerFrame == 0) {
@@ -80,8 +79,8 @@ public class CosmeticaTexture extends AbstractTexture {
 
     private final File cacheFile;
     private final String url;
-    private final ResourceLocation loadingTexture;
-    private final @Nullable ResourceLocation errorTexture;
+    private final Identifier loadingTexture;
+    private final @Nullable Identifier errorTexture;
     private final int tilesheetFrames;
     private final int realTicksPerFrame;
     private final Consumer<NativeImage> onFirstUpload;
@@ -190,7 +189,7 @@ public class CosmeticaTexture extends AbstractTexture {
         }, BACKGROUND_TASK_EXECUTOR);
     }
 
-    private void loadFromPack(ResourceManager resourceManager, ResourceLocation location) throws IOException {
+    private void loadFromPack(ResourceManager resourceManager, Identifier location) throws IOException {
         // we use SimpleTexture-based code to upload the loading/fallback texture
         TextureImage defaultImage = load(resourceManager, location);
         final NativeImage nativeImage = defaultImage.image;
@@ -258,7 +257,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
         GpuDevice gpuDevice = RenderSystem.getDevice();
         this.texture = gpuDevice.createTexture((String)null, 5, TextureFormat.RGBA8, this.image.getWidth(), this.frameHeight, 1, 1);
-        this.texture.setTextureFilter(FilterMode.NEAREST, false);
+        this.sampler = RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
         this.textureView = gpuDevice.createTextureView(this.texture);
 
         this.upload(image, false);
@@ -495,7 +494,7 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     // Based on SimpleTexture.TextureImage.load
-    private static TextureImage load(ResourceManager resourceManager, ResourceLocation resourceLocation) throws IOException {
+    private static TextureImage load(ResourceManager resourceManager, Identifier resourceLocation) throws IOException {
         TextureImage textureImage = new TextureImage();
 
         Resource resource = resourceManager.getResourceOrThrow(resourceLocation);
@@ -527,8 +526,8 @@ public class CosmeticaTexture extends AbstractTexture {
      * Exists so we can use all the utilities that CosmeticaHttpTexture adds to HttpTexture for static textures, without
      * adding the unnecessary overhead of ticking every static texture (which will be most textures).
      */
-    private static class Animated extends CosmeticaTexture implements Tickable {
-        private Animated(File file, String url, ResourceLocation loadingTexture, @Nullable ResourceLocation errorTexture,
+    private static class Animated extends CosmeticaTexture implements TickableTexture {
+        private Animated(File file, String url, Identifier loadingTexture, @Nullable Identifier errorTexture,
                          int frames, int ticksPerFrame, Consumer<NativeImage> onLoad, int tilesheetAnimInc, int heightDivider) throws IllegalArgumentException {
             super(file, url, loadingTexture, errorTexture, frames, ticksPerFrame, onLoad, heightDivider);
             this.tilesheetIncrement = tilesheetAnimInc;
@@ -565,7 +564,7 @@ public class CosmeticaTexture extends AbstractTexture {
     public static class Builder {
         // Required
         private final @NotNull String url;
-        private final @NotNull ResourceLocation loadingTexture;
+        private final @NotNull Identifier loadingTexture;
 
         // Optional fields with default values
         private File file;
@@ -574,14 +573,14 @@ public class CosmeticaTexture extends AbstractTexture {
         private boolean ignoreTilesheet = false;
         private Consumer<NativeImage> onLoad;
         private AutoAnimate autoAnimate = AutoAnimate.AUTO;
-        private @Nullable ResourceLocation errorTexture;
+        private @Nullable Identifier errorTexture;
 
         /**
          * Constructs a new Builder instance.
          *
          * @param url The URL to retrieve the texture from.
          */
-        public Builder(@NotNull String url, @NotNull ResourceLocation loadingTexture) {
+        public Builder(@NotNull String url, @NotNull Identifier loadingTexture) {
             Objects.requireNonNull(url, "URL cannot be null");
             Objects.requireNonNull(loadingTexture, "Loading texture cannot be null");
             this.url = url;
@@ -601,7 +600,7 @@ public class CosmeticaTexture extends AbstractTexture {
          * @param errorTexture the error texture.
          * @return This Builder instance.
          */
-        public Builder failToLoadTexture(@Nullable ResourceLocation errorTexture) {
+        public Builder failToLoadTexture(@Nullable Identifier errorTexture) {
             this.errorTexture = errorTexture;
             return this;
         }

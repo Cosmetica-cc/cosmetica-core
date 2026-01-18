@@ -16,19 +16,23 @@
 
 package cc.cosmetica.core.util;
 
-import com.google.gson.*;
-import org.apache.http.HttpEntity;
-import org.apache.http.ParseException;
-import org.apache.http.StatusLine;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.StatusLine;
+import org.apache.hc.core5.util.Timeout;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
@@ -43,7 +47,7 @@ public class Response implements Closeable {
 	private Response(CloseableHttpClient client, CloseableHttpResponse response) {
 		this.client = client;
 		this.response = response;
-		this.status = this.response.getStatusLine();
+		this.status = new StatusLine(this.response);
 	}
 
 	private final CloseableHttpClient client;
@@ -77,9 +81,9 @@ public class Response implements Closeable {
 	 * @return the response as a string.
 	 * @throws IOException if an IO exception occurs during the operation.
 	 */
-	public String readEntityString() throws IOException {
+	public String readEntityString() throws IOException, ParseException {
 		HttpEntity entity = this.getEntity();
-		return entity == null ? "" : EntityUtils.toString(entity, StandardCharsets.UTF_8);
+		return entity == null ? "" : toString(entity);
 	}
 
 	/**
@@ -99,8 +103,8 @@ public class Response implements Closeable {
 	 * @throws IOException if an IO exception occurs during the operation.
 	 * @throws JsonParseException if the JSON is malformed.
 	 */
-	public JsonElement readEntityJson() throws NullPointerException, IOException, JsonParseException {
-		String s = EntityUtils.toString(Objects.requireNonNull(this.getEntity(), "Response body is missing"), StandardCharsets.UTF_8).trim();
+	public JsonElement readEntityJson() throws NullPointerException, IOException, ParseException, JsonParseException {
+		String s = toString(Objects.requireNonNull(this.getEntity(), "Response body is missing")).trim();
 		return new JsonParser().parse(s);
 	}
 
@@ -127,9 +131,9 @@ public class Response implements Closeable {
 	 */
 	public static Response get(String request, int timeout) throws ParseException, IOException {
 		RequestConfig requestConfig = RequestConfig.custom()
-				.setConnectionRequestTimeout(timeout)
-				.setConnectTimeout(timeout)
-				.setSocketTimeout(timeout)
+				.setConnectionRequestTimeout(Timeout.ofMilliseconds(timeout))
+				.setConnectTimeout(Timeout.ofMilliseconds(timeout))
+				.setResponseTimeout(Timeout.ofMilliseconds(timeout))
 				.build();
 
 		CloseableHttpClient client = HttpClients.custom()
@@ -155,9 +159,9 @@ public class Response implements Closeable {
 
 	public static Response post(String url, JsonElement body, int timeout) throws IOException {
 		RequestConfig requestConfig = RequestConfig.custom()
-				.setConnectionRequestTimeout(timeout)
-				.setConnectTimeout(timeout)
-				.setSocketTimeout(timeout)
+				.setConnectionRequestTimeout(Timeout.ofMilliseconds(timeout))
+				.setConnectTimeout(Timeout.ofMilliseconds(timeout))
+				.setResponseTimeout(Timeout.ofMilliseconds(timeout))
 				.build();
 
 		CloseableHttpClient client = HttpClients.custom()
@@ -175,4 +179,8 @@ public class Response implements Closeable {
 	}
 
 	private static final Gson GSON = new Gson();
+
+	private static String toString(HttpEntity entity) throws IOException, ParseException {
+		return EntityUtils.toString(entity, StandardCharsets.UTF_8);
+	}
 }

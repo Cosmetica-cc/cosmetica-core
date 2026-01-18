@@ -21,13 +21,11 @@ import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +49,7 @@ public class BlockModelManager {
 	private static final WeakCache<CachedImage> IMAGE_CACHE = new WeakCache<>();
 
 	private static final Path CACHE_DIRECTORY;
-	public static final ResourceLocation FALLBACK_TEXTURE = ResourceLocation.fromNamespaceAndPath("cosmetica-core", "icon.png");
+	public static final Identifier FALLBACK_TEXTURE = Identifier.fromNamespaceAndPath("cosmetica-core", "icon.png");
 	public static final ImageCacheManager IMAGE_CACHE_MANAGER;
 
 	static {
@@ -140,10 +138,10 @@ public class BlockModelManager {
 	 * Designed to avoid duplicating models for the same cosmetic.
 	 * @param modelId the id of the model. Should be unique per-model, so I recommend adding a prefix related to the purpose.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
+	 *           {@link Identifier} pathnames.
 	 * @param textureId the id of the model's texture. Should be unique per-texture, so I recommend adding a prefix related to the purpose.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
-	 *           {@link ResourceLocation} pathnames.
+	 *           {@link Identifier} pathnames.
 	 * @param jsonSource the location of the Java Block/Item model json to download if the model hasn't been created yet.
 	 * @param textureUrl the location of the texture for this model.
 	 * @param ticksPerFrame the number of ticks each frame should be shown for. Ignored if the texture is static.
@@ -159,7 +157,7 @@ public class BlockModelManager {
 		// if the model doesn't exist or has expired, generate a new one
 		if (model == null) {
 			// model id. Primarily used for texture location.
-			ResourceLocation textureLocation = getLocation(textureId);
+			Identifier textureLocation = getLocation(textureId);
 			File cacheFile = getCacheFile(textureLocation, IMAGE_CACHE_MANAGER).toFile();
 
 			model = new CosmeticaModel(textureLocation);
@@ -231,7 +229,7 @@ public class BlockModelManager {
 		// if the image doesn't exist or has expired, generate a new one
 		if (image == null) {
 			// image id. Primarily used for texture location.
-			ResourceLocation textureLocation = getLocation(id);
+			Identifier textureLocation = getLocation(id);
 			File cacheFile = getCacheFile(textureLocation, IMAGE_CACHE_MANAGER).toFile();
 
 			image = new CachedImage(textureLocation, textureBuilder.getTicksPerFrame());
@@ -270,7 +268,7 @@ public class BlockModelManager {
 	}
 
 	// public: Internally exposed for Cosmetica 2
-	public static Path getCacheFile(ResourceLocation textureLocation, @Nullable ImageCacheManager manager) {
+	public static Path getCacheFile(Identifier textureLocation, @Nullable ImageCacheManager manager) {
 		Path path = getUngroupedPath(textureLocation);
 		String fileName = path.getFileName().toString();
 		String subdirectory = getSubdirectory(fileName);
@@ -282,7 +280,7 @@ public class BlockModelManager {
 		return path.getParent().resolve(subdirectory).resolve(fileName);
 	}
 
-	private static Path getUngroupedPath(ResourceLocation textureLocation) {
+	private static Path getUngroupedPath(Identifier textureLocation) {
 		Path basePath = CACHE_DIRECTORY;
 
 		// default namespace
@@ -310,7 +308,7 @@ public class BlockModelManager {
 	 * Set the images to preserve. This replaces existing images.
 	 * @param images the images in the image cache to preserve. These won't be deleted even after expiry.
 	 */
-	public static void preserveImages(List<ResourceLocation> images) {
+	public static void preserveImages(List<Identifier> images) {
 		IMAGE_CACHE_MANAGER.setKeep(images.stream().map(rl -> {
 			Path path = getUngroupedPath(rl);
 			String fileName = path.getFileName().toString();
@@ -326,8 +324,8 @@ public class BlockModelManager {
 	 * @param id the model id, including any prefix used.
 	 * @return the location of the model's texture.
 	 */
-	public static ResourceLocation getLocation(String id) {
-		return ResourceLocation.fromNamespaceAndPath("cosmetica-core", pathify(id));
+	public static Identifier getLocation(String id) {
+		return Identifier.fromNamespaceAndPath("cosmetica-core", pathify(id));
 	}
 
 	/**
@@ -400,7 +398,7 @@ public class BlockModelManager {
 				Logging.getInstance().debug(LoggingCategory.GARBAGE_COLLECTOR, "Cosmetica GC: removing {}", id);
 
 				// free the texture
-				ResourceLocation textureLocation = getLocation(id);
+				Identifier textureLocation = getLocation(id);
 				Minecraft.getInstance().getTextureManager().release(textureLocation);
 			} else {
 				gcIndex++; // check the next one.

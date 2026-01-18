@@ -18,7 +18,7 @@ package cc.cosmetica.core.impl;
 
 import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;

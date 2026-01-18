@@ -18,13 +18,12 @@ package cc.cosmetica.core.builtin.manager;
 
 import cc.cosmetica.core.api.*;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
-import cc.cosmetica.core.impl.UUIDs;
 import gg.cloaks.javaclient.model.CosmeticaUser;
 import gg.cloaks.javaclient.model.Outfit;
 import gg.cloaks.javaclient.model.PlayerResponse;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.Optional;
@@ -143,5 +142,5 @@ public class SelfCosmeticManager implements CosmeticManager {
 		return cosmetics == NoneCosmetics.NONE ? Optional.empty() : Optional.of(cosmetics);
 	}
 
-	private static final ResourceLocation SELF_MANAGER = ResourceLocation.fromNamespaceAndPath("cosmetica", "self");
+	private static final Identifier SELF_MANAGER = Identifier.fromNamespaceAndPath("cosmetica", "self");
 }

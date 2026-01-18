@@ -22,10 +22,10 @@ import cc.cosmetica.core.impl.MasterCosmeticManager;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.resources.PlayerSkin;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.ClientAsset;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -72,14 +72,31 @@ public abstract class AbstractClientPlayerMixin extends Player {
 					Optional<ImageCosmetic> cloak = cosmetics.get().getCloak();
 					Optional<ImageCosmetic> elytra = cosmetics.get().getElytra();
 
-					ResourceLocation cloakLocation = cloak.isPresent()   ?  cloak.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.capeTexture();
-					ResourceLocation elytraLocation = elytra.isPresent() ? elytra.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.elytraTexture();
+					Identifier cloakLocation = cloak.isPresent()   ?  cloak.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.cape().texturePath();
+					Identifier elytraLocation = elytra.isPresent() ? elytra.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.elytra().texturePath();
+
+					class CosmeticaAssetTexture implements ClientAsset.Texture {
+						CosmeticaAssetTexture(Identifier location) {
+							this.location = location;
+						}
+
+						private final Identifier location;
+
+						@Override
+						public Identifier texturePath() {
+							return this.location;
+						}
+
+						@Override
+						public Identifier id() {
+							return this.location;
+						}
+					}
 
 					PlayerSkin modified = new PlayerSkin(
-							existing.texture(),
-							existing.textureUrl(),
-							cloakLocation,
-							elytraLocation,
+							existing.body(),
+							new CosmeticaAssetTexture(cloakLocation),
+							new CosmeticaAssetTexture(elytraLocation),
 							existing.model(),
 							existing.secure()
 					);

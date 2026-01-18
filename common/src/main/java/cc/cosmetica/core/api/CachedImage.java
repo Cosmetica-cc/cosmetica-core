@@ -18,7 +18,7 @@ package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * A reference to an image that is cached. Once this reference is garbage collected, the image will be removed.
@@ -31,12 +31,12 @@ public final class CachedImage {
 	 * @param location the location of the cached image.
 	 * @param framePeriod the frame period.
 	 */
-	public CachedImage(ResourceLocation location, int framePeriod) {
+	public CachedImage(Identifier location, int framePeriod) {
 		this.location = location;
 		this.framePeriod = framePeriod;
 	}
 
-	public final ResourceLocation location;
+	public final Identifier location;
 	private boolean loaded;
 	private int width, height, framePeriod;
 
