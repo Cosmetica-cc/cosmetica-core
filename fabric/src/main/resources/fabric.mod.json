@@ -24,6 +24,6 @@
     "cosmetica-core-fabric.mixins.json"
   ],
   "depends": {
-    "minecraft": ">=1.21.7 <1.22"
+    "minecraft": ">=1.21.10 <1.22"
   }
 }

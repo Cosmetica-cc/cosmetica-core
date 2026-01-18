@@ -23,7 +23,7 @@ public class CosmeticaCoreNeoForged {
         // Development Testing Auth
         String devAuth = System.getProperty("cosmetica.token");
 
-        if (devAuth != null && !FMLEnvironment.production) {
+        if (devAuth != null && !FMLEnvironment.isProduction()) {
             CosmeticaSession.authenticate(devAuth, "development", null);
         }
     }
