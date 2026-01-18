@@ -22,7 +22,7 @@ import net.neoforged.fml.loading.FMLPaths;
 import java.nio.file.Path;
 
 /**
- * Forge implementation of CosmeticaCore expect platform.
+ * NeoForge implementation of CosmeticaCore expect platform.
  */
 public class CosmeticaCoreExpectPlatformImpl {
 	public static Path getGameDirectory() {
