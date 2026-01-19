@@ -186,6 +186,12 @@ public final class NametagRenderer {
 				stack.translate(0, state.nameTagAttachment.y, 0);
 				stack.scale(0.75F, 0.75F, 0.75F);
 
+				CachedImage loreIcon = lore.getIcon().getImage();
+				boolean showLoreIcon = loreIcon.isLoaded();
+				if (showLoreIcon) {
+					((IconSubmitter) collector.order(0)).cosmeticacore$submitIcon(loreIcon, state.isDiscrete, true);
+				}
+
 				Component component = Component.literal(lore.getPrefix());
 				collector.submitNameTag(
 						stack,

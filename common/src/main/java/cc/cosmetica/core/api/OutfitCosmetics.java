@@ -40,6 +40,11 @@ public class OutfitCosmetics implements Cosmetics {
 		this.creator = Cosmetic.gameProfileOf(outfit.getCreator());
 		this.accessories = new ArrayList<>();
 
+		// This happened once in dev somehow
+		if (this.id == null) {
+			throw new IllegalStateException("Outfit ID cannot be null! Name: " + outfit.getName() + ", Creator: " + this.creator);
+		}
+
 		// read accessories
 		for (OutfitAccessory accessory : outfit.getAccessories()) {
 			this.accessories.add(Accessory.fromOutfitAccessory(accessory));
