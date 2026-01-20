@@ -25,6 +25,7 @@ import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.player.PlayerModel;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -307,12 +308,10 @@ public final class NametagRenderer {
 			float xOffset = (float) (-font.width(component) / 2);
 
 			if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
-			font.drawInBatch(component, xOffset, 0, 0x20FFFFFF, false, textModel, multiBufferSource, fullyRender ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, alphaARGB, packedLight);
+			font.drawInBatch(component, xOffset, 0, 0x80FFFFFF, false, textModel, multiBufferSource, Font.DisplayMode.SEE_THROUGH, alphaARGB, packedLight);
 
-			if (fullyRender) {
-				if (showLoreIcon) prepareIcon(loreIcon, false, true);
-				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, Font.DisplayMode.NORMAL, 0, packedLight);
-			}
+			if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
+			font.drawInBatch(component, xOffset, 0, !fullyRender ? 0x20FFFFFF : -1, false, textModel, multiBufferSource, fullyRender ? Font.DisplayMode.NORMAL : Font.DisplayMode.SEE_THROUGH, 0, LightTexture.lightCoordsWithEmission(packedLight, 2));
 
 			stack.popPose();
 		}
