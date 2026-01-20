@@ -54,9 +54,6 @@ public abstract class AbstractClientPlayerMixin extends Player {
 	@Nullable WeakReference<PlayerSkin> cosmeticacore$vanillaSkin = new WeakReference<>(null);
 	@Unique
 	@Nullable PlayerSkin cosmeticacore$modifiedSkin = null;
-	@Unique
-	@Nullable
-	private static final ResourceLocation cosmeticacore$VANILLA_WINGS = ResourceLocation.withDefaultNamespace("textures/entity/elytra.png");
 
 	@Inject(at = @At("RETURN"), method = "getSkin", cancellable = true)
 	private void addCosmeticaCapes(CallbackInfoReturnable<PlayerSkin> info) {
@@ -76,7 +73,7 @@ public abstract class AbstractClientPlayerMixin extends Player {
 					Optional<ImageCosmetic> elytra = cosmetics.get().getElytra();
 
 					ResourceLocation cloakLocation = cloak.isPresent()   ?  cloak.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.capeTexture();
-					ResourceLocation elytraLocation = elytra.isPresent() ? elytra.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? cosmeticacore$VANILLA_WINGS : existing.elytraTexture();
+					ResourceLocation elytraLocation = elytra.isPresent() ? elytra.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.elytraTexture();
 
 					PlayerSkin modified = new PlayerSkin(
 							existing.texture(),
