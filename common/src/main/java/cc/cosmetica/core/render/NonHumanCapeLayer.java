@@ -105,7 +105,6 @@ public class NonHumanCapeLayer<T extends LivingEntityRenderState, M extends Enti
 
 		// PlayerCapeModel
 
-		stack.translate(0.0, 0.0, 0.3);
 //			double d = Mth.lerp((double)h, renderState.xCloakO, renderState.xCloak) - Mth.lerp((double)h, renderState.xo, renderState.getX());
 //			double e = Mth.lerp((double)h, renderState.yCloakO, renderState.yCloak) - Mth.lerp((double)h, renderState.yo, renderState.getY());
 //			double m = Mth.lerp((double)h, renderState.zCloakO, renderState.zCloak) - Mth.lerp((double)h, renderState.zo, renderState.getZ());
@@ -132,7 +131,7 @@ public class NonHumanCapeLayer<T extends LivingEntityRenderState, M extends Enti
 		}
 		stack.mulPose(createRotation(XP, (6.0f + r / 2.0f + q)));
 		stack.mulPose(createRotation(ZP, (s / 2.0f)));
-		stack.mulPose(createRotation(YP, (180.0f - s / 2.0f)));
+		stack.mulPose(createRotation(YP, /*180.0f - */(s / 2.0f)));
 		// cosmetica start
 
 		ResourceLocation cloakLocation = cosmetics.getCloak().get().getImage().location;
