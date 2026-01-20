@@ -17,14 +17,12 @@
 package cc.cosmetica.core.mixin.cape;
 
 import cc.cosmetica.core.api.Cosmetics;
-import cc.cosmetica.core.api.ImageCosmetic;
-import cc.cosmetica.core.impl.MasterCosmeticManager;
+import cc.cosmetica.core.impl.CapeTextureManager;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,7 +33,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
-import java.lang.ref.WeakReference;
 import java.util.Optional;
 
 /**
@@ -51,9 +48,7 @@ public abstract class AbstractClientPlayerMixin extends Player {
 
 	// Capes
 	@Unique
-	@Nullable WeakReference<PlayerSkin> cosmeticacore$vanillaSkin = new WeakReference<>(null);
-	@Unique
-	@Nullable PlayerSkin cosmeticacore$modifiedSkin = null;
+	CapeTextureManager cosmeticacore$capeTextureManager = new CapeTextureManager();
 
 	@Inject(at = @At("RETURN"), method = "getSkin", cancellable = true)
 	private void addCosmeticaCapes(CallbackInfoReturnable<PlayerSkin> info) {
@@ -61,34 +56,7 @@ public abstract class AbstractClientPlayerMixin extends Player {
 
 		if (playerInfo != null) {
 			Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(this);
-
-			if (cosmetics.isPresent()) {
-				final @Nullable PlayerSkin cachedVanilla = this.cosmeticacore$vanillaSkin.get();
-				final PlayerSkin existing = info.getReturnValue();
-
-				if (cachedVanilla == existing) {
-					info.setReturnValue(cosmeticacore$modifiedSkin);
-				} else {
-					Optional<ImageCosmetic> cloak = cosmetics.get().getCloak();
-					Optional<ImageCosmetic> elytra = cosmetics.get().getElytra();
-
-					ResourceLocation cloakLocation = cloak.isPresent()   ?  cloak.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.capeTexture();
-					ResourceLocation elytraLocation = elytra.isPresent() ? elytra.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.elytraTexture();
-
-					PlayerSkin modified = new PlayerSkin(
-							existing.texture(),
-							existing.textureUrl(),
-							cloakLocation,
-							elytraLocation,
-							existing.model(),
-							existing.secure()
-					);
-
-					this.cosmeticacore$vanillaSkin = new WeakReference<>(existing);
-					this.cosmeticacore$modifiedSkin = modified;
-					info.setReturnValue(modified);
-				}
-			}
+			info.setReturnValue(this.cosmeticacore$capeTextureManager.getPlayerSkin(cosmetics, info.getReturnValue()));
 		}
 	}
 }
