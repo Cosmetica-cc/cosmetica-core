@@ -85,7 +85,7 @@ public abstract class FontStringRenderOutputMixin {
 			this.addGlyph(new BakedGlyph.GlyphInstance(
 					this.x,
 					this.y,
-					iconData.transparent ? 0x80FFFFFF : -1,
+					iconData.transparent ? 0x48FFFFFF : -1,
 					0, // no shadow
 					glyph,
 					style,
