@@ -94,10 +94,12 @@ public class FontStringRenderOutputMixin {
 
 			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(this.mode));
 
+//			final int opacity = 0x48;
+
 			glyph.renderChar(new BakedGlyph.GlyphInstance(
 					this.x,
 					this.y,
-					iconData.transparent ? 0x80FFFFFF : -1,
+					iconData.transparent ? 0x48FFFFFF : -1,
 					0, // no shadow
 					glyph,
 					style,
@@ -106,7 +108,7 @@ public class FontStringRenderOutputMixin {
 
 			/*
 			// italic, x, y, pose, vc, r,g,b,a, light
-			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1, iconData.transparent ? (0x20 / 255.0f) : 1, this.packedLightCoords);
+			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1, iconData.transparent ? (opacity / 255.0f) : 1, this.packedLightCoords);
 			 */
 
 			// + advance

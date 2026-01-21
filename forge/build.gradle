@@ -61,8 +61,11 @@ shadowJar {
     relocate 'org.openapitools.jackson', 'cc.cosmetica.org.openapitools.jackson'
     relocate 'org.apache.hc', 'cc.cosmetica.org.apache.hc'
     relocate 'org.slf4j', 'cc.cosmetica.org.slf4j'
-    exclude 'javax/**'
+    exclude 'javax/annotation/**'
     exclude 'org/apache/commons/**'
+
+    relocate 'javax.activation', 'cc.cosmetica.include.javax.activation'
+    relocate 'javax.xml', 'cc.cosmetica.include.javax.xml'
 
     mergeServiceFiles()
 
