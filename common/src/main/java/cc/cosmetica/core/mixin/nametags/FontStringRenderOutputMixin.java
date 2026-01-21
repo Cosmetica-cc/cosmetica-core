@@ -86,8 +86,10 @@ public class FontStringRenderOutputMixin {
 
 			VertexConsumer consumer = this.bufferSource.getBuffer(glyph.renderType(displayMode));
 
+			final int opacity = 0x48;
+
 			// italic, x, y, pose, vc, r,g,b,a, light
-			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1, iconData.transparent ? (0x20 / 255.0f) : 1, this.packedLightCoords);
+			glyph.render(false, this.x, this.y, this.pose, consumer, 1,1,1, iconData.transparent ? (opacity / 255.0f) : 1, this.packedLightCoords);
 
 			// + advance
 			this.x += advance;
