@@ -18,24 +18,17 @@ package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
-import cc.cosmetica.core.api.NametagConfig;
-import cc.cosmetica.core.impl.NametagRenderer;
-import com.mojang.authlib.GameProfile;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -90,6 +83,7 @@ public class PlayerTabOverlayMixin {
 
 		return (int)additionalWidth + instance.width(arg);
 	}
+<<<<<<< HEAD
 
 	/// RENDERING ICON ///
 
@@ -114,4 +108,6 @@ public class PlayerTabOverlayMixin {
 			}
 		}
 	}
+=======
+>>>>>>> 1.21.8
 }

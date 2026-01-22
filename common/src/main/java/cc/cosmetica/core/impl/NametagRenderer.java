@@ -161,14 +161,47 @@ public final class NametagRenderer {
 						cosmetics.get().getLore().orElse(null),
 						cosmetics.get().getAccessories(),
 						!playerRenderState.headEquipment.isEmpty(), //player.hasItemInSlot(EquipmentSlot.HEAD),
-						playerRenderState.bedOrientation == null, // !player.isSleeping(), // doNametagShift
+						playerRenderState.bedOrientation == null && readjustNametagPosition, // !player.isSleeping(), // doNametagShift
 						playerRenderState.isDiscrete, // sneaking
 						playerRenderState.isUpsideDown, // upside down
-						playerRenderState.boundingBoxHeight, // player.getBbHeight(),
+						playerRenderState.nameTagAttachment == null ? playerRenderState.boundingBoxHeight : (float) playerRenderState.nameTagAttachment.y, // player.getBbHeight(),
 						playerModel.head.xRot,
 						packedLight);
 			}
 		}
+	}
+
+	public static Vec3 shiftNametags(AvatarRenderState state, PlayerModel model, Vec3 position) {
+		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
+		boolean wearingHelmet = !state.headEquipment.isEmpty();
+
+		if (!state.isUpsideDown && cosmetics.isPresent()) {
+			float hatTopY = 0;
+			float torsoFixedHatTopY = 0;
+
+			for (Accessory accessory : cosmetics.get().getAccessories()) {
+				if (accessory.getAttachment() == AttachmentEnum.HEAD) {
+					if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
+						hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
+					}
+				}
+			}
+
+			if (hatTopY > 0 || torsoFixedHatTopY > 0) {
+				float normalizedAngleMultiplier = (float) -(Math.abs(model.head.xRot) / 1.57 - 1);
+				float lookAngleMultiplier;
+
+				if (normalizedAngleMultiplier == GLIDING_SWIMMING_CROUCHING) { // Gliding with elytra, swimming, or crouching
+					lookAngleMultiplier = 0;
+				} else {
+					lookAngleMultiplier = normalizedAngleMultiplier;
+				}
+
+				return position.add(new Vec3(0, Math.max(hatTopY * lookAngleMultiplier, torsoFixedHatTopY) / 16.0, 0));
+			}
+		}
+
+		return position;
 	}
 
 	/**
@@ -207,39 +240,6 @@ public final class NametagRenderer {
 			}
 		}
 
-	}
-
-	public static Vec3 shiftNametags(AvatarRenderState state, PlayerModel model, Vec3 position) {
-		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
-		boolean wearingHelmet = !state.headEquipment.isEmpty();
-
-		if (!state.isUpsideDown && cosmetics.isPresent()) {
-			float hatTopY = 0;
-			float torsoFixedHatTopY = 0;
-
-			for (Accessory accessory : cosmetics.get().getAccessories()) {
-				if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-					if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
-						hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
-					}
-				}
-			}
-
-			if (hatTopY > 0 || torsoFixedHatTopY > 0) {
-				float normalizedAngleMultiplier = (float) -(Math.abs(model.head.xRot) / 1.57 - 1);
-				float lookAngleMultiplier;
-
-				if (normalizedAngleMultiplier == GLIDING_SWIMMING_CROUCHING) { // Gliding with elytra, swimming, or crouching
-					lookAngleMultiplier = 0;
-				} else {
-					lookAngleMultiplier = normalizedAngleMultiplier;
-				}
-
-				return position.add(new Vec3(0, Math.max(hatTopY * lookAngleMultiplier, torsoFixedHatTopY) / 16.0, 0));
-			}
-		}
-
-		return position;
 	}
 
 	/**
@@ -307,11 +307,16 @@ public final class NametagRenderer {
 
 			float xOffset = (float) (-font.width(component) / 2);
 
-			if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
-			font.drawInBatch(component, xOffset, 0, 0x80FFFFFF, false, textModel, multiBufferSource, Font.DisplayMode.SEE_THROUGH, alphaARGB, packedLight);
+			// FIXME lore text disappears while sneaking for some reason
+			// It appears to be controlled by the same field that controls whether a nametag is visible behind blocks
 
 			if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
-			font.drawInBatch(component, xOffset, 0, !fullyRender ? 0x20FFFFFF : -1, false, textModel, multiBufferSource, fullyRender ? Font.DisplayMode.NORMAL : Font.DisplayMode.SEE_THROUGH, 0, LightTexture.lightCoordsWithEmission(packedLight, 2));
+			font.drawInBatch(component, xOffset, 0, 0x80FFFFFF, false, textModel, multiBufferSource, fullyRender ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, alphaARGB, packedLight);
+
+			if (fullyRender) {
+				if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
+				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.lightCoordsWithEmission(packedLight, 2));
+			}
 
 			stack.popPose();
 		}
