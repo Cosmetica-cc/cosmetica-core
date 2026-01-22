@@ -157,7 +157,7 @@ public final class NametagRenderer {
 						player.hasItemInSlot(EquipmentSlot.HEAD),
 						!player.isSleeping(), // doNametagShift
 						player.isDiscrete(), // sneaking
-						false, // upside down
+						cosmetics.get().isUpsideDown(), // upside down
 						player.getBbHeight(),
 						playerModel.head.xRot,
 						packedLight);
