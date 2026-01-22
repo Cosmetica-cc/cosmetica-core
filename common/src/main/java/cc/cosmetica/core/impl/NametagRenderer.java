@@ -198,7 +198,7 @@ public final class NametagRenderer {
 					lookAngleMultiplier = normalizedAngleMultiplier;
 				}
 
-				stack.translate(0, Math.max(0, hatTopY * lookAngleMultiplier)/ 16, 0);
+				stack.translate(0, Math.max(hatTopY * lookAngleMultiplier, 0)/ 16, 0);
 			}
 		}
 
