@@ -162,13 +162,8 @@ public final class NametagRenderer {
 						!playerRenderState.headEquipment.isEmpty(), //player.hasItemInSlot(EquipmentSlot.HEAD),
 						playerRenderState.bedOrientation == null && readjustNametagPosition, // !player.isSleeping(), // doNametagShift
 						playerRenderState.isDiscrete, // sneaking
-<<<<<<< HEAD
-						false, // upside down
-						playerRenderState.nameTagAttachment == null ? playerRenderState.boundingBoxHeight : (float) playerRenderState.nameTagAttachment.y, // player.getBbHeight(),
-=======
 						cosmetics.get().isUpsideDown(), // upside down
-						playerRenderState.boundingBoxHeight, // player.getBbHeight(),
->>>>>>> 1.21.4
+						playerRenderState.nameTagAttachment == null ? playerRenderState.boundingBoxHeight : (float) playerRenderState.nameTagAttachment.y, // player.getBbHeight(),
 						playerModel.head.xRot,
 						packedLight);
 			}
