@@ -157,7 +157,7 @@ public final class NametagRenderer {
 						player.hasItemInSlot(EquipmentSlot.HEAD),
 						!player.isSleeping(), // doNametagShift
 						player.isDiscrete(), // sneaking
-						false, // upside down
+						cosmetics.get().isUpsideDown(), // upside down
 						player.getBbHeight(),
 						playerModel.head.xRot,
 						packedLight);
@@ -177,22 +177,18 @@ public final class NametagRenderer {
 		// upside down players don't need nametags shifted up
 		if (!upsideDown) {
 			float hatTopY = 0;
-			float torsoFixedHatTopY = 0;
 
 			if (doNametagShift) {
 				for (Accessory accessory : hats) {
 					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
 						if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
 							hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
-//							else {
-//								torsoFixedHatTopY = Math.max(torsoFixedHatTopY, (float) accessory.bounds().y1());
-//							}
 						}
 					}
 				}
 			}
 
-			if (hatTopY > 0 || torsoFixedHatTopY > 0) {
+			if (hatTopY > 0) {
 				float normalizedAngleMultiplier = (float) -(Math.abs(xRotHead) / 1.57 - 1);
 				float lookAngleMultiplier;
 
@@ -202,7 +198,7 @@ public final class NametagRenderer {
 					lookAngleMultiplier = normalizedAngleMultiplier;
 				}
 
-				stack.translate(0, Math.max(hatTopY * lookAngleMultiplier, torsoFixedHatTopY)/ 16, 0);
+				stack.translate(0, Math.max(hatTopY * lookAngleMultiplier, 0)/ 16, 0);
 			}
 		}
 
