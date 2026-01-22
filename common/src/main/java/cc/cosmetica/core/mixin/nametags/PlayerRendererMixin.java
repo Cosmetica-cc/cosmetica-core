@@ -44,6 +44,13 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 		super(context, entityModel, f);
 	}
 
+	@Inject(at = @At(value = "HEAD"),
+			method = "renderNameTag(Lnet/minecraft/client/renderer/entity/state/PlayerRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
+	)
+	private void shiftNametags(PlayerRenderState avatarRenderState, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+		avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment);
+	}
+
 	@Inject(at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;renderNameTag(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
@@ -51,7 +58,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 	), method = "renderNameTag(Lnet/minecraft/client/renderer/entity/state/PlayerRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V")
 	protected void onRenderNameTag(PlayerRenderState state, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
 		// add lore
-		NametagRenderer.renderLore(this.entityRenderDispatcher, state, this.getModel(), stack, buffer, this.getFont(), packedLight);
+		NametagRenderer.renderLore(this.entityRenderDispatcher, state, this.getModel(), stack, buffer, this.getFont(), packedLight, false);
 
 		// add nametag icons
 		Cosmetics.getCosmetics(state).ifPresent(c -> {
