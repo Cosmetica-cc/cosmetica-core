@@ -268,6 +268,9 @@ public final class NametagRenderer {
 
 			float xOffset = (float) (-font.width(component) / 2);
 
+			// FIXME lore text disappears while sneaking for some reason
+			// It appears to be controlled by the same field that controls whether a nametag is visible behind blocks
+
 			if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
 			font.drawInBatch(component, xOffset, 0, 0x80FFFFFF, false, textModel, multiBufferSource, fullyRender ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, alphaARGB, packedLight);
 
