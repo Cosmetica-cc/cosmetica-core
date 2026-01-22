@@ -48,7 +48,7 @@ public abstract class PlayerRendererMixin<AvatarlikeEntity extends Avatar & Clie
 	}
 
 	@Inject(at = @At(value = "HEAD"),
-			method = "submitNameTag(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V"
+			method = "submitNameTag(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V")
 	private void shiftNametags(AvatarRenderState avatarRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
 		avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment);
 	}
