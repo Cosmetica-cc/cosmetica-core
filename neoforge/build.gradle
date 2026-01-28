@@ -76,6 +76,7 @@ shadowJar {
 remapJar {
     inputFile.set shadowJar.archiveFile
     dependsOn shadowJar
+    atAccessWideners.add "cosmetica-core.accesswidener"
 }
 
 sourcesJar {
