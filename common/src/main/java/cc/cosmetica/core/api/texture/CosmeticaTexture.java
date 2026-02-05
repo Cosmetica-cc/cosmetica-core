@@ -44,6 +44,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -121,7 +122,9 @@ public class CosmeticaTexture extends AbstractTexture {
                 httpURLConnection.setDoInput(true);
                 httpURLConnection.setDoOutput(false);
                 httpURLConnection.connect();
-                if (httpURLConnection.getResponseCode() / 100 == 2) {
+                final int responseCode = httpURLConnection.getResponseCode();
+
+                if (responseCode / 100 == 2) {
                     InputStream rawInputStream = httpURLConnection.getInputStream();
 
                     if (this.cacheFile == null) {
@@ -159,7 +162,26 @@ public class CosmeticaTexture extends AbstractTexture {
                         this.loadCacheFile();
                     }
                 } else {
-                    throw new HttpResponseException(httpURLConnection.getResponseCode(), "Reading texture from " + this.url);
+                    StringBuilder message = new StringBuilder("Error code ")
+                            .append(responseCode)
+                            .append(" reading texture from ")
+                            .append(this.url);
+                    try {
+                        InputStream errorStream = httpURLConnection.getErrorStream();
+
+                        if (errorStream != null) {
+                            try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream, StandardCharsets.UTF_8))) {
+                                message.append('\n');
+                                String line;
+                                while ((line = reader.readLine()) != null) {
+                                    message.append(line).append('\n');
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        Logging.getInstance().warn("Error reading error message from server? ", e);
+                    }
+                    throw new HttpResponseException(responseCode, message.toString());
                 }
             } catch (Exception var6) {
                 Logging.getInstance().error("Couldn't download cosmetica texture", var6);
