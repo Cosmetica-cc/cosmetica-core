@@ -152,23 +152,20 @@ public class CosmeticaTexture extends AbstractTexture {
                         final IOException e = e_;
                         final NativeImage directRead = directRead_;
 
-                        // TODO remove this after debugging is over
-                        if (!Boolean.getBoolean("dangerousDontLoadCosmeticaTextures")) {
-                            Minecraft.getInstance().execute(() -> {
-                                if (e == null) {
-                                    this.firstUpload(directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? this.tilesheetIncrement : tilesheetFrames);
-                                } else {
-                                    Logging.getInstance().error("Couldn't download cosmetica texture", e);
-                                    if (this.errorTexture != null) {
-                                        try {
-                                            this.loadFromPack(resourceManager, this.errorTexture);
-                                        } catch (IOException ex) {
-                                            Logging.getInstance().error("Couldn't load fallback texture", ex);
-                                        }
+                        Minecraft.getInstance().execute(() -> {
+                            if (e == null) {
+                                this.firstUpload(directRead, true, tilesheetFrames * ais.frames, ais.frames == 1 ? this.tilesheetIncrement : tilesheetFrames);
+                            } else {
+                                Logging.getInstance().error("Couldn't download cosmetica texture", e);
+                                if (this.errorTexture != null) {
+                                    try {
+                                        this.loadFromPack(resourceManager, this.errorTexture);
+                                    } catch (IOException ex) {
+                                        Logging.getInstance().error("Couldn't load fallback texture", ex);
                                     }
                                 }
-                            });
-                        }
+                            }
+                        });
                     } else {
                         FileUtils.copyInputStreamToFile(rawInputStream, this.cacheFile);
                         this.loadCacheFile();
@@ -244,11 +241,8 @@ public class CosmeticaTexture extends AbstractTexture {
             try {
                 AnimatedInputStream inputStream = readToPNG(fileInputStream, this.cacheFile.getName(), this.heightDivider);
 
-                // TODO remove this when debug is done
-                if (!Boolean.getBoolean("dangerousDontLoadCosmeticaTextures")) {
-                    nativeImage1 = NativeImage.read(inputStream.stream);
-                    trueFrames = inputStream.frames;
-                }
+                nativeImage1 = NativeImage.read(inputStream.stream);
+                trueFrames = inputStream.frames;
             } catch (IOException e) {
                 Logging.getInstance().error("Error reading cached texture at {}", e, this.cacheFile);
             }
