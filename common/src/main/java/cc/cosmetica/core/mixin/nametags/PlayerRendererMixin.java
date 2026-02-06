@@ -48,7 +48,9 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 			method = "renderNameTag(Lnet/minecraft/client/renderer/entity/state/PlayerRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
 	)
 	private void shiftNametags(PlayerRenderState avatarRenderState, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
-		avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment);
+		if (avatarRenderState.nameTagAttachment != null) {
+			avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment);
+		}
 	}
 
 	@Inject(at = @At(
