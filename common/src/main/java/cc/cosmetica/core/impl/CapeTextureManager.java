@@ -63,13 +63,13 @@ public class CapeTextureManager {
                     }
                 }
 
-                Identifier cloakLocation = cloak.isPresent()   ?  cloak.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.cape() == null ? null : existing.cape().texturePath();
+                Identifier cloakLocation =  cloak.isPresent()  ? cloak.get().getImage().location  : MasterCosmeticManager.hideVanillaCapes ? null : existing.cape() == null   ? null : existing.cape().texturePath();
                 Identifier elytraLocation = elytra.isPresent() ? elytra.get().getImage().location : MasterCosmeticManager.hideVanillaCapes ? null : existing.elytra() == null ? null : existing.elytra().texturePath();
 
                 PlayerSkin modified = new PlayerSkin(
                         existing.body(),
-                        new CosmeticaAssetTexture(cloakLocation),
-                        new CosmeticaAssetTexture(elytraLocation),
+                        cloakLocation == null ? null : new CosmeticaAssetTexture(cloakLocation),
+                        elytraLocation == null ? null : new CosmeticaAssetTexture(elytraLocation),
                         existing.model(),
                         existing.secure()
                 );
