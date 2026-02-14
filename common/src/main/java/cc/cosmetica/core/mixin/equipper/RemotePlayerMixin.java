@@ -38,7 +38,7 @@ import java.util.Optional;
 @Mixin(RemotePlayer.class)
 public class RemotePlayerMixin extends AbstractClientPlayer implements CosmeticEquipper {
     public RemotePlayerMixin(ClientLevel clientLevel, GameProfile gameProfile) {
-        super(clientLevel, gameProfile);
+        super(clientLevel, gameProfile, null);
     }
 
     @Override
