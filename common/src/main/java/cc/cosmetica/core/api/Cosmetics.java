@@ -21,6 +21,7 @@ import cc.cosmetica.core.impl.CosmeticEquipper;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.NametagRenderer;
 import gg.cloaks.javaclient.model.PlayerResponse;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +98,16 @@ public interface Cosmetics {
 	 */
 	static Optional<Cosmetics> getCosmetics(LivingEntity entity) {
 		CosmeticEquipper equipper = (CosmeticEquipper) entity;
+		return equipper.cosmeticacore$getCosmetics();
+	}
+
+	/**
+	 * Get the container for cosmetics being worn by the given remote player (not ones' self).
+	 * @param remotePlayerInfo the player for which to get the container.
+	 * @return the container.
+	 */
+	static Optional<Cosmetics> getCosmetics(PlayerInfo remotePlayerInfo) {
+		CosmeticEquipper equipper = (CosmeticEquipper) remotePlayerInfo;
 		return equipper.cosmeticacore$getCosmetics();
 	}
 
