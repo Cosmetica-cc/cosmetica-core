@@ -21,6 +21,7 @@ import cc.cosmetica.core.impl.MasterCosmeticManager;
 import gg.cloaks.javaclient.ApiException;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
 /**
@@ -44,11 +45,19 @@ public final class AsyncApi<API> {
     public <T> CompletableFuture<T> requestAsync(Function<API, T> request) {
         return CompletableFuture.supplyAsync(() -> request.apply(this.api), MasterCosmeticManager.HTTP_THREAD_POOL)
                 .exceptionally(t -> {
-                    if (t.getCause() instanceof ApiException && ((ApiException) t.getCause()).getCode() == 401)
+                    if (t instanceof CompletionException)
                         t = t.getCause();
 
-                    if (t instanceof ApiException && ((ApiException) t).getCode() == 401) {
-                        CosmeticaSession.deauthenticate(CosmeticaAPI.AuthChangeReason.ERROR_401);
+                    if (t instanceof ApiException) {
+                        if (((ApiException) t).getCode() == 401) {
+                            CosmeticaSession.deauthenticate(CosmeticaAPI.AuthChangeReason.ERROR_401);
+                        } else if (
+                                ((ApiException) t).getCode() == 502 ||
+                                ((ApiException) t).getCode() == 503 ||
+                                ((ApiException) t).getCode() == 504
+                        ) {
+                            CosmeticaSession.deauthenticate(CosmeticaAPI.AuthChangeReason.OFFLINE);
+                        }
                     }
 
                     throw (RuntimeException)t;

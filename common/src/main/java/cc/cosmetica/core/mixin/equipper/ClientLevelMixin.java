@@ -17,13 +17,18 @@
 package cc.cosmetica.core.mixin.equipper;
 
 import cc.cosmetica.core.impl.CosmeticEquipper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.function.BooleanSupplier;
 
 /**
  * Manages revoking removed entities from Cosmetic managers.
@@ -34,6 +39,16 @@ public class ClientLevelMixin {
 	public void onEntityRemoved(Entity entity, CallbackInfo ci) {
 		if (entity instanceof LivingEntity) {
 			((CosmeticEquipper) entity).cosmeticacore$onEntityRemoved();
+		}
+	}
+
+	@Inject(at = @At("HEAD"), method = "tick")
+	private void onTick(BooleanSupplier booleanSupplier, CallbackInfo ci) {
+        assert Minecraft.getInstance().player != null; // We are in game
+        ClientPacketListener connection = Minecraft.getInstance().player.connection;
+
+		for (PlayerInfo info : connection.getOnlinePlayers()) {
+			((CosmeticEquipper) info).cosmeticacore$pollCosmetics();
 		}
 	}
 }
