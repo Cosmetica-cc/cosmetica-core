@@ -17,6 +17,8 @@
 package cc.cosmetica.core.mixin.equipper;
 
 import cc.cosmetica.core.impl.CosmeticEquipper;
+import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.impl.LoggingCategory;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
@@ -51,6 +53,7 @@ public abstract class ClientPacketListenerMixin {
         if (packet.getAction() == ClientboundPlayerInfoPacket.Action.REMOVE_PLAYER) {
             PlayerInfo info = this.getPlayerInfo(playerUpdate.getProfile().getId());
             if (info != null) {
+                Logging.getInstance().debug(LoggingCategory.COSMETICS, "Detaching {} from their cosmetics manager", info.getProfile().getId());
                 ((CosmeticEquipper) info).cosmeticacore$onEntityRemoved();
             }
         }
@@ -61,6 +64,7 @@ public abstract class ClientPacketListenerMixin {
             at = @At("HEAD")
     )
     private void onDisconnect(CallbackInfo ci) {
+        Logging.getInstance().debug(LoggingCategory.COSMETICS, "Detaching all player infos from their cosmetics manager");
         for (PlayerInfo info : this.getOnlinePlayers()) {
             ((CosmeticEquipper) info).cosmeticacore$onEntityRemoved();
         }
