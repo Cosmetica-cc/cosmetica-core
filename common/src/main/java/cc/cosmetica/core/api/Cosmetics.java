@@ -22,11 +22,8 @@ import cc.cosmetica.core.impl.HasCosmeticsRenderState;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.NametagRenderer;
 import gg.cloaks.javaclient.model.PlayerResponse;
-<<<<<<< HEAD
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-=======
 import net.minecraft.client.multiplayer.PlayerInfo;
->>>>>>> 1.21.1
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -38,7 +38,7 @@ public class PlayerTabOverlayMixin {
                     CachedImage icon = nametagConfig.getIcon().getImage();
 
                     if (icon.isLoaded()) {
-                        NametagRenderer.prepareIcon(icon, 2, nametagConfig.isTransparentIcon(), false);
+                        NametagRenderer.prepareIcon(icon, 1, nametagConfig.isTransparentIcon(), false);
                     }
                 });
         }
