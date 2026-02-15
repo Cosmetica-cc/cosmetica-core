@@ -102,16 +102,14 @@ public class PlayerTabOverlayMixin {
 		if (level != null && gameProfile.getId() != null) {
 			Player player = level.getPlayerByUUID(gameProfile.getId());
 
-			if (player != null) {
-				Cosmetics.getCosmetics(player).ifPresent(cosmetics -> {
-					NametagConfig nametagConfig = cosmetics.getNametag();
-					CachedImage icon = nametagConfig.getIcon().getImage();
+			(player == null ? Cosmetics.getCosmetics(playerInfo2) : Cosmetics.getCosmetics(player)).ifPresent(cosmetics -> {
+				NametagConfig nametagConfig = cosmetics.getNametag();
+				CachedImage icon = nametagConfig.getIcon().getImage();
 
-					if (icon.isLoaded()) {
-						NametagRenderer.prepareIcon(icon, 2, nametagConfig.isTransparentIcon(), false);
-					}
-				});
-			}
+				if (icon.isLoaded()) {
+					NametagRenderer.prepareIcon(icon, 2, nametagConfig.isTransparentIcon(), false);
+				}
+			});
 		}
 	}
 }

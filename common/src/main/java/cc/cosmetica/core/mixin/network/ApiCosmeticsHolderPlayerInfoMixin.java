@@ -18,7 +18,7 @@ package cc.cosmetica.core.mixin.network;
 
 import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
-import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
@@ -26,8 +26,8 @@ import org.spongepowered.asm.mixin.Unique;
  * Caches cosmetica data fetched from the Cosmetica API.
  * Used for implementing the main CosmeticManager.
  */
-@Mixin(AbstractClientPlayer.class)
-public class AbstractClientPlayerMixin implements ApiCosmeticsHolder {
+@Mixin(PlayerInfo.class)
+public class ApiCosmeticsHolderPlayerInfoMixin implements ApiCosmeticsHolder {
 	@Unique
 	private PlayerCosmetics cosmeticacore$apiCosmetics;
 
