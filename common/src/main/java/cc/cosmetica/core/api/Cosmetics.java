@@ -21,7 +21,9 @@ import cc.cosmetica.core.impl.CosmeticEquipper;
 import cc.cosmetica.core.impl.MasterCosmeticManager;
 import cc.cosmetica.core.impl.NametagRenderer;
 import gg.cloaks.javaclient.model.PlayerResponse;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -100,6 +102,16 @@ public interface Cosmetics {
 	}
 
 	/**
+	 * Get the container for cosmetics being worn by the given remote player (not ones' self).
+	 * @param remotePlayerInfo the player for which to get the container.
+	 * @return the container.
+	 */
+	static Optional<Cosmetics> getCosmetics(PlayerInfo remotePlayerInfo) {
+		CosmeticEquipper equipper = (CosmeticEquipper) remotePlayerInfo;
+		return equipper.cosmeticacore$getCosmetics();
+	}
+
+	/**
 	 * Call this to update the entity's cosmetics, only if the given manager is still current.
 	 * @param entity the entity to update cosmetics for.
 	 * @param manager the manager for which to update.
@@ -112,10 +124,10 @@ public interface Cosmetics {
 	/**
 	 * Register the cosmetics change callback. This will only run in the world!
 	 * @param onChange a consumer that takes the entity, and new cosmetics whenever the cosmetics on an entity changes.
-	 *                 <ul><li>The LivingEntity parameter will never be null.</li>
+	 *                 <ul><li>The {@linkplain CosmeticManager.Either equipper} will never be null.</li>
 	 *                 <li>The cosmetics parameter may be null.</li></ul>
 	 */
-	static void registerCosmeticsChangeCallback(BiConsumer<LivingEntity, @Nullable Cosmetics> onChange) {
+	static void registerCosmeticsChangeCallback(BiConsumer<CosmeticManager.@NotNull Either, @Nullable Cosmetics> onChange) {
 		MasterCosmeticManager.addCallback(onChange);
 	}
 
@@ -125,7 +137,7 @@ public interface Cosmetics {
 	 * However, it does catch mods clearing cosmetics via {@link SelfCosmeticManager#clear()}.
 	 * <b>Note:</b> Both clearing cosmetics and updating cosmetics with an {@link gg.cloaks.javaclient.model.Outfit Outfit} may provide null player response!
 	 */
-	static void registerUserDataFetchCallback(BiConsumer<@Nullable PlayerResponse, Cosmetics> onFetch) {
+	static void registerSelfDataFetchCallback(BiConsumer<@Nullable PlayerResponse, Cosmetics> onFetch) {
 		MasterCosmeticManager.addSelfCallback(onFetch);
 	}
 

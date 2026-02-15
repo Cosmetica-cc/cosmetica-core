@@ -49,4 +49,9 @@ public interface CosmeticEquipper {
 	 * Called internally when the entity is removed from the client level.
 	 */
 	void cosmeticacore$onEntityRemoved();
+
+	/**
+	 * Poll new cosmetics for this equipper.
+	 */
+	void cosmeticacore$pollCosmetics();
 }
