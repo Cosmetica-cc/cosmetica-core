@@ -38,7 +38,7 @@ public abstract class MinecraftMixin {
     @Shadow @Nullable public ClientLevel level;
 
     @Inject(
-            method = "clearLevel(Lnet/minecraft/client/gui/screens/Screen;)V",
+            method = "clearClientLevel(Lnet/minecraft/client/gui/screens/Screen;)V",
             at = @At("HEAD")
     )
     private void onClearLevel(Screen screen, CallbackInfo ci) {
