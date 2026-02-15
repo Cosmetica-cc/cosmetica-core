@@ -15,6 +15,7 @@
     "equipper.ClientLevelMixin",
     "equipper.ClientPacketListenerMixin",
     "equipper.EntityMixin",
+    "equipper.MinecraftMixin",
     "equipper.PlayerInfoMixin",
     "equipper.RemotePlayerMixin",
     "nametags.FontStringRenderOutputMixin",

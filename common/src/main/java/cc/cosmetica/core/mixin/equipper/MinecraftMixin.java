@@ -19,35 +19,33 @@ package cc.cosmetica.core.mixin.equipper;
 import cc.cosmetica.core.impl.CosmeticEquipper;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
-import org.spongepowered.asm.mixin.Final;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Map;
-import java.util.UUID;
-
-/**
- * Revoke cosmetic manager when PlayerInfo is removed.
- */
-@Mixin(ClientPacketListener.class)
-public abstract class ClientPacketListenerMixin {
-    @Shadow @Final private Map<UUID, PlayerInfo> playerInfoMap;
+@Mixin(Minecraft.class)
+public abstract class MinecraftMixin {
+    @Shadow @Nullable public abstract ClientPacketListener getConnection();
 
     @Inject(
-            method = "handlePlayerInfoRemove",
+            method = "clearLevel(Lnet/minecraft/client/gui/screens/Screen;)V",
             at = @At("HEAD")
     )
-    private void onPlayerInfoRemove(ClientboundPlayerInfoRemovePacket packet, CallbackInfo ci) {
-        for (UUID uUID : packet.profileIds()) {
-            PlayerInfo info = this.playerInfoMap.get(uUID);
-            if (info != null) {
-                Logging.getInstance().debug(LoggingCategory.COSMETICS, "Detaching {} from their cosmetics manager", info.getProfile().getId());
+    private void onDisconnect(Screen screen, CallbackInfo ci) {
+        ClientPacketListener clientPacketListener = this.getConnection();
+
+        if (clientPacketListener == null) {
+            Logging.getInstance().warn("Tried to stop listening to websocket updates for remote player cosmetics, but client packet listener is none!");
+        } else {
+            Logging.getInstance().debug(LoggingCategory.COSMETICS, "Detaching all player infos from their cosmetics manager");
+            for (PlayerInfo info : clientPacketListener.getOnlinePlayers()) {
                 ((CosmeticEquipper) info).cosmeticacore$onEntityRemoved();
             }
         }
