@@ -384,6 +384,10 @@ public final class CosmeticaAPI {
 		 */
 		ERROR_401,
 		/**
+		 * An error was received indicating the remote host could not be reached.
+		 */
+		OFFLINE,
+		/**
 		 * As the implementation may change, it is not guaranteed by the api
 		 * this will always be called at the same places by the implementation.
 		 */

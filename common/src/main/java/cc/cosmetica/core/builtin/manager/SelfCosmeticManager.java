@@ -45,12 +45,12 @@ public class SelfCosmeticManager implements CosmeticManager {
 	private static Cosmetics cosmetics = NoneCosmetics.NONE;
 
 	@Override
-	public boolean canManage(LivingEntity entity) {
-		return entity instanceof LocalPlayer && cosmetics != NoneCosmetics.NONE;
+	public boolean canManage(Either either) {
+		return either.entity instanceof LocalPlayer && cosmetics != NoneCosmetics.NONE;
 	}
 
 	@Override
-	public Cosmetics getCosmetics(LivingEntity entity) {
+	public Cosmetics getCosmetics(Either entity) {
 		return cosmetics;
 	}
 

@@ -34,17 +34,25 @@ import java.util.UUID;
  */
 public class ArmourStandCosmeticManager implements CosmeticManager {
 	@Override
-	public boolean canManage(LivingEntity entity) {
+	public boolean canManage(Either either) {
+		if (either.entity == null) {
+			return false;
+		}
+		LivingEntity entity = either.entity;
 		return entity instanceof OutfitCosmeticsHolder && ((OutfitCosmeticsHolder) entity).cosmeticacore$getOutfitCosmetics() != null;
 	}
 
 	@Override
-	public Cosmetics getCosmetics(LivingEntity entity) {
-		return ((OutfitCosmeticsHolder) entity).cosmeticacore$getOutfitCosmetics();
+	public Cosmetics getCosmetics(Either either) {
+		assert either.entity != null;
+		return ((OutfitCosmeticsHolder) either.entity).cosmeticacore$getOutfitCosmetics();
 	}
 
 	@Override
-	public void onAssign(LivingEntity entity) {
+	public void onAssign(Either either) {
+		assert either.entity != null;
+		final LivingEntity entity = either.entity;
+
 		Cosmetics outfitCosmetics = ((OutfitCosmeticsHolder) entity).cosmeticacore$getOutfitCosmetics();
 		WeakReference<LivingEntity> entityRef = new WeakReference<>(entity);
 
@@ -76,8 +84,9 @@ public class ArmourStandCosmeticManager implements CosmeticManager {
 	}
 
 	@Override
-	public void onRevoke(LivingEntity entity) {
-		UUID uuid = ((OutfitCosmeticsHolder)entity).cosmeticacore$getSubscribedID();
+	public void onRevoke(Either either) {
+		assert either.entity != null;
+		UUID uuid = ((OutfitCosmeticsHolder)either.entity).cosmeticacore$getSubscribedID();
 		if (uuid != null) {
 			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Unsubscribing from outfit updates for {}", uuid);
 			CosmeticaAPI.unsubscribe(CosmeticaAPI.SubscriptionEvent.OUTFIT, uuid, ARMOUR_STAND_MANAGER);

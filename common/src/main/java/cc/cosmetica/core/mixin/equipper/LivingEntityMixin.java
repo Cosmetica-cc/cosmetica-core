@@ -19,20 +19,19 @@ package cc.cosmetica.core.mixin.equipper;
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.*;
+import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Optional;
-import java.util.Queue;
 
 /**
  * Implements the {@link CosmeticEquipper} and connects the entity tick to polling cosmetics.
@@ -43,92 +42,53 @@ public abstract class LivingEntityMixin extends Entity implements CosmeticEquipp
 		super(entityType, level);
 	}
 
-	// allows us to use older cosmetics while newer ones are still loading.
-	// this should not get very big.
-	@Unique
-	private final Queue<Cosmetics> cosmeticacore$cosmetics = new ArrayDeque<>();
+	// Implemented by Equip Helper
 
 	@Unique
-	private final IdentityCache<CosmeticManager> cosmeticacore$manager = new IdentityCache<>();
+	private final CosmeticEquipHelper cosmeticacore$cosmetics = new CosmeticEquipHelper(manager -> manager.getCosmetics(
+			new CosmeticManager.Either((LivingEntity) (Object) this)));
 
 	@Override
 	public Optional<Cosmetics> cosmeticacore$getCosmetics() {
-		return Optional.ofNullable(this.cosmeticacore$cosmetics.peek());
+		return this.cosmeticacore$cosmetics.getCosmetics();
 	}
 
 	@Override
 	public void cosmeticacore$refreshCosmetics(CosmeticManager manager) {
-		if (cosmeticacore$manager.getValue() == manager) {
-			// test if cosmetics are different from the most recently added (other end of the queue)
-			Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
-			if (next != ((Deque<Cosmetics>)this.cosmeticacore$cosmetics).peekLast()) {
-				Logging.getInstance().debug(LoggingCategory.COSMETICS, "New cosmetics detected. Refreshing for {}", this.getUUID());
-				// load new cosmetics
-				cosmeticacore$updateCosmetics(manager);
-			}
-		}
+		this.cosmeticacore$cosmetics.refreshCosmetics(manager, this.getUUID(), newCosmetics -> {
+			MasterCosmeticManager.post((LivingEntity) (Object) this, newCosmetics);
+		});
 	}
 
 	@Override
 	public void cosmeticacore$updateCosmetics(CosmeticManager manager) {
-		if (cosmeticacore$manager.getValue() == manager) {
-			if (manager == null) {
-				synchronized (this.cosmeticacore$cosmetics) {
-					this.cosmeticacore$cosmetics.clear();
-				}
+		this.cosmeticacore$cosmetics.updateCosmetics(manager, newCosmetics -> {
+			MasterCosmeticManager.post((LivingEntity) (Object) this, newCosmetics);
+		});
+	}
 
-				// forward to listeners
-				MasterCosmeticManager.post((LivingEntity) (Object) this, null);
-			} else {
-				// push a new cosmetics
-				Cosmetics next = manager.getCosmetics((LivingEntity) (Object) this);
-				Logging.getInstance().debug(LoggingCategory.COSMETICS, "Next cosmetics " + next);
+	// Implement By Self
 
-				synchronized (this.cosmeticacore$cosmetics) {
-					this.cosmeticacore$cosmetics.add(next);
-				}
+	@Override
+	public void cosmeticacore$onEntityRemoved() {
+		@Nullable CosmeticManager manager = this.cosmeticacore$cosmetics.getManager().getValue();
 
-				next.enqueue(() -> {
-					boolean updated = false;
-
-					synchronized (this.cosmeticacore$cosmetics) {
-						// fast-forward to front
-						if (this.cosmeticacore$cosmetics.contains(next)) {
-							updated = true;
-
-							while (this.cosmeticacore$cosmetics.peek() != next)
-								this.cosmeticacore$cosmetics.remove();
-						}
-
-						Logging.getInstance().debug(LoggingCategory.COSMETICS, "Loaded Cosmetics {}", this.cosmeticacore$cosmetics);
-					}
-
-					if (updated) {
-						// forward to listeners
-						MasterCosmeticManager.post((LivingEntity) (Object) this, next);
-					}
-				}, () -> {
-					synchronized (this.cosmeticacore$cosmetics) {
-						this.cosmeticacore$cosmetics.remove(next);
-					}
-				});
-			}
+		if (manager != null) {
+			manager.onRevoke(new CosmeticManager.Either((LivingEntity) (Object) this));
 		}
 	}
 
 	@Override
-	public void cosmeticacore$onEntityRemoved() {
-		CosmeticManager manager = this.cosmeticacore$manager.getValue();
-
-		if (manager != null) {
-			manager.onRevoke((LivingEntity) (Object) this);
-		}
+	public void cosmeticacore$pollCosmetics() {
+		MasterCosmeticManager.pollCosmetics(new CosmeticManager.Either((LivingEntity)(Object)this), this.cosmeticacore$cosmetics.getManager());
 	}
 
 	@Inject(method = "tick", at = @At("RETURN"))
 	private void onTick(CallbackInfo ci) {
-		if (this.level().isClientSide()) {
-			MasterCosmeticManager.pollCosmetics((LivingEntity)(Object)this, this.cosmeticacore$manager);
+		boolean remotePlayer = (Object)this instanceof RemotePlayer;
+
+		if (!remotePlayer && this.level().isClientSide()) {
+			MasterCosmeticManager.pollCosmetics(new CosmeticManager.Either((LivingEntity)(Object)this), this.cosmeticacore$cosmetics.getManager());
 		}
 	}
 }

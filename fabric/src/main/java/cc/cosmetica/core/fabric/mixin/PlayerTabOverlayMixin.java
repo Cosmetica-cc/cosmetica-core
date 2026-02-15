@@ -25,6 +25,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.scores.Objective;
@@ -42,14 +43,13 @@ public class PlayerTabOverlayMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;III)I")
     )
     private void beforeRenderName(GuiGraphics guiGraphics, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci,
-                                  @Local GameProfile gameProfile) {
+                                  @Local PlayerInfo playerInfo2, @Local GameProfile gameProfile) {
         Level level = Minecraft.getInstance().level;
 
         if (level != null && gameProfile.getId() != null) {
             Player player = level.getPlayerByUUID(gameProfile.getId());
 
-            if (player != null) {
-                Cosmetics.getCosmetics(player).ifPresent(cosmetics -> {
+            (player == null ? Cosmetics.getCosmetics(playerInfo2) : Cosmetics.getCosmetics(player)).ifPresent(cosmetics -> {
                     NametagConfig nametagConfig = cosmetics.getNametag();
                     CachedImage icon = nametagConfig.getIcon().getImage();
 
@@ -57,7 +57,6 @@ public class PlayerTabOverlayMixin {
                         NametagRenderer.prepareIcon(icon, 2, nametagConfig.isTransparentIcon(), false);
                     }
                 });
-            }
         }
     }
 }
