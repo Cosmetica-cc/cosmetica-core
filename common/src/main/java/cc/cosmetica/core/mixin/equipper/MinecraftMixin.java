@@ -55,4 +55,23 @@ public abstract class MinecraftMixin {
             }
         }
     }
+
+    @Inject(
+            method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;Z)V",
+            at = @At("HEAD")
+    )
+    private void onClearLevel(Screen screen, boolean bl, CallbackInfo ci) {
+        ClientPacketListener clientPacketListener = this.getConnection();
+
+        if (clientPacketListener == null) {
+            if (this.level != null) {
+                Logging.getInstance().warn("Tried to stop listening to websocket updates for remote player cosmetics, but client packet listener is none!");
+            }
+        } else {
+            Logging.getInstance().debug(LoggingCategory.COSMETICS, "Detaching all player infos from their cosmetics manager");
+            for (PlayerInfo info : clientPacketListener.getOnlinePlayers()) {
+                ((CosmeticEquipper) info).cosmeticacore$onEntityRemoved();
+            }
+        }
+    }
 }
