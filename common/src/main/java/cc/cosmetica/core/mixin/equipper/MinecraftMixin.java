@@ -21,6 +21,7 @@ import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import org.jetbrains.annotations.Nullable;
@@ -34,15 +35,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MinecraftMixin {
     @Shadow @Nullable public abstract ClientPacketListener getConnection();
 
+    @Shadow @Nullable public ClientLevel level;
+
     @Inject(
             method = "clearLevel(Lnet/minecraft/client/gui/screens/Screen;)V",
             at = @At("HEAD")
     )
-    private void onDisconnect(Screen screen, CallbackInfo ci) {
+    private void onClearLevel(Screen screen, CallbackInfo ci) {
         ClientPacketListener clientPacketListener = this.getConnection();
 
         if (clientPacketListener == null) {
-            Logging.getInstance().warn("Tried to stop listening to websocket updates for remote player cosmetics, but client packet listener is none!");
+            if (this.level != null) {
+                Logging.getInstance().warn("Tried to stop listening to websocket updates for remote player cosmetics, but client packet listener is none!");
+            }
         } else {
             Logging.getInstance().debug(LoggingCategory.COSMETICS, "Detaching all player infos from their cosmetics manager");
             for (PlayerInfo info : clientPacketListener.getOnlinePlayers()) {
