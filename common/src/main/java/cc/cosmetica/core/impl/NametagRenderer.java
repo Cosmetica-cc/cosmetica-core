@@ -20,6 +20,7 @@ import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.NametagConfig;
+import cc.cosmetica.core.render.HumanoidAccessoriesLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.Minecraft;
@@ -31,7 +32,10 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.PlayerModelPart;
+import net.minecraft.world.item.ElytraItem;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
@@ -149,6 +153,10 @@ public final class NametagRenderer {
 			fixedCameraOrientation.rotateY(Mth.DEG_TO_RAD * 180);
 
 			if (cosmetics.isPresent()) {
+				boolean cloak = player.isModelPartShown(PlayerModelPart.CAPE) &&
+						(!(player instanceof AbstractClientPlayer) || ((AbstractClientPlayer)player).getSkin().capeTexture() != null) &&
+						(!player.hasItemInSlot(EquipmentSlot.CHEST) || !(player.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem));
+
 				renderLore(
 						stack,
 						fixedCameraOrientation,
@@ -162,7 +170,9 @@ public final class NametagRenderer {
 						cosmetics.get().isUpsideDown(), // upside down
 						player.getBbHeight(),
 						playerModel.head.xRot,
-						packedLight);
+						packedLight,
+						player,
+						cloak);
 			}
 		}
 	}
@@ -173,7 +183,8 @@ public final class NametagRenderer {
 	public static void renderLore(PoseStack stack, Quaternionf cameraOrientation, Font font,
 								  MultiBufferSource multiBufferSource, @Nullable NametagConfig lore, Collection<Accessory> hats,
 								  boolean wearingHelmet, boolean doNametagShift, boolean discrete, boolean upsideDown,
-								  float playerHeight, float xRotHead, int packedLight) {
+								  float playerHeight, float xRotHead, int packedLight,
+								  LivingEntity entity, boolean cloak) {
 		// how much do we need to shift up nametags?
 
 		// upside down players don't need nametags shifted up
@@ -183,8 +194,10 @@ public final class NametagRenderer {
 			if (doNametagShift) {
 				for (Accessory accessory : hats) {
 					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-						if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
-							hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
+						if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, new HumanoidAccessoriesLayer.EntityEquipper(entity), cloak)) {
+							if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
+								hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
+							}
 						}
 					}
 				}
