@@ -57,10 +57,10 @@ public abstract class MinecraftMixin {
     }
 
     @Inject(
-            method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;Z)V",
+            method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;ZZ)V",
             at = @At("HEAD")
     )
-    private void onClearLevel(Screen screen, boolean bl, CallbackInfo ci) {
+    private void onClearLevel(Screen screen, boolean bl, boolean bl2, CallbackInfo ci) {
         ClientPacketListener clientPacketListener = this.getConnection();
 
         if (clientPacketListener == null) {
