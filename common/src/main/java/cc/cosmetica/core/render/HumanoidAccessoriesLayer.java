@@ -204,7 +204,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 						// If not skewed hide with either parrot
 						Vec3 centre = accessory.getModel().getBoundingBox().getCenter();
 						if (Math.abs(centre.x - 8) > 0.5) {
-							side = (centre.x > 8 ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
+							side = ((centre.x > 8) ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
 						}
 						break;
 					case LEFT_ARM:
