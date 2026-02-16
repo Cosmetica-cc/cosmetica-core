@@ -190,7 +190,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 						// decide based on which side it is skewed to
 						// If not skewed hide with either parrot
 						Vec3 centre = accessory.getModel().getBoundingBox().getCenter();
-						if (Math.abs(centre.x - 8) > 0.5) {
+						if (Math.abs(centre.x - 8) > 0.25) {
 							side = (centre.x > 8 ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
 						}
 						break;
@@ -211,7 +211,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 					}
 				}
 				if (side == null || side == HumanoidArm.RIGHT) {
-					if (equipper.hasLeftShoulderEntity()) {
+					if (equipper.hasRightShoulderEntity()) {
 						return false;
 					}
 				}
@@ -250,7 +250,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 
 		@Override
 		public boolean hasRightShoulderEntity() {
-			return entity instanceof AbstractClientPlayer && !((AbstractClientPlayer) entity).getShoulderEntityLeft().isEmpty();
+			return entity instanceof AbstractClientPlayer && !((AbstractClientPlayer) entity).getShoulderEntityRight().isEmpty();
 		}
 	}
 }
