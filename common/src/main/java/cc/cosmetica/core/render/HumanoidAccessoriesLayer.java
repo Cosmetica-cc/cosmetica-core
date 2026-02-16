@@ -32,7 +32,9 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.ElytraItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
@@ -53,93 +55,26 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 		Minecraft.getInstance().getProfiler().push("accessories");
 
 		Cosmetics.getCosmetics(entity).ifPresent(cosmetics -> {
+			boolean playerCloak = entity instanceof AbstractClientPlayer &&
+					((AbstractClientPlayer)entity).isModelPartShown(PlayerModelPart.CAPE) &&
+					((AbstractClientPlayer)entity).getCloakTextureLocation() != null &&
+					(!entity.hasItemInSlot(EquipmentSlot.CHEST) || !(entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem));
+			boolean nonLivingCloak = !(entity instanceof AbstractClientPlayer) &&
+					cosmetics.getCloak().isPresent();
+			boolean cloak = playerCloak || nonLivingCloak;
+
 			for (Accessory accessory : cosmetics.getAccessories()) {
-				this.renderAccessory(accessory, poseStack, multiBufferSource, light, entity);
+				this.renderAccessory(accessory, poseStack, multiBufferSource, light, cloak, entity);
 			}
 		});
 
 		Minecraft.getInstance().getProfiler().pop();
 	}
 
-	private void renderAccessory(Accessory accessory, PoseStack stack, MultiBufferSource multiBufferSource, int light, E entity) {
-		//System.out.println("rendering accessory " + accessory.getName() + " on " + accessory.getAttachment().getValue()	);
+	private void renderAccessory(Accessory accessory, PoseStack stack, MultiBufferSource multiBufferSource, int light, boolean cloak, E entity) {
 		// Check if accessory can be rendered
-		Collection<Accessory.Flag> flags = accessory.getFlags();
-
-		if (flags.contains(Accessory.Flag.HIDE_WITH_HELMET)) {
-			if (entity.hasItemInSlot(EquipmentSlot.HEAD)) {
-				return;
-			}
-		}
-
-		if (entity.hasItemInSlot(EquipmentSlot.CHEST)) {
-			if (entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem) {
-				if (flags.contains(Accessory.Flag.HIDE_WITH_ELYTRA)) {
-					return;
-				}
-			} else {
-				if (flags.contains(Accessory.Flag.HIDE_WITH_CHESTPLATE)) {
-					return;
-				}
-			}
-		}
-		if (entity instanceof AbstractClientPlayer &&
-				((AbstractClientPlayer)entity).getCloakTextureLocation() != null &&
-				(!entity.hasItemInSlot(EquipmentSlot.CHEST) || !(entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem))
-		) {
-			if (flags.contains(Accessory.Flag.HIDE_WITH_CLOAK)) {
-				return;
-			}
-		}
-
-		if (flags.contains(Accessory.Flag.HIDE_WITH_LEGGINGS)) {
-			if (entity.hasItemInSlot(EquipmentSlot.LEGS)) {
-				return;
-			}
-		}
-
-		if (flags.contains(Accessory.Flag.HIDE_WITH_BOOTS)) {
-			if (entity.hasItemInSlot(EquipmentSlot.FEET)) {
-				return;
-			}
-		}
-
-		if (flags.contains(Accessory.Flag.HIDE_WITH_PARROT)) {
-			if (entity instanceof AbstractClientPlayer) {
-				HumanoidArm side = null;
-
-				switch (accessory.getAttachment()) {
-					case HEAD:
-					case BODY:
-						// decide based on which side it is skewed to
-						// If not skewed hide with either parrot
-						Vec3 centre = accessory.getModel().getBoundingBox().getCenter();
-						if (Math.abs(centre.x - 8) > 0.5) {
-							side = (centre.x > 8 ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
-						}
-						break;
-					case LEFT_ARM:
-					case LEFT_LEG:
-						side = accessory.isMirrored() ? HumanoidArm.RIGHT : HumanoidArm.LEFT;
-						break;
-					case RIGHT_ARM:
-					case RIGHT_LEG:
-						side = accessory.isMirrored() ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
-					case UNKNOWN_DEFAULT_OPEN_API:
-						break;
-				}
-
-				if (side == null || side == HumanoidArm.LEFT) {
-					if (!((AbstractClientPlayer) entity).getShoulderEntityLeft().isEmpty()) {
-						return;
-					}
-				}
-				if (side == null || side == HumanoidArm.RIGHT) {
-					if (!((AbstractClientPlayer) entity).getShoulderEntityRight().isEmpty()) {
-						return;
-					}
-				}
-			}
+		if (!canRenderAccessory(accessory, new EntityEquipper(entity), cloak)) {
+			return;
 		}
 
 		ModelPart part = null;
@@ -204,6 +139,118 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 					(float) offset.x + additionalXOffset, (float) offset.y, (float) offset.z,
 					accessory.isMirrored()
 			);
+		}
+	}
+
+	public static boolean canRenderAccessory(Accessory accessory, ArmourEquipper equipper, boolean cloak) {
+		Collection<Accessory.Flag> flags = accessory.getFlags();
+
+		if (flags.contains(Accessory.Flag.HIDE_WITH_HELMET)) {
+			if (equipper.hasItemInSlot(EquipmentSlot.HEAD)) {
+				return false;
+			}
+		}
+
+		if (equipper.hasItemInSlot(EquipmentSlot.CHEST)) {
+			if (equipper.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem) {
+				if (flags.contains(Accessory.Flag.HIDE_WITH_ELYTRA)) {
+					return false;
+				}
+			} else {
+				if (flags.contains(Accessory.Flag.HIDE_WITH_CHESTPLATE)) {
+					return false;
+				}
+			}
+		}
+		if (cloak) {
+			if (flags.contains(Accessory.Flag.HIDE_WITH_CLOAK)) {
+				return false;
+			}
+		}
+
+		if (flags.contains(Accessory.Flag.HIDE_WITH_LEGGINGS)) {
+			if (equipper.hasItemInSlot(EquipmentSlot.LEGS)) {
+				return false;
+			}
+		}
+
+		if (flags.contains(Accessory.Flag.HIDE_WITH_BOOTS)) {
+			if (equipper.hasItemInSlot(EquipmentSlot.FEET)) {
+				return false;
+			}
+		}
+
+		if (flags.contains(Accessory.Flag.HIDE_WITH_PARROT)) {
+			if (equipper.hasLeftShoulderEntity() || equipper.hasRightShoulderEntity()) {
+				HumanoidArm side = null;
+
+				switch (accessory.getAttachment()) {
+					case HEAD:
+					case BODY:
+						// decide based on which side it is skewed to
+						// If not skewed hide with either parrot
+						Vec3 centre = accessory.getModel().getBoundingBox().getCenter();
+						if (Math.abs(centre.x - 8) > 0.5) {
+							side = (centre.x > 8 ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
+						}
+						break;
+					case LEFT_ARM:
+					case LEFT_LEG:
+						side = accessory.isMirrored() ? HumanoidArm.RIGHT : HumanoidArm.LEFT;
+						break;
+					case RIGHT_ARM:
+					case RIGHT_LEG:
+						side = accessory.isMirrored() ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
+					case UNKNOWN_DEFAULT_OPEN_API:
+						break;
+				}
+
+				if (side == null || side == HumanoidArm.LEFT) {
+					if (equipper.hasLeftShoulderEntity()) {
+						return false;
+					}
+				}
+				if (side == null || side == HumanoidArm.RIGHT) {
+					if (equipper.hasLeftShoulderEntity()) {
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	public interface ArmourEquipper {
+		ItemStack getItemBySlot(EquipmentSlot equipmentSlot);
+		boolean hasLeftShoulderEntity();
+		boolean hasRightShoulderEntity();
+
+		default boolean hasItemInSlot(EquipmentSlot equipmentSlot) {
+			return !getItemBySlot(equipmentSlot).isEmpty();
+		}
+	}
+
+	public static final class EntityEquipper implements ArmourEquipper {
+		public EntityEquipper(LivingEntity entity) {
+			this.entity = entity;
+		}
+
+		private final LivingEntity entity;
+
+		@Override
+		public ItemStack getItemBySlot(EquipmentSlot equipmentSlot) {
+			return entity.getItemBySlot(equipmentSlot);
+		}
+
+		@Override
+		public boolean hasLeftShoulderEntity() {
+			return entity instanceof AbstractClientPlayer && !((AbstractClientPlayer) entity).getShoulderEntityLeft().isEmpty();
+		}
+
+		@Override
+		public boolean hasRightShoulderEntity() {
+			return entity instanceof AbstractClientPlayer && !((AbstractClientPlayer) entity).getShoulderEntityLeft().isEmpty();
 		}
 	}
 }
