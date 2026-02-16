@@ -145,7 +145,7 @@ public final class CosmeticaModelBakery {
 			List<BlockModelPart> list,
 			PoseStack poseStack,
 			VertexConsumer vertexConsumer,
-			int i
+			int packedLight
 	) {
 		int j = 0;
 		int k = 0;
@@ -166,7 +166,7 @@ public final class CosmeticaModelBakery {
 
 						if (bl3) {
 							// lighting m -> -1
-							renderModelFaceFlat(blockAndTintGetter, -1, i, false, poseStack, vertexConsumer, list2, renderStorage);
+							renderModelFaceFlat(blockAndTintGetter, -1, packedLight, false, poseStack, vertexConsumer, list2, renderStorage);
 						}
 					}
 				}
@@ -174,7 +174,7 @@ public final class CosmeticaModelBakery {
 
 			List<BakedQuad> list3 = blockModelPart.getQuads(null);
 			if (!list3.isEmpty()) {
-				renderModelFaceFlat(blockAndTintGetter, -1, i, true, poseStack, vertexConsumer, list3, renderStorage);
+				renderModelFaceFlat(blockAndTintGetter, -1, packedLight, true, poseStack, vertexConsumer, list3, renderStorage);
 			}
 		}
 	}
@@ -182,7 +182,7 @@ public final class CosmeticaModelBakery {
 	private static void renderModelFaceFlat(
 			BlockAndTintGetter blockAndTintGetter,
 			int i,
-			int j,
+			int packedLight,
 			boolean bl,
 			PoseStack poseStack,
 			VertexConsumer vertexConsumer,
@@ -200,11 +200,11 @@ public final class CosmeticaModelBakery {
 			storage.brightness[1] = f;
 			storage.brightness[2] = f;
 			storage.brightness[3] = f;
-			storage.lightmap[0] = j;//i;
-			storage.lightmap[1] = j;//i;
-			storage.lightmap[2] = j;//i;
-			storage.lightmap[3] = j;//i;
-			putQuadData(vertexConsumer, poseStack.last(), bakedQuad, storage, j);
+			storage.lightmap[0] = packedLight;
+			storage.lightmap[1] = packedLight;
+			storage.lightmap[2] = packedLight;
+			storage.lightmap[3] = packedLight;
+			putQuadData(vertexConsumer, poseStack.last(), bakedQuad, storage, packedLight);
 		}
 	}
 
