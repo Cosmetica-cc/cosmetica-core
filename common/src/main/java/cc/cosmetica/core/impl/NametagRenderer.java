@@ -26,19 +26,14 @@ import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.PlayerRenderState;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.PlayerModelPart;
-import net.minecraft.world.item.ElytraItem;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
@@ -159,6 +154,7 @@ public final class NametagRenderer {
 
 			if (cosmetics.isPresent()) {
 				boolean cloak = playerRenderState.skin.capeTexture() != null && playerRenderState.showCape;
+				boolean elytra = HumanoidAccessoriesLayer.hasLayer(playerRenderState.chestEquipment, EquipmentClientInfo.LayerType.WINGS, equipmentAssets);
 
 				renderLore(
 						stack,
@@ -175,7 +171,8 @@ public final class NametagRenderer {
 						playerModel.head.xRot,
 						packedLight,
 						new HumanoidAccessoriesLayer.HumanoidRenderEquipper(playerRenderState),
-						cloak);
+						cloak,
+						elytra);
 			}
 		}
 	}
@@ -197,7 +194,7 @@ public final class NametagRenderer {
 			if (doNametagShift) {
 				for (Accessory accessory : hats) {
 					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-						if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak)) {
+						if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak, elytra)) {
 							if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
 								hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
 							}

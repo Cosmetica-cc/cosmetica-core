@@ -24,7 +24,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
@@ -37,7 +36,6 @@ import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.phys.Vec3;
@@ -147,7 +145,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 	}
 
 	// Vanilla method for checking whether elytra renders or for humanoid models
-	private static boolean hasLayer(ItemStack itemStack, EquipmentClientInfo.LayerType layerType, EquipmentAssetManager equipmentAssets) {
+	public static boolean hasLayer(ItemStack itemStack, EquipmentClientInfo.LayerType layerType, EquipmentAssetManager equipmentAssets) {
 		Equippable equippable = itemStack.get(DataComponents.EQUIPPABLE);
 		if (equippable != null && !equippable.assetId().isEmpty()) {
 			EquipmentClientInfo equipmentClientInfo = equipmentAssets.get(equippable.assetId().get());
