@@ -53,7 +53,7 @@ public class PlayerInfoMixin implements CosmeticEquipper {
 
     @Override
     public void cosmeticacore$refreshCosmetics(CosmeticManager manager) {
-        this.cosmeticacore$cosmetics.refreshCosmetics(manager, this.profile.getId(), newCosmetics -> {
+        this.cosmeticacore$cosmetics.refreshCosmetics(manager, this.profile.id(), newCosmetics -> {
             MasterCosmeticManager.post((PlayerInfo) (Object) this, newCosmetics);
         });
     }

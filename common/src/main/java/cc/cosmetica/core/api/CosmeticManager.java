@@ -84,7 +84,7 @@ public interface CosmeticManager {
 
 		public UUID getId() {
 			if (this.remotePlayerInfo != null) {
-				return this.remotePlayerInfo.getProfile().getId();
+				return this.remotePlayerInfo.getProfile().id();
 			} else {
                 assert this.entity != null;
                 return this.entity.getUUID();

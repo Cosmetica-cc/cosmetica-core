@@ -48,7 +48,7 @@ public abstract class ClientPacketListenerMixin {
         for (UUID uUID : packet.profileIds()) {
             PlayerInfo info = this.playerInfoMap.get(uUID);
             if (info != null) {
-                Logging.getInstance().debug(LoggingCategory.COSMETICS, "Detaching {} from their cosmetics manager", info.getProfile().getId());
+                Logging.getInstance().debug(LoggingCategory.COSMETICS, "Detaching {} from their cosmetics manager", info.getProfile().id());
                 ((CosmeticEquipper) info).cosmeticacore$onEntityRemoved();
             }
         }
