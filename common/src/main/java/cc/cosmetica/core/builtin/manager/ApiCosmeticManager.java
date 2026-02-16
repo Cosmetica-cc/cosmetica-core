@@ -30,9 +30,8 @@ import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.model.PlayerResponse;
 import gg.cloaks.javaclient.model.TexturePacketDto;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
@@ -46,19 +45,19 @@ import java.util.UUID;
  */
 public class ApiCosmeticManager implements CosmeticManager {
 	@Override
-	public boolean canManage(LivingEntity entity) {
-		return entity instanceof RemotePlayer && ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics() != null;
+	public boolean canManage(Either either) {
+		return either.remotePlayerInfo != null && ((ApiCosmeticsHolder)either.remotePlayerInfo).cosmeticacore$getApiCosmetics() != null;
 	}
 
 	@Override
-	public Cosmetics getCosmetics(LivingEntity entity) {
-		return ((ApiCosmeticsHolder)entity).cosmeticacore$getApiCosmetics();
+	public Cosmetics getCosmetics(Either entity) {
+		return ((ApiCosmeticsHolder)entity.remotePlayerInfo).cosmeticacore$getApiCosmetics();
 	}
 
 	@Override
-	public void onRevoke(LivingEntity entity) {
-		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Unsubscribing to player updates for {}", entity.getUUID());
-		CosmeticaAPI.unsubscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, entity.getUUID(), API_MANAGER);
+	public void onRevoke(Either entity) {
+		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Unsubscribing to API player updates for {}", entity.getId());
+		CosmeticaAPI.unsubscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, entity.getId(), API_MANAGER);
 		// TODO clear built models to store minimal data when not owning a player (in case switch to another manager)
 	}
 
@@ -176,25 +175,33 @@ public class ApiCosmeticManager implements CosmeticManager {
 		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Updating cosmetics for {}", profile);
 		Player player = level.getPlayerByUUID(profile.id());
 
-		if (player == null) {
-			Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.name(), profile.id());
+		// catch a case where the game profile is not quite the same, but it's still our player
+		if (player == Minecraft.getInstance().player) {
+			// configure own cosmetics
+			SelfCosmeticManager.update(response);
 		} else {
-			// catch a case where the game profile is not quite the same, but it's still our player
-			if (player == Minecraft.getInstance().player) {
-				// configure own cosmetics
-				SelfCosmeticManager.update(response);
+			assert Minecraft.getInstance().player != null;
+
+			// Remote player
+			PlayerInfo playerInfo = Minecraft.getInstance().player.connection.getPlayerInfo(profile.id());
+			if (playerInfo == null && profile.name() != null) {
+				playerInfo = Minecraft.getInstance().player.connection.getPlayerInfo(profile.name());
+			}
+
+			if (playerInfo == null) {
+				Logging.getInstance().warn("Tried to configure cosmetics of {}/{} no matching player found!", profile.name(), profile.id());
 			} else {
 				// create a new ApiCosmetics
 				PlayerCosmetics cosmetics = PlayerCosmetics.fromResponse(response);
 
 				// store on the player
-				ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) player);
+				ApiCosmeticsHolder holder = ((ApiCosmeticsHolder) playerInfo);
 				holder.cosmeticacore$setApiCosmetics(cosmetics);
 
 				if (creaked) {
 					CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER_CREAKED, profile.name(), API_MANAGER, () -> lookUpGameProfile(profile));
 				} else {
-					CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, player.getUUID(), API_MANAGER, () -> lookUpGameProfile(profile));
+					CosmeticaAPI.subscribe(CosmeticaAPI.SubscriptionEvent.PLAYER, profile.id(), API_MANAGER, () -> lookUpGameProfile(profile));
 				}
 			}
 		}
