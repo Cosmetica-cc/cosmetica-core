@@ -130,148 +130,60 @@ public final class CosmeticaModelBakery {
 
 	// render
 	public static void renderModel(BlockModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
-		tesselateWithoutAO(
-				EmptyBlockAndTintGetter.INSTANCE,
-				List.of(model),
+		VertexConsumer consumer = multiBufferSource.getBuffer(RenderType.armorTranslucent(texture));
+
+		int[] tints = new int[0];
+		for (Direction direction : Direction.values()) {
+			List<BakedQuad> quads = model.getQuads(direction);
+			renderQuadList(
+					stack,
+					consumer,
+					quads,
+					tints,
+					packedLight,
+					OverlayTexture.NO_OVERLAY
+					);
+		}
+
+		List<BakedQuad> quads = model.getQuads(null);
+		renderQuadList(
 				stack,
-				multiBufferSource.getBuffer(RenderType.armorTranslucent(texture)),
-				packedLight
+				consumer,
+				quads,
+				tints,
+				packedLight,
+				OverlayTexture.NO_OVERLAY
 		);
 	}
 
-	// Adapted from ModelBlockRenderer
-	private static void tesselateWithoutAO(
-			BlockAndTintGetter blockAndTintGetter,
-			List<BlockModelPart> list,
-			PoseStack poseStack,
-			VertexConsumer vertexConsumer,
-			int packedLight
-	) {
-		int j = 0;
-		int k = 0;
-		CommonRenderStorage renderStorage = new CommonRenderStorage();
+	// Adapted from ItemRenderer
+	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> quads, int[] tintLayers, int lighting, int overlay) {
+		PoseStack.Pose pose = poseStack.last();
 
-		for (BlockModelPart blockModelPart : list) {
-			for (Direction direction : Direction.values()) {
-				int l = 1 << direction.ordinal();
-				boolean bl2 = (j & l) == 1;
-				boolean bl3 = (k & l) == 1;
-				if (!bl2 || bl3) {
-					List<BakedQuad> list2 = blockModelPart.getQuads(direction);
-					if (!list2.isEmpty()) {
-						if (!bl2) {
-							j |= l;
-							k |= l;
-						}
-
-						if (bl3) {
-							// lighting m -> -1
-							renderModelFaceFlat(blockAndTintGetter, -1, packedLight, false, poseStack, vertexConsumer, list2, renderStorage);
-						}
-					}
-				}
+		for (BakedQuad bakedQuad : quads) {
+			float f;
+			float g;
+			float h;
+			float l;
+			if (bakedQuad.isTinted()) {
+				int k = getLayerColorSafe(tintLayers, bakedQuad.tintIndex());
+				f = ARGB.alpha(k) / 255.0F;
+				g = ARGB.red(k) / 255.0F;
+				h = ARGB.green(k) / 255.0F;
+				l = ARGB.blue(k) / 255.0F;
+			} else {
+				f = 1.0F;
+				g = 1.0F;
+				h = 1.0F;
+				l = 1.0F;
 			}
 
-			List<BakedQuad> list3 = blockModelPart.getQuads(null);
-			if (!list3.isEmpty()) {
-				renderModelFaceFlat(blockAndTintGetter, -1, packedLight, true, poseStack, vertexConsumer, list3, renderStorage);
-			}
+			vertexConsumer.putBulkData(pose, bakedQuad, g, h, l, f, lighting, overlay);
 		}
 	}
 
-	private static void renderModelFaceFlat(
-			BlockAndTintGetter blockAndTintGetter,
-			int i,
-			int packedLight,
-			boolean bl,
-			PoseStack poseStack,
-			VertexConsumer vertexConsumer,
-			List<BakedQuad> list,
-			CommonRenderStorage storage
-	) {
-		for (BakedQuad bakedQuad : list) {
-			if (bl) {
-				calculateShape(bakedQuad.vertices(), bakedQuad.direction(), storage);
-				i = -1; //Brightness.pack(0xF, 0xF);
-			}
-
-			float f = blockAndTintGetter.getShade(bakedQuad.direction(), bakedQuad.shade());
-			storage.brightness[0] = f;
-			storage.brightness[1] = f;
-			storage.brightness[2] = f;
-			storage.brightness[3] = f;
-			storage.lightmap[0] = packedLight;
-			storage.lightmap[1] = packedLight;
-			storage.lightmap[2] = packedLight;
-			storage.lightmap[3] = packedLight;
-			putQuadData(vertexConsumer, poseStack.last(), bakedQuad, storage, packedLight);
-		}
-	}
-
-	private static void putQuadData(
-			VertexConsumer vertexConsumer,
-			PoseStack.Pose pose,
-			BakedQuad bakedQuad,
-			CommonRenderStorage commonRenderStorage,
-			int i
-	) {
-		// tint
-		float tintRed = 1.0F;
-		float tintGreen = 1.0F;
-		float tintBlue = 1.0F;
-
-		vertexConsumer.putBulkData(pose, bakedQuad, commonRenderStorage.brightness, tintRed, tintGreen, tintBlue, 1.0F, commonRenderStorage.lightmap, i, true);
-	}
-
-	private static void calculateShape(
-			int[] is,
-			Direction direction,
-			CommonRenderStorage commonRenderStorage
-	) {
-		float f = 32.0F;
-		float g = 32.0F;
-		float h = 32.0F;
-		float i = -32.0F;
-		float j = -32.0F;
-		float k = -32.0F;
-
-		for (int l = 0; l < 4; l++) {
-			float m = Float.intBitsToFloat(is[l * 8]);
-			float n = Float.intBitsToFloat(is[l * 8 + 1]);
-			float o = Float.intBitsToFloat(is[l * 8 + 2]);
-			f = Math.min(f, m);
-			g = Math.min(g, n);
-			h = Math.min(h, o);
-			i = Math.max(i, m);
-			j = Math.max(j, n);
-			k = Math.max(k, o);
-		}
-
-		commonRenderStorage.facePartial = switch (direction) {
-			case DOWN, UP -> f >= 1.0E-4F || h >= 1.0E-4F || i <= 0.9999F || k <= 0.9999F;
-			case NORTH, SOUTH -> f >= 1.0E-4F || g >= 1.0E-4F || i <= 0.9999F || j <= 0.9999F;
-			case WEST, EAST -> g >= 1.0E-4F || h >= 1.0E-4F || j <= 0.9999F || k <= 0.9999F;
-		};
-
-		commonRenderStorage.faceCubic = switch (direction) {
-			// With "blockState.isCollisionShapeFullBlock" assumed false
-			case DOWN -> g == j && (g < 1.0E-4F);
-			case UP -> g == j && (j > 0.9999F);
-			case NORTH -> h == k && (h < 1.0E-4F);
-			case SOUTH -> h == k && (k > 0.9999F);
-			case WEST -> f == i && (f < 1.0E-4F);
-			case EAST -> f == i && (i > 0.9999F);
-		};
-	}
-
-	private static class CommonRenderStorage {
-		public final BlockPos.MutableBlockPos scratchPos = new BlockPos.MutableBlockPos();
-		public boolean faceCubic;
-		public boolean facePartial;
-		public final float[] brightness = new float[4];
-		public final int[] lightmap = new int[4];
-		public int tintCacheIndex = -1;
-		public int tintCacheValue;
+	private static int getLayerColorSafe(int[] tintLayers, int index) {
+		return index >= 0 && index < tintLayers.length ? tintLayers[index] : -1;
 	}
 
 	// ======================== //
