@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
+    "MinecraftMixin",
     "PlayerModelAccessor",
     "cape.AbstractClientPlayerMixin",
     "cape.ArmourStandRendererMixin",
@@ -12,19 +13,23 @@
     "cosmetics.ArmourStandModelMixin",
     "cosmetics.LivingEntityRendererMixin",
     "cosmetics.LivingEntityRenderStateMixin",
+    "equipper.ClientLevelMixin",
+    "equipper.ClientPacketListenerMixin",
     "equipper.EntityMixin",
+    "equipper.MinecraftMixin",
+    "equipper.PlayerInfoMixin",
+    "equipper.RemotePlayerMixin",
     "nametags.FontStringRenderOutputMixin",
     "nametags.InventoryScreenMixin",
     "nametags.LivingEntityRendererMixin",
     "nametags.PlayerRendererMixin",
     "nametags.PlayerTabOverlayMixin",
-    "network.AbstractClientPlayerMixin",
     "network.ClientboundPlayerInfoUpdatePacketActionMixin",
+    "network.ApiCosmeticsHolderPlayerInfoMixin",
     "texture.ModelManagerMixin",
     "texture.NativeImageAccessorMixin"
   ],
   "mixins": [
-    "MinecraftMixin",
     "equipper.LivingEntityMixin",
     "network.ArmourStandMixin"
   ],

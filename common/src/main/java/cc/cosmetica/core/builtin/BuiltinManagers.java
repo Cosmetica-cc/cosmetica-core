@@ -20,18 +20,12 @@ import cc.cosmetica.core.api.CosmeticManagers;
 import cc.cosmetica.core.builtin.manager.ApiCosmeticManager;
 import cc.cosmetica.core.builtin.manager.ArmourStandCosmeticManager;
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
-import cc.cosmetica.core.builtin.manager.TestCosmeticManager;
-import cc.cosmetica.core.impl.UUIDs;
-import net.minecraft.client.Minecraft;
-
-import java.util.UUID;
 
 /**
  * Registers the built-in cosmetic managers in the Cosmetica.
  */
 public class BuiltinManagers {
 	public void init() {
-		CosmeticManagers.registerCosmeticManager(-100, new TestCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(0, new ApiCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(1, new ArmourStandCosmeticManager());
 		CosmeticManagers.registerCosmeticManager(2, new SelfCosmeticManager());
