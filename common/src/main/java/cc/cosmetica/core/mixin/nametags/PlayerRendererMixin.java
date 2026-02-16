@@ -29,11 +29,15 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.lang.ref.WeakReference;
 
 /**
  * Adds lore to players.
@@ -44,6 +48,13 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 		super(context, entityModel, f);
 	}
 
+	@Inject(at = @At("RETURN"), method = "<init>")
+	private void onInit(EntityRendererProvider.Context context, boolean bl, CallbackInfo ci) {
+		this.cosmeticacore$equipmentAssets = context.getEquipmentAssets();
+	}
+
+	private @Unique EquipmentAssetManager cosmeticacore$equipmentAssets;
+
 	@Inject(at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;renderNameTag(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
@@ -51,7 +62,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 	), method = "renderNameTag(Lnet/minecraft/client/renderer/entity/state/PlayerRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V")
 	protected void onRenderNameTag(PlayerRenderState state, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
 		// add lore
-		NametagRenderer.renderLore(this.entityRenderDispatcher, state, this.getModel(), stack, buffer, this.getFont(), packedLight);
+		NametagRenderer.renderLore(this.entityRenderDispatcher, state, this.getModel(), stack, buffer, this.getFont(), packedLight, this.cosmeticacore$equipmentAssets);
 
 		// add nametag icons
 		Cosmetics.getCosmetics(state).ifPresent(c -> {
