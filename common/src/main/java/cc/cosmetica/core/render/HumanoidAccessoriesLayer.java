@@ -191,7 +191,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 						// If not skewed hide with either parrot
 						Vec3 centre = accessory.getModel().getBoundingBox().getCenter()
 								.add(accessory.getOffset());
-						if (Math.abs(centre.x - 8) > 0.5) {
+						if (Math.abs(centre.x - 8) > 0.3125) {
 							side = (centre.x < 8 ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
 						}
 						break;
