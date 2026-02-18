@@ -202,9 +202,10 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 					case BODY:
 						// decide based on which side it is skewed to
 						// If not skewed hide with either parrot
-						Vec3 centre = accessory.getModel().getBoundingBox().getCenter();
-						if (Math.abs(centre.x - 8) > 0.5) {
-							side = ((centre.x > 8) ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
+						Vec3 centre = accessory.getModel().getBoundingBox().getCenter()
+								.add(accessory.getOffset());
+						if (Math.abs(centre.x - 8) > 0.3125) {
+							side = (centre.x < 8 ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
 						}
 						break;
 					case LEFT_ARM:
@@ -219,7 +220,6 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 				}
 
 				if (side == null || side == HumanoidArm.LEFT) {
-					// FIXME compatibility with modded entities?
 					if (equipper.hasLeftShoulderEntity()) {
 						return false;
 					}
@@ -286,6 +286,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 
 		@Override
 		public boolean hasLeftShoulderEntity() {
+			// FIXME compatibility with modded entities?
 			return state instanceof PlayerRenderState playerRenderState && playerRenderState.parrotOnLeftShoulder != null;
 		}
 
