@@ -20,6 +20,7 @@ import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.NametagConfig;
 import cc.cosmetica.core.impl.NametagRenderer;
+import cc.cosmetica.core.render.HumanoidAccessoriesLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -29,11 +30,15 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.lang.ref.WeakReference;
 
 /**
  * Adds lore to players.
@@ -44,12 +49,19 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 		super(context, entityModel, f);
 	}
 
+	@Inject(at = @At("RETURN"), method = "<init>")
+	private void onInit(EntityRendererProvider.Context context, boolean bl, CallbackInfo ci) {
+		this.cosmeticacore$equipmentAssets = context.getEquipmentAssets();
+	}
+
+	private @Unique EquipmentAssetManager cosmeticacore$equipmentAssets;
+
 	@Inject(at = @At(value = "HEAD"),
 			method = "renderNameTag(Lnet/minecraft/client/renderer/entity/state/PlayerRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
 	)
 	private void shiftNametags(PlayerRenderState avatarRenderState, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
 		if (avatarRenderState.nameTagAttachment != null) {
-			avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment);
+			avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment, new HumanoidAccessoriesLayer.HumanoidRenderEquipper(avatarRenderState), this.cosmeticacore$equipmentAssets, cloak, elytra);
 		}
 	}
 
@@ -60,7 +72,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 	), method = "renderNameTag(Lnet/minecraft/client/renderer/entity/state/PlayerRenderState;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V")
 	protected void onRenderNameTag(PlayerRenderState state, Component displayName, PoseStack stack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
 		// add lore
-		NametagRenderer.renderLore(this.entityRenderDispatcher, state, this.getModel(), stack, buffer, this.getFont(), packedLight, false);
+		NametagRenderer.renderLore(this.entityRenderDispatcher, state, this.getModel(), stack, buffer, this.getFont(), packedLight, false, null);
 
 		// add nametag icons
 		Cosmetics.getCosmetics(state).ifPresent(c -> {

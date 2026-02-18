@@ -20,16 +20,18 @@ import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.NametagConfig;
+import cc.cosmetica.core.render.HumanoidAccessoriesLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.resources.model.EquipmentAssetManager;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -141,8 +143,12 @@ public final class NametagRenderer {
 	 * @param multiBufferSource the buffer source for rendering.
 	 * @param font the font to draw text with.
 	 * @param packedLight the environment light.
+	 * @param readjustNametagPosition whether to readjust the nametag position for the entity based on head accessories.
+	 * @param equipmentAssets the equipment asset manager (for checking if an elytra is equipped) if readjusting nametags.
+	 *                        May be null if readjustNametagPosition is false.
 	 */
-	public static void renderLore(EntityRenderDispatcher entityRenderDispatcher, PlayerRenderState playerRenderState, PlayerModel playerModel, PoseStack stack, MultiBufferSource multiBufferSource, Font font, int packedLight, boolean readjustNametagPosition) {
+	public static void renderLore(EntityRenderDispatcher entityRenderDispatcher, PlayerRenderState playerRenderState, PlayerModel playerModel, PoseStack stack, MultiBufferSource multiBufferSource, Font font, int packedLight, boolean readjustNametagPosition,
+								  EquipmentAssetManager equipmentAssets) {
 		double squaredDistance = playerRenderState.distanceToCameraSq; //entityRenderDispatcher.distanceToSqr(player);
 
 		if (squaredDistance <= 4096.0D) {
@@ -152,6 +158,9 @@ public final class NametagRenderer {
 			fixedCameraOrientation.rotateY(Mth.DEG_TO_RAD * 180);
 
 			if (cosmetics.isPresent()) {
+				boolean cloak = playerRenderState.skin.capeTexture() != null && playerRenderState.showCape;
+				boolean elytra = HumanoidAccessoriesLayer.hasLayer(playerRenderState.chestEquipment, EquipmentClientInfo.LayerType.WINGS, equipmentAssets);
+
 				renderLore(
 						stack,
 						fixedCameraOrientation,
@@ -165,12 +174,17 @@ public final class NametagRenderer {
 						cosmetics.get().isUpsideDown(), // upside down
 						playerRenderState.nameTagAttachment == null ? playerRenderState.boundingBoxHeight : (float) playerRenderState.nameTagAttachment.y, // player.getBbHeight(),
 						playerModel.head.xRot,
-						packedLight);
+						packedLight,
+						new HumanoidAccessoriesLayer.HumanoidRenderEquipper(playerRenderState),
+						cloak,
+						elytra);
 			}
 		}
 	}
 
-	public static Vec3 shiftNametags(PlayerRenderState state, PlayerModel model, Vec3 position) {
+	public static Vec3 shiftNametags(PlayerRenderState state, PlayerModel model, Vec3 position,
+									 HumanoidAccessoriesLayer.ArmourEquipper equipper, EquipmentAssetManager equipmentAssets,
+									 boolean cloak, boolean elytra) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
 		boolean wearingHelmet = !state.headEquipment.isEmpty();
 
@@ -180,8 +194,10 @@ public final class NametagRenderer {
 
 			for (Accessory accessory : cosmetics.get().getAccessories()) {
 				if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-					if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
-						hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
+					if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak && state.showCape, elytra)) {
+						if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
+							hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
+						}
 					}
 				}
 			}
@@ -209,7 +225,8 @@ public final class NametagRenderer {
 	public static void renderLore(PoseStack stack, Quaternionf cameraOrientation, Font font,
 								  MultiBufferSource multiBufferSource, @Nullable NametagConfig lore, Collection<Accessory> hats,
 								  boolean wearingHelmet, boolean doNametagShift, boolean discrete, boolean upsideDown,
-								  float playerHeight, float xRotHead, int packedLight) {
+								  float playerHeight, float xRotHead, int packedLight,
+								  HumanoidAccessoriesLayer.ArmourEquipper equipper, boolean cloak, boolean elytra) {
 		// how much do we need to shift up nametags?
 
 		// upside down players don't need nametags shifted up
@@ -219,8 +236,10 @@ public final class NametagRenderer {
 			if (doNametagShift) {
 				for (Accessory accessory : hats) {
 					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-						if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
-							hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
+						if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak, elytra)) {
+							if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
+								hatTopY = Math.max(hatTopY, (float) (accessory.getModel().getBoundingBox().maxY + accessory.getOffset().y));
+							}
 						}
 					}
 				}
