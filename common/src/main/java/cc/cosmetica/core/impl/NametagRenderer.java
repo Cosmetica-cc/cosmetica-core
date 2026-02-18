@@ -183,10 +183,10 @@ public final class NametagRenderer {
 	}
 
 	public static Vec3 shiftNametags(PlayerRenderState state, PlayerModel model, Vec3 position,
-									 HumanoidAccessoriesLayer.ArmourEquipper equipper, EquipmentAssetManager equipmentAssets,
-									 boolean cloak, boolean elytra) {
+									 HumanoidAccessoriesLayer.ArmourEquipper equipper, boolean elytra) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
 		boolean wearingHelmet = !state.headEquipment.isEmpty();
+		boolean cloak = state.skin.capeTexture() != null && state.showCape;
 
 		if (!state.isUpsideDown && cosmetics.isPresent()) {
 			float hatTopY = 0;
@@ -194,7 +194,7 @@ public final class NametagRenderer {
 
 			for (Accessory accessory : cosmetics.get().getAccessories()) {
 				if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-					if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak && state.showCape, elytra)) {
+					if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak, elytra)) {
 						if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
 							hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
 						}
