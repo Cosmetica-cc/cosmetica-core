@@ -21,19 +21,21 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.NametagConfig;
 import cc.cosmetica.core.impl.IconSubmitter;
 import cc.cosmetica.core.impl.NametagRenderer;
+import cc.cosmetica.core.render.HumanoidAccessoriesLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.entity.ClientAvatarEntity;
 import net.minecraft.client.model.player.PlayerModel;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.resources.model.EquipmentAssetManager;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.world.entity.Avatar;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -47,11 +49,19 @@ public abstract class PlayerRendererMixin<AvatarlikeEntity extends Avatar & Clie
 		super(context, entityModel, f);
 	}
 
+	@Inject(at = @At("RETURN"), method = "<init>")
+	private void onInit(EntityRendererProvider.Context context, boolean bl, CallbackInfo ci) {
+		this.cosmeticacore$equipmentAssets = context.getEquipmentAssets();
+	}
+
+	private @Unique EquipmentAssetManager cosmeticacore$equipmentAssets;
+
 	@Inject(at = @At(value = "HEAD"),
 			method = "submitNameTag(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V")
 	private void shiftNametags(AvatarRenderState avatarRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
 		if (avatarRenderState.nameTagAttachment != null) {
-			avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment);
+			boolean elytra = HumanoidAccessoriesLayer.hasLayer(avatarRenderState.chestEquipment, EquipmentClientInfo.LayerType.WINGS, this.cosmeticacore$equipmentAssets);
+			avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment, new HumanoidAccessoriesLayer.HumanoidRenderEquipper(avatarRenderState), elytra);
 		}
 	}
 
