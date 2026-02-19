@@ -196,7 +196,7 @@ public final class NametagRenderer {
 				if (accessory.getAttachment() == AttachmentEnum.HEAD) {
 					if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak, elytra)) {
 						if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
-							hatTopY = Math.max(hatTopY, (float) accessory.getModel().getBoundingBox().maxY);
+							hatTopY = Math.max(hatTopY, (float) (accessory.getModel().getBoundingBox().maxY + accessory.getOffset().y*16.0 - 12.0));
 						}
 					}
 				}
