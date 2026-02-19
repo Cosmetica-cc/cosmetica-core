@@ -146,6 +146,11 @@ public class Accessory implements Cosmetic {
 
 		private final Vec3 baseOffset;
 
+		/**
+		 * Set the offset of this adjustable accessory. This sets the absolute, in-game offset. Add
+		 * {@link Adjustable#getBaseOffset()} as a base in most cases!
+		 * @param offset the offset for this accessory.
+		 */
 		public void setOffset(Vec3 offset) {
 			this.offset = offset;
 		}
