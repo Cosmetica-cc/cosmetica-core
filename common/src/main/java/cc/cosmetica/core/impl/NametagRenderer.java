@@ -196,7 +196,10 @@ public final class NametagRenderer {
 					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
 						if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, new HumanoidAccessoriesLayer.EntityEquipper(entity), cloak)) {
 							if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
-								hatTopY = Math.max(hatTopY, (float) (accessory.getModel().getBoundingBox().maxY + accessory.getOffset().y));
+								// 8.0 - 4 == 4.0 is the default visual offset (see Accessory#attachmentTransform)
+								// -8 as this code was written for hats, but the base of the head is offset 0 now
+								// = -12
+								hatTopY = Math.max(hatTopY, (float) (accessory.getModel().getBoundingBox().maxY + accessory.getOffset().y*16.0 - 12.0));
 							}
 						}
 					}

@@ -189,10 +189,13 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 					case BODY:
 						// decide based on which side it is skewed to
 						// If not skewed hide with either parrot
-						Vec3 centre = accessory.getModel().getBoundingBox().getCenter()
-								.add(accessory.getOffset());
-						if (Math.abs(centre.x - 8) > 0.3125) {
-							side = (centre.x < 8 ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
+						Vec3 centre = accessory.getModel().getBoundingBox().getCenter();
+						Vec3 offset = accessory.getOffset();
+
+						double horizontalPosition = centre.x - 8 + offset.x * 16;
+
+						if (Math.abs(horizontalPosition) > 0.5) {
+							side = (horizontalPosition < 8 ^ accessory.isMirrored()) ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
 						}
 						break;
 					case LEFT_ARM:
