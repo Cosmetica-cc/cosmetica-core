@@ -161,7 +161,7 @@ public final class NametagRenderer {
 
 			if (cosmetics.isPresent()) {
 				boolean cloak = playerRenderState.skin.cape() != null && playerRenderState.showCape;
-				boolean elytra = HumanoidAccessoriesLayer.hasLayer(playerRenderState.chestEquipment, EquipmentClientInfo.LayerType.WINGS, equipmentAssets);
+				boolean elytra = readjustNametagPosition && HumanoidAccessoriesLayer.hasLayer(playerRenderState.chestEquipment, EquipmentClientInfo.LayerType.WINGS, equipmentAssets);
 
 				renderLore(
 						stack,
