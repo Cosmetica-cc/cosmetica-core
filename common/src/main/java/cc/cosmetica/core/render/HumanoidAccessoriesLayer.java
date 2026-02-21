@@ -109,7 +109,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 				// thin skin: shift
 				if (this.getParentModel() instanceof PlayerModel) {
 					if (((PlayerModelAccessor) this.getParentModel()).isSlim()) {
-						additionalXOffset += 0.5f / 16.0f;
+						additionalXOffset -= 0.5f / 16.0f;
 					}
 				}
 				break;
