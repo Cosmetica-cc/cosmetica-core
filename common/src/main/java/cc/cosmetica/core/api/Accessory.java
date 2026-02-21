@@ -229,20 +229,20 @@ public class Accessory implements Cosmetic {
 
 		switch (attachment) {
 		case HEAD:
-			dy = 8.0 - 4;
-			dx = 8.0 - 8;
+			dy = 4.0;
+			dx = 0.0;
 			break;
 		case RIGHT_ARM:
-			dy = 0.0 - 6;
-			dx = 8.0 - 8;
+			dy = -6.0;
+			dx = 1.0;
 			break;
 		case LEFT_ARM:
-			dy = 0.0 - 6;
-			dx = 7.0 - 8;
+			dy = -6.0;
+			dx = -1.0;
 			break;
 		default:
-			dy = -2.0 - 6;
-			dx = 8.0 - 8;
+			dy = -8.0;
+			dx = 0.0;
 			break;
 		}
 
