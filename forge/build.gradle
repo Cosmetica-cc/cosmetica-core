@@ -2,6 +2,11 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
+tasks.register('remapJar', net.fabricmc.loom.task.RemapJarTask) {
+    enabled = false
+    return
+}
+
 architectury {
     platformSetupLoomIde()
     forge()
@@ -32,7 +37,7 @@ dependencies {
 
     api "gg.cloaks:javaclient:${cosmetica_java_client_version}"
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    common(project(path: ":common")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 
     // bundle okhttp and javaclient

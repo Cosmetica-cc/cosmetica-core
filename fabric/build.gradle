@@ -2,6 +2,11 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
+tasks.register('remapJar', net.fabricmc.loom.task.RemapJarTask) {
+    enabled = false
+    return
+}
+
 architectury {
     platformSetupLoomIde()
     fabric()
@@ -20,14 +25,14 @@ configurations {
 }
 
 dependencies {
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-    modRuntimeOnly ("net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}") {
+    implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    runtimeOnly ("net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}") {
         exclude module: "fabric-loader"
     }
 
     api "gg.cloaks:javaclient:${cosmetica_java_client_version}"
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    common(project(path: ":common")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
     // bundle javaclient

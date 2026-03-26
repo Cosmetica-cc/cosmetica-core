@@ -21,25 +21,25 @@ We highly recommend bundling this with Jar-In-Jar or Shadow as well (not shown h
 ### Common
 ```groovy
 dependencies {
-    modImplementation "cc.cosmetica:kupe:${rootProject.kupe_version}-${rootProject.minecraft_version}"
+    implementation "cc.cosmetica:kupe:${rootProject.kupe_version}-${rootProject.minecraft_version}"
 }
 ```
 ### Fabric
 ```groovy
 dependencies {
-    modImplementation "cc.cosmetica:kupe-fabric:${rootProject.kupe_version}-${rootProject.minecraft_version}"
+    implementation "cc.cosmetica:kupe-fabric:${rootProject.kupe_version}-${rootProject.minecraft_version}"
 }
 ```
 ### Forge
 ```groovy
 dependencies {
-    modImplementation "cc.cosmetica:kupe-forge:${rootProject.kupe_version}-${rootProject.minecraft_version}"
+    implementation "cc.cosmetica:kupe-forge:${rootProject.kupe_version}-${rootProject.minecraft_version}"
 }
 ```
 
 ### NeoForge
 ```groovy
 dependencies {
-    modImplementation "cc.cosmetica:kupe-neoforge:${rootProject.kupe_version}-${rootProject.minecraft_version}"
+    implementation "cc.cosmetica:kupe-neoforge:${rootProject.kupe_version}-${rootProject.minecraft_version}"
 }
 ```
