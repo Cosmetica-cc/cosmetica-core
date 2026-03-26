@@ -21,12 +21,15 @@ import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
+import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.block.BlockModelRenderState;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -53,7 +56,7 @@ public final class CosmeticaModel {
 	}
 
 	private final Identifier texture;
-	private BlockModelPart model;
+	private BlockStateModelPart model;
 	private BlockModel unbakedModel; // cleared when the model is baked!
 	private AABB boundingBox;
 	private boolean textureLoaded;
@@ -111,7 +114,7 @@ public final class CosmeticaModel {
 	 * @return the baked model for this cosmetic model, or null if it has not been baked yet.
 	 */
 	@Nullable
-	public BlockModelPart getBakedModel() {
+	public BlockStateModelPart getBakedModel() {
 		return this.model;
 	}
 
@@ -135,7 +138,7 @@ public final class CosmeticaModel {
 	 * @param mirror whether to mirror the model.
 	 */
 	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
-		BlockModelPart model = this.getBakedModel();
+		BlockStateModelPart model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.0f;
@@ -150,8 +153,8 @@ public final class CosmeticaModel {
 				model,
 				stack,
 				multiBufferSource,
-				this.getTexture(),
 				packedLight);
+		// 26.1: removed texture parameter (buffers sourced from model)
 
 		stack.popPose();
 	}
@@ -168,7 +171,7 @@ public final class CosmeticaModel {
 	 * @param mirror whether to mirror the model.
 	 */
 	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror) {
-		BlockModelPart model = this.getBakedModel();
+		BlockStateModelPart model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.0f;
@@ -182,9 +185,8 @@ public final class CosmeticaModel {
 		collector.submitBlockModel(
 				stack,
 				RenderTypes.armorTranslucent(this.getTexture()),
-				new SingleVariant(model),
-				// rgb
-				1, 1, 1,
+				ImmutableList.of(model),
+				BlockModelRenderState.EMPTY_TINTS,
 				// light, overlay, outline
 				packedLight, OverlayTexture.NO_OVERLAY, 0
 		);

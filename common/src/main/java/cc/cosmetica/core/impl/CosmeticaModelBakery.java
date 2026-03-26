@@ -18,30 +18,29 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.texture.ModelSprite;
-import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.QuadInstance;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.OutlineBufferSource;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.SpriteLoader;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.client.resources.model.sprite.MaterialBaker;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -50,8 +49,6 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 /**
  * Bakes cosmetica models. A lot of code is reused from the vanilla game.
@@ -60,12 +57,6 @@ public final class CosmeticaModelBakery {
 	private CosmeticaModelBakery() {
 		// NO-OP
 	}
-
-	/**
-	 * The model bakery.
-	 * Set by ModelManagerMixin.
-	 */
-	public static ModelBakery bakery;
 
 	/**
 	 * Bake the given block model with the texture at the given location.
@@ -158,15 +149,18 @@ public final class CosmeticaModelBakery {
 	}
 
 	// render
-	public static void renderModel(BlockStateModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, Identifier texture, int packedLight) {
-		VertexConsumer consumer = multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture));
+	public static void renderModel(BlockStateModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight) {
+//		VertexConsumer consumer = multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture));
+
+		QuadInstance instance = new QuadInstance();
 
 		int[] tints = new int[0];
 		for (Direction direction : Direction.values()) {
 			List<BakedQuad> quads = model.getQuads(direction);
 			renderQuadList(
-					stack,
-					consumer,
+					instance,
+					stack.last(),
+					multiBufferSource,
 					quads,
 					tints,
 					packedLight,
@@ -176,8 +170,9 @@ public final class CosmeticaModelBakery {
 
 		List<BakedQuad> quads = model.getQuads(null);
 		renderQuadList(
-				stack,
-				consumer,
+				instance,
+				stack.last(),
+				multiBufferSource,
 				quads,
 				tints,
 				packedLight,
@@ -185,30 +180,38 @@ public final class CosmeticaModelBakery {
 		);
 	}
 
-	// Adapted from ItemRenderer
-	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> quads, int[] tintLayers, int lighting, int overlay) {
-		PoseStack.Pose pose = poseStack.last();
+	// Adapted from ItemFeatureRenderer
+	private static void renderQuadList(
+			final QuadInstance instance,
+			final PoseStack.Pose pose,
+			final MultiBufferSource bufferSource,
+//			final OutlineBufferSource outlineBufferSource,
+			final Iterable<BakedQuad> model,
+			final int[] tintLayers,
+			final int lightCoords,
+			final int overlayCoords
+	) {
+		instance.setLightCoords(lightCoords);
+		instance.setOverlayCoords(overlayCoords);
+//		if (submit.outlineColor() != 0) {
+//			outlineBufferSource.setColor(submit.outlineColor());
+//		}
 
-		for (BakedQuad bakedQuad : quads) {
-			float f;
-			float g;
-			float h;
-			float l;
-			if (bakedQuad.materialInfo().isTinted()) {
-				int k = getLayerColorSafe(tintLayers, bakedQuad.materialInfo().tintIndex());
-				f = ARGB.alpha(k) / 255.0F;
-				g = ARGB.red(k) / 255.0F;
-				h = ARGB.green(k) / 255.0F;
-				l = ARGB.blue(k) / 255.0F;
-			} else {
-				f = 1.0F;
-				g = 1.0F;
-				h = 1.0F;
-				l = 1.0F;
-			}
+		for (BakedQuad quad : model) {
+			BakedQuad.MaterialInfo material = quad.materialInfo();
+			RenderType renderType = material.itemRenderType();
+			instance.setColor(getLayerColorSafe(tintLayers, material));
 
-			vertexConsumer.putBulkData(pose, bakedQuad, g, h, l, f, lighting, overlay);
+//			if (submit.outlineColor() != 0) {
+//				outlineBufferSource.getBuffer(renderType).putBakedQuad(pose, quad, instance);
+//			}
+
+			bufferSource.getBuffer(renderType).putBakedQuad(pose, quad, instance);
 		}
+	}
+
+	private static int getLayerColorSafe(int[] tintLayers, final BakedQuad.MaterialInfo material) {
+		return material.isTinted() ? getLayerColorSafe(tintLayers, material.tintIndex()) : -1;
 	}
 
 	private static int getLayerColorSafe(int[] tintLayers, int index) {

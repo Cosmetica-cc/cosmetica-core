@@ -20,12 +20,23 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.resources.model.BlockStateDefinitions;
+import net.minecraft.client.resources.model.BlockStateModelLoader;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.StrictJsonParser;
 import net.minecraft.util.Util;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +48,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -195,8 +207,18 @@ public class BlockModelManager {
 					.thenAccept(json -> {
 						if (json == null) return;
 
+						final StateDefinition<Block, >
+
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
-							BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
+							// BlockStateModelLoader
+							JsonElement element = StrictJsonParser.parse(new InputStreamReader(is));
+							BlockStateModelDispatcher definition = BlockStateModelDispatcher.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(JsonParseException::new);
+							// Function<Identifier, StateDefinition<Block, BlockState>> definitionToBlockState = BlockStateDefinitions.definitionLocationToBlockStateMapper();
+							BlockStateModel.UnbakedRoot blockModel = definition.instantiate(
+									null,
+									() -> "cosmetica/" + modelId);
+
+							loadedStack.add(new BlockStateModelLoader.LoadedBlockStateModelDispatcher(resource.sourcePackId(), definition));
 
 							// calculate bounds
 							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(JsonParser.parseString(json));
