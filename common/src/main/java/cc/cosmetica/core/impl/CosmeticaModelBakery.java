@@ -27,15 +27,18 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.resources.model.sprite.MaterialBaker;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
@@ -47,6 +50,8 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * Bakes cosmetica models. A lot of code is reused from the vanilla game.
@@ -68,7 +73,7 @@ public final class CosmeticaModelBakery {
 	 *                 Must refer to an {@link CosmeticaTexture}.
 	 * @param model the model to bake.
 	 */
-	public static BlockModelPart bakeModel(Identifier location, BlockModel model) {
+	public static BlockStateModelPart bakeModel(Identifier location, BlockModel model) {
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
@@ -80,14 +85,41 @@ public final class CosmeticaModelBakery {
 			final String debugName = location.toString();
 
 			return new Variant(location).bake(new ModelBaker() {
-				// ModelBakery.PartCacheImpl
-				private final PartCache cache = new PartCache() {
-					private final Interner<Vector3fc> vectors = Interners.newStrongInterner();
+				private final MaterialBaker materials = new MaterialBaker() {
+					public Material.Baked get(Material material, ModelDebugName name) {
+						return new Material.Baked(sprite, material.forceTranslucent());
+					}
+
+					@Override
+					public Material.Baked reportMissingReference(String reference, ModelDebugName name) {
+						Logging.getInstance().warnOnce("reportMissingReference", "Should not have missing reference in Cosmetica model");
+						return new Material.Baked(sprite, false);
+					}
+				};
+
+				private final ModelBaker.Interner interner = new Interner() {
+					private final com.google.common.collect.Interner<Vector3fc> vectors = Interners.newStrongInterner();
+					private final com.google.common.collect.Interner<BakedQuad.MaterialInfo> materialInfos = Interners.newStrongInterner();
 
 					public Vector3fc vector(Vector3fc vector3fc) {
 						return this.vectors.intern(vector3fc);
 					}
+
+					@Override
+					public BakedQuad.MaterialInfo materialInfo(BakedQuad.MaterialInfo material) {
+						return this.materialInfos.intern(material);
+					}
 				};
+
+				@Override
+				public MaterialBaker materials() {
+					return this.materials;
+				}
+
+				@Override
+				public Interner interner() {
+					return this.interner;
+				}
 
 				@Override
 				public ResolvedModel getModel(Identifier resourceLocation) {
@@ -110,29 +142,9 @@ public final class CosmeticaModelBakery {
 				}
 
 				@Override
-				public BlockModelPart missingBlockModelPart() {
+				public BlockStateModelPart missingBlockModelPart() {
 					throw new IllegalStateException();
 //					return ((ModelBakeryAccessor) bakery).getMissingModel();
-				}
-
-				@Override
-				public PartCache parts() {
-					return this.cache;
-				}
-
-				@Override
-				public SpriteGetter sprites() {
-					return new SpriteGetter() {
-						@Override
-						public TextureAtlasSprite get(Material material, ModelDebugName modelDebugName) {
-							return sprite;
-						}
-
-						@Override
-						public TextureAtlasSprite reportMissingReference(String string, ModelDebugName modelDebugName) {
-							return sprite;
-						}
-					};
 				}
 
 				@Override
@@ -146,7 +158,7 @@ public final class CosmeticaModelBakery {
 	}
 
 	// render
-	public static void renderModel(BlockModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, Identifier texture, int packedLight) {
+	public static void renderModel(BlockStateModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, Identifier texture, int packedLight) {
 		VertexConsumer consumer = multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture));
 
 		int[] tints = new int[0];
@@ -182,8 +194,8 @@ public final class CosmeticaModelBakery {
 			float g;
 			float h;
 			float l;
-			if (bakedQuad.isTinted()) {
-				int k = getLayerColorSafe(tintLayers, bakedQuad.tintIndex());
+			if (bakedQuad.materialInfo().isTinted()) {
+				int k = getLayerColorSafe(tintLayers, bakedQuad.materialInfo().tintIndex());
 				f = ARGB.alpha(k) / 255.0F;
 				g = ARGB.red(k) / 255.0F;
 				h = ARGB.green(k) / 255.0F;
