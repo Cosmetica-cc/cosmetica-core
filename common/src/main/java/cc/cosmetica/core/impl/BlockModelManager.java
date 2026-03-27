@@ -212,19 +212,12 @@ public class BlockModelManager {
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
 							// BlockStateModelLoader
 							JsonElement element = StrictJsonParser.parse(new InputStreamReader(is));
-							BlockStateModelDispatcher definition = BlockStateModelDispatcher.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(JsonParseException::new);
-							// Function<Identifier, StateDefinition<Block, BlockState>> definitionToBlockState = BlockStateDefinitions.definitionLocationToBlockStateMapper();
-							BlockStateModel.UnbakedRoot blockModel = definition.instantiate(
-									null,
-									() -> "cosmetica/" + modelId);
-
-							loadedStack.add(new BlockStateModelLoader.LoadedBlockStateModelDispatcher(resource.sourcePackId(), definition));
 
 							// calculate bounds
-							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(JsonParser.parseString(json));
+							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(element);
 							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", modelId, aabb);
 
-							lambdaHack.setModel(blockModel, aabb);
+							lambdaHack.setModel(element, aabb);
 						} catch (IOException | RuntimeException e) {
 							Logging.getInstance().error("Failed to parse model " + modelId, e);
 						}

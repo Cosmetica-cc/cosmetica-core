@@ -148,6 +148,10 @@ public final class CosmeticaModelBakery {
 		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
 	}
 
+	// ==============
+	//    Render
+	// ==============
+
 	// render
 	public static void renderModel(BlockStateModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight) {
 //		VertexConsumer consumer = multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture));
