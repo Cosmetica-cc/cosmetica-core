@@ -21,6 +21,7 @@ import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
+import cc.cosmetica.core.render.BlockModel;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -33,6 +34,9 @@ import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -42,6 +46,7 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -56,7 +61,7 @@ public final class CosmeticaModel {
 	}
 
 	private final Identifier texture;
-	private BlockStateModelPart model;
+	private List<BakedQuad> model;
 	private BlockModel unbakedModel; // cleared when the model is baked!
 	private AABB boundingBox;
 	private boolean textureLoaded;
@@ -90,7 +95,7 @@ public final class CosmeticaModel {
 		}
 	}
 
-	private void startBaking(JsonElement model) {
+	private void startBaking(BlockModel model) {
 		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Scheduling baking for {}", this.texture);
 
@@ -114,7 +119,7 @@ public final class CosmeticaModel {
 	 * @return the baked model for this cosmetic model, or null if it has not been baked yet.
 	 */
 	@Nullable
-	public BlockStateModelPart getBakedModel() {
+	public List<BakedQuad> getBakedModel() {
 		return this.model;
 	}
 
@@ -138,7 +143,7 @@ public final class CosmeticaModel {
 	 * @param mirror whether to mirror the model.
 	 */
 	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
-		BlockStateModelPart model = this.getBakedModel();
+		List<BakedQuad> model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.0f;
@@ -171,7 +176,7 @@ public final class CosmeticaModel {
 	 * @param mirror whether to mirror the model.
 	 */
 	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror) {
-		BlockStateModelPart model = this.getBakedModel();
+		List<BakedQuad> model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.0f;
@@ -182,10 +187,35 @@ public final class CosmeticaModel {
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		stack.translate(-0.5, -0.25, -0.5);
 
+		// TODO is this okay or should I make a custom submit
 		collector.submitBlockModel(
 				stack,
 				RenderTypes.armorTranslucent(this.getTexture()),
-				ImmutableList.of(model),
+				ImmutableList.of(new BlockStateModelPart() {
+					@Override
+					public List<BakedQuad> getQuads(@org.jspecify.annotations.Nullable Direction direction) {
+						if (direction == null) {
+							return model;
+						} else {
+							return ImmutableList.of();
+						}
+					}
+
+					@Override
+					public boolean useAmbientOcclusion() {
+						return false;
+					}
+
+					@Override
+					public Material.Baked particleMaterial() {
+						return null;
+					}
+
+					@Override
+					public @BakedQuad.MaterialFlags int materialFlags() {
+						return 0;
+					}
+				}),
 				BlockModelRenderState.EMPTY_TINTS,
 				// light, overlay, outline
 				packedLight, OverlayTexture.NO_OVERLAY, 0

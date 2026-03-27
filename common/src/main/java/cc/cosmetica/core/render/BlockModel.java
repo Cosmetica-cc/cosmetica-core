@@ -46,9 +46,13 @@ public final class BlockModel {
         return this.elements;
     }
 
+    public int getElementCount() {
+        return this.elements.size();
+    }
+
     public static final class Element {
         private Element(Face north, Face east, Face south, Face west, Face up, Face down,
-                       Vector3f from, Vector3f to, @Nullable String name) {
+                       Vector3f from, Vector3f to, Rotation rotation, @Nullable String name) {
             this.north = north;
             this.east = east;
             this.south = south;
@@ -68,8 +72,9 @@ public final class BlockModel {
         private final Face down;
         private final Vector3f from;
         private final Vector3f to;
-        private final String name;
-        private String group;
+        private final @Nullable String name;
+        private @Nullable String group;
+        private Rotation rotation;
 
         public Face getFace(@NotNull Direction direction) {
             return switch (direction) {
@@ -97,16 +102,42 @@ public final class BlockModel {
         public @Nullable String group() {
             return this.group;
         }
+
+        public Rotation rotation() {
+            return this.rotation;
+        }
+    }
+
+    /**
+     * Rotation expressed in degrees, around an origin.
+     */
+    public static final class Rotation {
+        private Rotation(float x, float y, float z, Vector3f origin) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.origin = origin;
+        }
+
+        public final float x;
+        public final float y;
+        public final float z;
+        public final Vector3f origin;
     }
 
     public static final class Face {
-        private Face(Vector4f uv, Identifier texture) {
+        private Face(Vector4f uv, Identifier texture, int rotation) {
             this.uv = uv;
             this.texture = texture;
+            this.rotation = rotation;
         }
 
         public final Vector4f uv;
         public final Identifier texture;
+        /**
+         * Rotation, a multiple of 90.
+         */
+        public final int rotation;
     }
 
     // Factories
@@ -201,8 +232,44 @@ public final class BlockModel {
         Vector3f from = vertexFromJson(jElement.getAsJsonArray("from"));
         Vector3f to = vertexFromJson(jElement.getAsJsonArray("to"));
 
-        return new Element(north, east, south, west, up, down, from, to, name);
+        Rotation rotation;
+
+        if (jElement.has("rotation")) {
+            JsonObject jRotation = jElement.getAsJsonObject("rotation");
+
+            Vector3f origin = vertexFromJson(jRotation.getAsJsonArray("origin"));
+
+            if (jRotation.has("angle")) {
+                if (!jRotation.has("axis")) {
+                    throw new IllegalStateException("Must specify axis in axis-angle-origin rotation format");
+                }
+
+                float angle = jRotation.get("angle").getAsFloat();
+                String axis = jRotation.get("axis").getAsString();
+
+                rotation = switch (axis) {
+                    case "x", "X" -> new Rotation(angle, 0, 0, origin);
+                    case "y", "Y" -> new Rotation(0, angle, 0, origin);
+                    case "z", "Z" -> new Rotation(0, 0, angle, origin);
+                    default ->
+                            throw new IllegalStateException("Unknown axis '" + axis + "'");
+                };
+            } else {
+                rotation = new Rotation(
+                        jRotation.get("x").getAsFloat(),
+                        jRotation.get("y").getAsFloat(),
+                        jRotation.get("z").getAsFloat(),
+                        origin
+                );
+            }
+        } else {
+            rotation = new Rotation(0, 0 , 0, ORIGIN);
+        }
+
+        return new Element(north, east, south, west, up, down, from, to, rotation, name);
     }
+
+    private static final Vector3f ORIGIN = new Vector3f(0, 0, 0);
 
     private static Vector3f vertexFromJson(JsonArray json) {
         if (json.size() != 3) {
@@ -229,6 +296,6 @@ public final class BlockModel {
 
         Identifier texture = textures.apply(object.get("texture").getAsString());
 
-        return new Face(uv, texture);
+        return new Face(uv, texture, object.has("rotation") ? object.get("rotation").getAsInt() : 0);
     }
 }

@@ -17,36 +17,32 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import cc.cosmetica.core.render.BlockModel;
 import cc.cosmetica.core.render.texture.ModelSprite;
-import com.google.common.collect.Interners;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.QuadInstance;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Quadrant;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.builders.UVPair;
+import net.minecraft.client.renderer.FaceInfo;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.OutlineBufferSource;
-import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.renderer.block.dispatch.Variant;
-import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.*;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
-import net.minecraft.client.resources.model.sprite.MaterialBaker;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.*;
 
@@ -64,7 +60,7 @@ public final class CosmeticaModelBakery {
 	 *                 Must refer to an {@link CosmeticaTexture}.
 	 * @param model the model to bake.
 	 */
-	public static BlockStateModelPart bakeModel(Identifier location, BlockModel model) {
+	public static List<BakedQuad> bakeModel(Identifier location, BlockModel model) {
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
@@ -73,79 +69,95 @@ public final class CosmeticaModelBakery {
 			ModelSprite sprite = new ModelSprite(location, texture.getCurrentImage(),
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});
-			final String debugName = location.toString();
+			RenderType renderType = RenderTypes.entityTranslucent(location);
 
-			return new Variant(location).bake(new ModelBaker() {
-				private final MaterialBaker materials = new MaterialBaker() {
-					public Material.Baked get(Material material, ModelDebugName name) {
-						return new Material.Baked(sprite, material.forceTranslucent());
+			List<BakedQuad> bakedQuads = new ArrayList<>(model.getElementCount() * 6);
+
+			for (BlockModel.Element element : model.getElements()) {
+				Vector3f from = element.from();
+				Vector3f to = element.to();
+
+				final class QuadAdderHelper {
+					void addQuad(FaceInfo faceInfo, Direction direction) {
+						CosmeticaModelBakery.addQuad(
+								bakedQuads,
+								sprite,
+								renderType,
+								faceInfo,
+								from,
+								to,
+								element.getFace(direction),
+								element.rotation()
+						);
 					}
-
-					@Override
-					public Material.Baked reportMissingReference(String reference, ModelDebugName name) {
-						Logging.getInstance().warnOnce("reportMissingReference", "Should not have missing reference in Cosmetica model");
-						return new Material.Baked(sprite, false);
-					}
-				};
-
-				private final ModelBaker.Interner interner = new Interner() {
-					private final com.google.common.collect.Interner<Vector3fc> vectors = Interners.newStrongInterner();
-					private final com.google.common.collect.Interner<BakedQuad.MaterialInfo> materialInfos = Interners.newStrongInterner();
-
-					public Vector3fc vector(Vector3fc vector3fc) {
-						return this.vectors.intern(vector3fc);
-					}
-
-					@Override
-					public BakedQuad.MaterialInfo materialInfo(BakedQuad.MaterialInfo material) {
-						return this.materialInfos.intern(material);
-					}
-				};
-
-				@Override
-				public MaterialBaker materials() {
-					return this.materials;
 				}
+				QuadAdderHelper helper = new QuadAdderHelper();
 
-				@Override
-				public Interner interner() {
-					return this.interner;
-				}
+				helper.addQuad(FaceInfo.NORTH, Direction.NORTH);
+				helper.addQuad(FaceInfo.EAST, Direction.EAST);
+				helper.addQuad(FaceInfo.SOUTH, Direction.SOUTH);
+				helper.addQuad(FaceInfo.WEST, Direction.WEST);
+				helper.addQuad(FaceInfo.UP, Direction.UP);
+				helper.addQuad(FaceInfo.DOWN, Direction.DOWN);
+			}
 
-				@Override
-				public ResolvedModel getModel(Identifier resourceLocation) {
-					return new ResolvedModel() {
-						@Override
-						public UnbakedModel wrapped() {
-							return model;
-						}
-
-						@Override
-						public @Nullable ResolvedModel parent() {
-							return null;
-						}
-
-						@Override
-						public String debugName() {
-							return debugName;
-						}
-					};
-				}
-
-				@Override
-				public BlockStateModelPart missingBlockModelPart() {
-					throw new IllegalStateException();
-//					return ((ModelBakeryAccessor) bakery).getMissingModel();
-				}
-
-				@Override
-				public <T> T compute(SharedOperationKey<T> sharedOperationKey) {
-					return sharedOperationKey.compute(this);
-				}
-			});
+			return bakedQuads;
+		} else {
+			throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
 		}
+	}
 
-		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
+	private static void addQuad(List<BakedQuad> output,
+								TextureAtlasSprite sprite, RenderType renderType,
+								FaceInfo faceInfo,
+								Vector3f from, Vector3f to,
+								BlockModel.Face face,
+								BlockModel.Rotation rotation) {
+		Vector3f corner0 = rotateCorner(faceInfo.getVertexInfo(0).select(from, to), rotation);
+		Vector3f corner1 = rotateCorner(faceInfo.getVertexInfo(1).select(from, to), rotation);
+		Vector3f corner2 = rotateCorner(faceInfo.getVertexInfo(2).select(from, to), rotation);
+		Vector3f corner3 = rotateCorner(faceInfo.getVertexInfo(3).select(from, to), rotation);
+
+		CuboidFace.UVs rawUVs = new CuboidFace.UVs(face.uv.x, face.uv.y, face.uv.z, face.uv.w);
+		final Quadrant[] quadrants = new Quadrant[] {
+				Quadrant.R0,
+				Quadrant.R90,
+				Quadrant.R180,
+				Quadrant.R270
+		};
+
+		long[] uvs = new long[] {
+				UVPair.pack(
+						CuboidFace.getU(rawUVs, quadrants[face.rotation/90 & 3], 0),
+						CuboidFace.getV(rawUVs, quadrants[face.rotation/90 & 3], 0)
+				),
+				UVPair.pack(
+						CuboidFace.getU(rawUVs, quadrants[face.rotation/90 & 3], 1),
+						CuboidFace.getV(rawUVs, quadrants[face.rotation/90 & 3], 1)
+				),
+				UVPair.pack(
+						CuboidFace.getU(rawUVs, quadrants[face.rotation/90 & 3], 2),
+						CuboidFace.getV(rawUVs, quadrants[face.rotation/90 & 3], 2)
+				),
+				UVPair.pack(
+						CuboidFace.getU(rawUVs, quadrants[face.rotation/90 & 3], 3),
+						CuboidFace.getV(rawUVs, quadrants[face.rotation/90 & 3], 3)
+				)
+		};
+
+		output.add(new BakedQuad(
+				corner0, corner1, corner2, corner3,
+				uvs[0], uvs[1], uvs[2], uvs[3],
+				Direction.getApproximateNearest(rotation.x, rotation.y, rotation.z),
+				new BakedQuad.MaterialInfo(
+						sprite,
+						ChunkSectionLayer.TRANSLUCENT,
+						renderType,
+						0,
+						true,
+						0
+				)
+		));
 	}
 
 	// ==============
@@ -153,31 +165,30 @@ public final class CosmeticaModelBakery {
 	// ==============
 
 	// render
-	public static void renderModel(BlockStateModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight) {
+	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight) {
 //		VertexConsumer consumer = multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture));
 
 		QuadInstance instance = new QuadInstance();
 
 		int[] tints = new int[0];
-		for (Direction direction : Direction.values()) {
-			List<BakedQuad> quads = model.getQuads(direction);
-			renderQuadList(
-					instance,
-					stack.last(),
-					multiBufferSource,
-					quads,
-					tints,
-					packedLight,
-					OverlayTexture.NO_OVERLAY
-					);
-		}
+//		for (Direction direction : Direction.values()) {
+//			List<BakedQuad> quads = model.getQuads(direction);
+//			renderQuadList(
+//					instance,
+//					stack.last(),
+//					multiBufferSource,
+//					quads,
+//					tints,
+//					packedLight,
+//					OverlayTexture.NO_OVERLAY
+//					);
+//		}
 
-		List<BakedQuad> quads = model.getQuads(null);
-		renderQuadList(
+        renderQuadList(
 				instance,
 				stack.last(),
 				multiBufferSource,
-				quads,
+                model,
 				tints,
 				packedLight,
 				OverlayTexture.NO_OVERLAY
@@ -343,6 +354,19 @@ public final class CosmeticaModelBakery {
 		corners.add(to);
 
 		return corners;
+	}
+
+	private static Vector3f rotateCorner(Vector3f corner, BlockModel.Rotation rotation) {
+		if (rotation.x != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.X, rotation.x);
+		}
+		if (rotation.y != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Y, rotation.y);
+		}
+		if (rotation.z != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Z, rotation.z);
+		}
+		return corner;
 	}
 
 	private static Vector3f rotateCorner(Vector3f corner, Vector3f origin, Direction.Axis axis, float angle) {
