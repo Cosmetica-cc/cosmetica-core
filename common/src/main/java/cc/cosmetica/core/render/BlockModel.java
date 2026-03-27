@@ -286,7 +286,6 @@ public final class BlockModel {
             throw new IllegalStateException("UV must be an array of length 4 (u0, v0, u1, v1). Got: " + jUV);
         }
 
-        // TODO UV rotation
         Vector4f uv = new Vector4f(
                 jUV.get(0).getAsInt() / (float)textureWidth,
                 jUV.get(1).getAsInt() / (float)textureHeight,

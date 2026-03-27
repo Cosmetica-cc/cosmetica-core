@@ -113,10 +113,14 @@ public final class CosmeticaModelBakery {
 								Vector3f from, Vector3f to,
 								BlockModel.Face face,
 								BlockModel.Rotation rotation) {
-		Vector3f corner0 = rotateCorner(faceInfo.getVertexInfo(0).select(from, to), rotation);
-		Vector3f corner1 = rotateCorner(faceInfo.getVertexInfo(1).select(from, to), rotation);
-		Vector3f corner2 = rotateCorner(faceInfo.getVertexInfo(2).select(from, to), rotation);
-		Vector3f corner3 = rotateCorner(faceInfo.getVertexInfo(3).select(from, to), rotation);
+		Vector3f corner0 = rotateCorner(faceInfo.getVertexInfo(0).select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner1 = rotateCorner(faceInfo.getVertexInfo(1).select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner2 = rotateCorner(faceInfo.getVertexInfo(2).select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner3 = rotateCorner(faceInfo.getVertexInfo(3).select(from, to), rotation)
+				.div(16.0f);
 
 		CuboidFace.UVs rawUVs = new CuboidFace.UVs(face.uv.x, face.uv.y, face.uv.z, face.uv.w);
 		final Quadrant[] quadrants = new Quadrant[] {
@@ -125,23 +129,24 @@ public final class CosmeticaModelBakery {
 				Quadrant.R180,
 				Quadrant.R270
 		};
+		final Quadrant uvRotation = quadrants[face.rotation/90 & 3];
 
-		long[] uvs = new long[] {
+		final long[] uvs = new long[] {
 				UVPair.pack(
-						CuboidFace.getU(rawUVs, quadrants[face.rotation/90 & 3], 0),
-						CuboidFace.getV(rawUVs, quadrants[face.rotation/90 & 3], 0)
+						CuboidFace.getU(rawUVs, uvRotation, 0),
+						CuboidFace.getV(rawUVs, uvRotation, 0)
 				),
 				UVPair.pack(
-						CuboidFace.getU(rawUVs, quadrants[face.rotation/90 & 3], 1),
-						CuboidFace.getV(rawUVs, quadrants[face.rotation/90 & 3], 1)
+						CuboidFace.getU(rawUVs, uvRotation, 1),
+						CuboidFace.getV(rawUVs, uvRotation, 1)
 				),
 				UVPair.pack(
-						CuboidFace.getU(rawUVs, quadrants[face.rotation/90 & 3], 2),
-						CuboidFace.getV(rawUVs, quadrants[face.rotation/90 & 3], 2)
+						CuboidFace.getU(rawUVs, uvRotation, 2),
+						CuboidFace.getV(rawUVs, uvRotation, 2)
 				),
 				UVPair.pack(
-						CuboidFace.getU(rawUVs, quadrants[face.rotation/90 & 3], 3),
-						CuboidFace.getV(rawUVs, quadrants[face.rotation/90 & 3], 3)
+						CuboidFace.getU(rawUVs, uvRotation, 3),
+						CuboidFace.getV(rawUVs, uvRotation, 3)
 				)
 		};
 
