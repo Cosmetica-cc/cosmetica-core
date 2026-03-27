@@ -26,15 +26,15 @@ import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.player.PlayerModel;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -334,7 +334,7 @@ public final class NametagRenderer {
 
 			if (fullyRender) {
 				if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
-				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.lightCoordsWithEmission(packedLight, 2));
+				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightCoordsUtil.lightCoordsWithEmission(packedLight, 2));
 			}
 
 			stack.popPose();

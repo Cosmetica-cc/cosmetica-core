@@ -18,9 +18,13 @@ package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.api.NametagConfig;
+import cc.cosmetica.core.impl.NametagRenderer;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.FormattedText;
@@ -34,10 +38,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -46,17 +47,17 @@ import java.util.Optional;
 @Mixin(PlayerTabOverlay.class)
 public class PlayerTabOverlayMixin {
 	/// MODIFYING WIDTH ///
-	@Inject(method="render",
-			at= @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/client/gui/components/PlayerTabOverlay;getNameForDisplay(Lnet/minecraft/client/multiplayer/PlayerInfo;)Lnet/minecraft/network/chat/Component;"),
-			locals = LocalCapture.CAPTURE_FAILHARD)
-	private void capturePlayerInfo(GuiGraphics guiGraphics, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci, List list, List list2, int j, int k, int l, Iterator var10, PlayerInfo playerInfo) {
+	@Inject(method = "extractRenderState",
+			at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/client/gui/components/PlayerTabOverlay;getNameForDisplay(Lnet/minecraft/client/multiplayer/PlayerInfo;)Lnet/minecraft/network/chat/Component;")
+	)
+	private void capturePlayerInfo(GuiGraphicsExtractor guiGraphics, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci, @Local PlayerInfo playerInfo) {
 		this.cosmeticacore$tempPassInfo = playerInfo;
 	}
 
 	@Unique
 	private PlayerInfo cosmeticacore$tempPassInfo;
 
-	@Redirect(method = "render",
+	@Redirect(method = "extractRenderState",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Font;width(Lnet/minecraft/network/chat/FormattedText;)I", ordinal=0))
 	private int addIconToWidth(Font instance, FormattedText arg) {
 		Level level = Minecraft.getInstance().level;
@@ -82,5 +83,28 @@ public class PlayerTabOverlayMixin {
 		this.cosmeticacore$tempPassInfo = null;
 
 		return (int)additionalWidth + instance.width(arg);
+	}
+
+	/// RENDERING ICON ///
+
+	@Inject(method = "extractRenderState",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;III)V")
+	)
+	private void beforeRenderName(GuiGraphicsExtractor guiGraphics, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci,
+								  @Local PlayerInfo playerInfo2, @Local GameProfile gameProfile) {
+		Level level = Minecraft.getInstance().level;
+
+		if (level != null && gameProfile.id() != null) {
+			Player player = level.getPlayerByUUID(gameProfile.id());
+
+			(player == null ? Cosmetics.getCosmetics(playerInfo2) : Cosmetics.getCosmetics(player)).ifPresent(cosmetics -> {
+				NametagConfig nametagConfig = cosmetics.getNametag();
+				CachedImage icon = nametagConfig.getIcon().getImage();
+
+				if (icon.isLoaded()) {
+					NametagRenderer.prepareIcon(icon, 1, nametagConfig.isTransparentIcon(), false);
+				}
+			});
+		}
 	}
 }

@@ -17,27 +17,47 @@
 package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.impl.NametagRenderer;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.entity.LivingEntity;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InventoryScreen.class)
 public class InventoryScreenMixin {
-	@Inject(at = @At("HEAD"), method = "renderEntityInInventoryFollowsMouse")
-	private static void disableOwnNametagTemporarilyIfShown(GuiGraphics guiGraphics, int i, int j, int k, int l, int m, float f, float g, float h, LivingEntity livingEntity, CallbackInfo ci) {
+	@Inject(at = @At("HEAD"), method = "extractEntityInInventoryFollowsMouse")
+	private static void disableOwnNametagTemporarilyIfShown(
+			final GuiGraphicsExtractor graphics,
+			final int x0,
+			final int y0,
+			final int x1,
+			final int y1,
+			final int size,
+			final float offsetY,
+			final float mouseX,
+			final float mouseY,
+			final LivingEntity entity,
+			CallbackInfo info
+	) {
 		NametagRenderer.setRenderingInventoryEntity(true);
 	}
 
-	@Inject(at = @At("RETURN"), method = "renderEntityInInventoryFollowsMouse")
-	private static void reenableNametag(GuiGraphics guiGraphics, int i, int j, int k, int l, int m, float f, float g, float h, LivingEntity livingEntity, CallbackInfo ci) {
+	@Inject(at = @At("RETURN"), method = "extractEntityInInventoryFollowsMouse")
+	private static void reenableNametag(
+			final GuiGraphicsExtractor graphics,
+			final int x0,
+			final int y0,
+			final int x1,
+			final int y1,
+			final int size,
+			final float offsetY,
+			final float mouseX,
+			final float mouseY,
+			final LivingEntity entity,
+			CallbackInfo info
+	) {
 		NametagRenderer.setRenderingInventoryEntity(false);
 	}
 }

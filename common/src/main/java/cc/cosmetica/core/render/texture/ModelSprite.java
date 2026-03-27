@@ -19,6 +19,8 @@ package cc.cosmetica.core.render.texture;
 import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.impl.Logging;
 import com.mojang.blaze3d.platform.NativeImage;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
@@ -121,8 +123,8 @@ public class ModelSprite extends TextureAtlasSprite {
 		}
 
 		@Override
-		public IntStream getUniqueFrames() {
-			return IntStream.range(0, getFrameCount());
+		public IntList getUniqueFrames() {
+			return IntArrayList.toList(IntStream.range(0, getFrameCount()));
 		}
 
 		// TODO what are these two close() functions for?
