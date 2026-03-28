@@ -2,11 +2,6 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
-tasks.register('remapJar', net.fabricmc.loom.task.RemapJarTask) {
-    enabled = false
-    return
-}
-
 architectury {
     platformSetupLoomIde()
     fabric()
@@ -53,7 +48,15 @@ processResources {
     }
 }
 
+jar {
+    archiveClassifier = "raw"
+}
+
 shadowJar {
+    dependsOn(jar)
+    mainSpec.sourcePaths.clear()       // Remove default source set inclusion
+    from(zipTree(jar.archiveFile))     // Unpack jar output (preserves Loom modifications)
+
     exclude "architectury.common.json"
 
     relocate 'com.fasterxml.jackson', 'cc.cosmetica.com.fasterxml.jackson'
@@ -66,19 +69,31 @@ shadowJar {
     mergeServiceFiles()
 
     configurations = [project.configurations.shadowCommon, project.configurations.shadow]
-    archiveClassifier = "dev-shadow"
+    archiveClassifier = null           // shadowJar becomes the main artifact
 }
 
-remapJar {
-    injectAccessWidener = true
-    input.set shadowJar.archiveFile
-    dependsOn shadowJar
-}
+//remapJar {
+//    injectAccessWidener = true
+//    input.set shadowJar.archiveFile
+//    dependsOn shadowJar
+//}
 
 sourcesJar {
     def commonSources = project(":common").sourcesJar
     dependsOn commonSources
     from commonSources.archiveFile.map { zipTree(it) }
+}
+
+// use shadowjar for maven on 26.1
+configurations {
+    apiElements {
+        outgoing.artifacts.clear()
+        outgoing.artifact(shadowJar)
+    }
+    runtimeElements {
+        outgoing.artifacts.clear()
+        outgoing.artifact(shadowJar)
+    }
 }
 
 components.java {

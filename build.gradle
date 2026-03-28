@@ -1,6 +1,6 @@
 plugins {
-    id "architectury-plugin" version "3.4.9999"
-    id "dev.architectury.loom" version "1.14.9999" apply false
+    id "architectury-plugin" version "3.5.163"
+    id "dev.architectury.loom" version "1.14.473" apply false
 }
 
 architectury {
