@@ -19,6 +19,7 @@
     "equipper.MinecraftMixin",
     "equipper.PlayerInfoMixin",
     "equipper.RemotePlayerMixin",
+    "nametags.EntityRendererMixin",
     "nametags.FontStringRenderOutputMixin",
     "nametags.InventoryScreenMixin",
     "nametags.LivingEntityRendererMixin",
@@ -28,9 +29,8 @@
     "nametags.PlayerRendererMixin",
     "nametags.PlayerTabOverlayMixin",
     "nametags.SubmitNodeCollectionMixin",
-    "network.ClientboundPlayerInfoUpdatePacketActionMixin",
     "network.ApiCosmeticsHolderPlayerInfoMixin",
-    "texture.ModelManagerMixin",
+    "network.ClientboundPlayerInfoUpdatePacketActionMixin",
     "texture.NativeImageAccessorMixin"
   ],
   "mixins": [

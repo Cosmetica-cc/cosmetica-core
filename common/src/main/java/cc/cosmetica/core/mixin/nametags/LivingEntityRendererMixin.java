@@ -39,13 +39,11 @@ public class LivingEntityRendererMixin {
 					value = "INVOKE",
 					target = "Lnet/minecraft/client/Minecraft;getCameraEntity()Lnet/minecraft/world/entity/Entity;")
 	)
-	private void shouldShowName(
-			final LivingEntity entity,
-			final double d,
-			CallbackInfoReturnable<Entity> cir) {
-		boolean thirdPerson = Minecraft.getInstance().options.getCameraType() != CameraType.FIRST_PERSON;
+	private Entity shouldShowName(Minecraft minecraft) {
+		boolean thirdPerson = minecraft.options.getCameraType() != CameraType.FIRST_PERSON;
 		if (thirdPerson && NametagRenderer.shouldShowOwnNametag()) {
-			cir.setReturnValue(null);
+			return null;
 		}
+		return minecraft.getCameraEntity();
 	}
 }

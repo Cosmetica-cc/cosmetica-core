@@ -88,7 +88,7 @@ public class PlayerTabOverlayMixin {
 	/// RENDERING ICON ///
 
 	@Inject(method = "extractRenderState",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;III)V")
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;text(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;III)V")
 	)
 	private void beforeRenderName(GuiGraphicsExtractor guiGraphics, int i, Scoreboard scoreboard, Objective objective, CallbackInfo ci,
 								  @Local PlayerInfo playerInfo2, @Local GameProfile gameProfile) {

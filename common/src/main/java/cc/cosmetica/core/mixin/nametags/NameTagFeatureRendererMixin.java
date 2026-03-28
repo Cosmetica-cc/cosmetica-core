@@ -18,6 +18,7 @@ package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.impl.IconSubmitter;
 import cc.cosmetica.core.impl.NametagRenderer;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollection;
@@ -33,20 +34,18 @@ import java.util.Iterator;
 
 @Mixin(NameTagFeatureRenderer.class)
 public class NameTagFeatureRendererMixin {
-    @Inject(method = "render",
-        locals = LocalCapture.CAPTURE_FAILHARD,
-        at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/client/gui/Font;drawInBatch(Lnet/minecraft/network/chat/Component;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)V"))
-    private void onRenderFontBatch0(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, Font font, CallbackInfo ci, NameTagFeatureRenderer.Storage storage, Iterator var5, SubmitNodeStorage.NameTagSubmit nameTagSubmit) {
+    @Inject(method = "renderTranslucent",
+            at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/client/gui/Font;drawInBatch(Lnet/minecraft/network/chat/Component;FFIZLorg/joml/Matrix4fc;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)V"))
+    private void onRenderFontBatch0(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, Font font, CallbackInfo ci, @Local SubmitNodeStorage.NameTagSubmit nameTagSubmit) {
         IconSubmitter.IconSubmission icon = ((IconSubmitter) (Object) nameTagSubmit).cosmeticacore$getPreparedIcon();
         if (icon != null) {
             NametagRenderer.prepareIcon(icon.icon(), icon.transparent(), icon.readjustTextPosition());
         }
     }
 
-    @Inject(method = "render",
-            locals = LocalCapture.CAPTURE_FAILHARD,
-            at = @At(value = "INVOKE", ordinal = 1, target = "Lnet/minecraft/client/gui/Font;drawInBatch(Lnet/minecraft/network/chat/Component;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)V"))
-    private void onRenderFontBatch1(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, Font font, CallbackInfo ci, NameTagFeatureRenderer.Storage storage, Iterator var5, SubmitNodeStorage.NameTagSubmit nameTagSubmit) {
+    @Inject(method = "renderTranslucent",
+            at = @At(value = "INVOKE", ordinal = 1, target = "Lnet/minecraft/client/gui/Font;drawInBatch(Lnet/minecraft/network/chat/Component;FFIZLorg/joml/Matrix4fc;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)V"))
+    private void onRenderFontBatch1(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, Font font, CallbackInfo ci, @Local SubmitNodeStorage.NameTagSubmit nameTagSubmit) {
         IconSubmitter.IconSubmission icon = ((IconSubmitter) (Object) nameTagSubmit).cosmeticacore$getPreparedIcon();
         if (icon != null) {
             NametagRenderer.prepareIcon(icon.icon(), icon.transparent(), icon.readjustTextPosition());

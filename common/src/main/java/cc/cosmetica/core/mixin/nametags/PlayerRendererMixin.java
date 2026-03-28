@@ -16,10 +16,6 @@
 
 package cc.cosmetica.core.mixin.nametags;
 
-import cc.cosmetica.core.api.CachedImage;
-import cc.cosmetica.core.api.Cosmetics;
-import cc.cosmetica.core.api.NametagConfig;
-import cc.cosmetica.core.impl.IconSubmitter;
 import cc.cosmetica.core.impl.NametagRenderer;
 import cc.cosmetica.core.render.HumanoidAccessoriesLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -43,7 +39,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Adds lore to players.
  */
-@Mixin(value = AvatarRenderer.class)
+@Mixin(AvatarRenderer.class)
 public abstract class PlayerRendererMixin<AvatarlikeEntity extends Avatar & ClientAvatarEntity> extends LivingEntityRenderer<AvatarlikeEntity, AvatarRenderState, PlayerModel> {
 	public PlayerRendererMixin(EntityRendererProvider.Context context, PlayerModel entityModel, float f) {
 		super(context, entityModel, f);
@@ -57,31 +53,11 @@ public abstract class PlayerRendererMixin<AvatarlikeEntity extends Avatar & Clie
 	private @Unique EquipmentAssetManager cosmeticacore$equipmentAssets;
 
 	@Inject(at = @At(value = "HEAD"),
-			method = "submitNameTag(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V")
+			method = "submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V")
 	private void shiftNametags(AvatarRenderState avatarRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
 		if (avatarRenderState.nameTagAttachment != null) {
 			boolean elytra = HumanoidAccessoriesLayer.hasLayer(avatarRenderState.chestEquipment, EquipmentClientInfo.LayerType.WINGS, this.cosmeticacore$equipmentAssets);
 			avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment, new HumanoidAccessoriesLayer.HumanoidRenderEquipper(avatarRenderState), elytra);
 		}
-	}
-
-	@Inject(at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitNameTag(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/phys/Vec3;ILnet/minecraft/network/chat/Component;ZIDLnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
-			ordinal = 1
-	), method = "submitNameTag(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V")
-	protected void onRenderNameTag(AvatarRenderState state, PoseStack stack, SubmitNodeCollector collector, CameraRenderState renderState, CallbackInfo ci) {
-		// add lore
-		NametagRenderer.submitLore(state, stack, collector, renderState);
-
-		// add nametag icons
-		Cosmetics.getCosmetics(state).ifPresent(c -> {
-			NametagConfig iconCosmetic = c.getNametag();
-			CachedImage icon = iconCosmetic.getIcon().getImage();
-
-			if (icon.isLoaded()) {
-				((IconSubmitter)collector.order(0)).cosmeticacore$submitIcon(icon, state.isDiscrete || iconCosmetic.isTransparentIcon(), true);
-			}
-		});
 	}
 }
