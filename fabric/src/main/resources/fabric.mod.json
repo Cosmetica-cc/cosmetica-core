@@ -24,7 +24,7 @@
     "cosmetica-core-fabric.mixins.json"
   ],
   "depends": {
-    "minecraft": ">=1.21.10 <1.22"
+    "minecraft": ">=26.1"
   },
   "custom": {
     "modmenu": {
