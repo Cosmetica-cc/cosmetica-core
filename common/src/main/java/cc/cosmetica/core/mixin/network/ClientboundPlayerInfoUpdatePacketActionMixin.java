@@ -29,8 +29,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientboundPlayerInfoUpdatePacket.Action.class)
 public class ClientboundPlayerInfoUpdatePacketActionMixin {
 	// This captures only other players
-	// See comment in Cosmetica.forwardPublicUserInfoToNametag
-	@Inject(at = @At("RETURN"), method = "method_46342")
+	// See comment in Cosmetica.forwardPublicUserInfoToNametag (v1)
+	@Inject(at = @At("RETURN"), method = "lambda$static$0")
 	private static void afterAddPlayer(ClientboundPlayerInfoUpdatePacket.EntryBuilder entryBuilder, RegistryFriendlyByteBuf registryFriendlyByteBuf, CallbackInfo ci) {
 		final GameProfile profile = entryBuilder.profile;
 
