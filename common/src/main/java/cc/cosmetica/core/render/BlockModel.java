@@ -293,10 +293,10 @@ public final class BlockModel {
         }
 
         Vector4f uv = new Vector4f(
-                jUV.get(0).getAsInt(),
-                jUV.get(1).getAsInt(),
-                jUV.get(2).getAsInt(),
-                jUV.get(3).getAsInt()
+                jUV.get(0).getAsFloat(),
+                jUV.get(1).getAsFloat(),
+                jUV.get(2).getAsFloat(),
+                jUV.get(3).getAsFloat()
         );
 
         Identifier texture = textures.apply(object.get("texture").getAsString());
