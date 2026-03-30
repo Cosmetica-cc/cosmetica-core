@@ -42,7 +42,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.joml.GeometryUtils;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -153,7 +157,7 @@ public final class CosmeticaModelBakery {
 		output.add(new BakedQuad(
 				corner0, corner1, corner2, corner3,
 				uvs[0], uvs[1], uvs[2], uvs[3],
-				Direction.getApproximateNearest(rotation.x, rotation.y, rotation.z),
+				calculateFacing(corner0, corner1, corner2, corner3),
 				new BakedQuad.MaterialInfo(
 						sprite,
 						ChunkSectionLayer.TRANSLUCENT,
@@ -163,6 +167,34 @@ public final class CosmeticaModelBakery {
 						0
 				)
 		));
+	}
+
+	// Vanilla Vertex Direction Calculations
+	@NotNull
+	private static Direction calculateFacing(final Vector3fc ...positions) {
+		Vector3f normal = new Vector3f();
+		GeometryUtils.normal(positions[0], positions[1], positions[2], normal);
+		return findClosestDirection(normal);
+	}
+
+	@NotNull
+	private static Direction findClosestDirection(final Vector3f direction) {
+		if (!direction.isFinite()) {
+			return Direction.UP;
+		} else {
+			Direction result = null;
+			float closestProduct = 0.0F;
+
+			for (Direction dir : Direction.values()) {
+				float dotProduct = direction.dot(dir.getUnitVec3f());
+				if (dotProduct >= 0.0F && dotProduct > closestProduct) {
+					closestProduct = dotProduct;
+					result = dir;
+				}
+			}
+
+			return result == null ? Direction.UP : result;
+		}
 	}
 
 	// ==============

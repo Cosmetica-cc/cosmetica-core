@@ -22,25 +22,25 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
  * Unbaked block model.
  */
 public final class BlockModel {
-    private BlockModel(List<Element> elements) {
+    private BlockModel(List<Element> elements, Vector2i textureSize) {
         this.elements = elements;
+        this.textureSize = textureSize;
     }
 
     private final List<Element> elements;
+    private final Vector2i textureSize;
 
     public Iterable<Element> getElements() {
         return this.elements;
@@ -48,6 +48,10 @@ public final class BlockModel {
 
     public int getElementCount() {
         return this.elements.size();
+    }
+
+    public Vector2i getTextureSize() {
+        return this.textureSize;
     }
 
     public static final class Element {
@@ -61,6 +65,7 @@ public final class BlockModel {
             this.down = down;
             this.from = from;
             this.to = to;
+            this.rotation = Objects.requireNonNull(rotation, "Must provide rotation for element");
             this.name = name;
         }
 
@@ -177,7 +182,7 @@ public final class BlockModel {
         JsonArray jElements = object.getAsJsonArray("elements");
 
         for (JsonElement element : jElements) {
-            elements.add(elementFromJson(element, textureWidth, textureHeight, id -> textures.getOrDefault(id, missingTexture)));
+            elements.add(elementFromJson(element, id -> textures.getOrDefault(id, missingTexture)));
         }
 
         // Groups
@@ -189,7 +194,7 @@ public final class BlockModel {
             }
         }
 
-        return new BlockModel(elements);
+        return new BlockModel(elements, new Vector2i(textureWidth, textureHeight));
     }
 
     private static void attachGroups(List<Element> elements, JsonElement jGroup, String parent) {
@@ -216,16 +221,16 @@ public final class BlockModel {
         }
     }
 
-    private static Element elementFromJson(JsonElement json, int textureWidth, int textureHeight, Function<String, Identifier> textures) {
+    private static Element elementFromJson(JsonElement json, Function<String, Identifier> textures) {
         JsonObject jElement = json.getAsJsonObject();
         JsonObject jFaces = jElement.getAsJsonObject("faces");
 
-        Face north = faceFromJson(jFaces.get("north"), textureWidth, textureHeight, textures);
-        Face east = faceFromJson(jFaces.get("east"), textureWidth, textureHeight, textures);
-        Face south = faceFromJson(jFaces.get("south"), textureWidth, textureHeight, textures);
-        Face west = faceFromJson(jFaces.get("west"), textureWidth, textureHeight, textures);
-        Face up = faceFromJson(jFaces.get("up"), textureWidth, textureHeight, textures);
-        Face down = faceFromJson(jFaces.get("down"), textureWidth, textureHeight, textures);
+        Face north = faceFromJson(jFaces.get("north"), textures);
+        Face east = faceFromJson(jFaces.get("east"), textures);
+        Face south = faceFromJson(jFaces.get("south"), textures);
+        Face west = faceFromJson(jFaces.get("west"), textures);
+        Face up = faceFromJson(jFaces.get("up"), textures);
+        Face down = faceFromJson(jFaces.get("down"), textures);
 
         @Nullable String name = jElement.has("name") ? jElement.get("name").getAsString() : null;
 
@@ -263,13 +268,14 @@ public final class BlockModel {
                 );
             }
         } else {
-            rotation = new Rotation(0, 0 , 0, ORIGIN);
+            rotation = NO_ROTATION;
         }
 
         return new Element(north, east, south, west, up, down, from, to, rotation, name);
     }
 
     private static final Vector3f ORIGIN = new Vector3f(0, 0, 0);
+    private static final Rotation NO_ROTATION = new Rotation(0, 0 , 0, ORIGIN);
 
     private static Vector3f vertexFromJson(JsonArray json) {
         if (json.size() != 3) {
@@ -279,7 +285,7 @@ public final class BlockModel {
         return new Vector3f(json.get(0).getAsFloat(), json.get(1).getAsFloat(), json.get(2).getAsFloat());
     }
 
-    private static Face faceFromJson(JsonElement json, int textureWidth, int textureHeight, Function<String, Identifier> textures) {
+    private static Face faceFromJson(JsonElement json, Function<String, Identifier> textures) {
         JsonObject object = json.getAsJsonObject();
         JsonArray jUV = object.getAsJsonArray("uv");
         if (jUV.size() != 4) {
@@ -287,10 +293,10 @@ public final class BlockModel {
         }
 
         Vector4f uv = new Vector4f(
-                jUV.get(0).getAsInt() / (float)textureWidth,
-                jUV.get(1).getAsInt() / (float)textureHeight,
-                jUV.get(2).getAsInt() / (float)textureWidth,
-                jUV.get(3).getAsInt() / (float)textureHeight
+                jUV.get(0).getAsInt(),
+                jUV.get(1).getAsInt(),
+                jUV.get(2).getAsInt(),
+                jUV.get(3).getAsInt()
         );
 
         Identifier texture = textures.apply(object.get("texture").getAsString());
