@@ -96,11 +96,11 @@ configurations {
     }
 }
 
-components.java {
-    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-        skip()
-    }
-}
+//components.java {
+//    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+//        skip()
+//    }
+//}
 
 publishing {
     publications {

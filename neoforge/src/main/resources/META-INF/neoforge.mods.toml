@@ -34,4 +34,4 @@ config = "cosmetica-core-common.mixins.json"
 config = "cosmetica-core-neoforge.mixins.json"
 
 [[accessTransformers]]
-file="accesstransformer.cfg"
+file="META-INF/accesstransformer.cfg"
