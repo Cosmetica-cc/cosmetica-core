@@ -64,6 +64,7 @@ shadowJar {
 
     exclude "fabric.mod.json"
     exclude "architectury.common.json"
+    exclude "cosmetica-core.accesswidener"
 
     relocate 'com.fasterxml.jackson', 'cc.cosmetica.com.fasterxml.jackson'
     relocate 'org.openapitools.jackson', 'cc.cosmetica.org.openapitools.jackson'
