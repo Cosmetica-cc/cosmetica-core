@@ -30,5 +30,6 @@
     "modmenu": {
       "badges": [ "library" ]
     }
-  }
+  },
+  "accessWidener": "cosmetica-core-fabric.accesswidener"
 }
