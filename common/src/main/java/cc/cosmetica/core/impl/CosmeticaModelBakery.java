@@ -43,10 +43,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.GeometryUtils;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -154,10 +154,17 @@ public final class CosmeticaModelBakery {
 				)
 		};
 
+		Vector3fc corners[] = {corner0, corner1, corner2, corner3};
+
+		@Nullable Direction facing = calculateFacing(corner0, corner1, corner2, corner3);
+		if (facing != null) {
+			recalculateWinding(corners, uvs, facing);
+		}
+
 		output.add(new BakedQuad(
-				corner0, corner1, corner2, corner3,
+				corners[0], corners[1], corners[2], corners[3],
 				uvs[0], uvs[1], uvs[2], uvs[3],
-				calculateFacing(corner0, corner1, corner2, corner3),
+				facing == null ? Direction.UP : facing,
 				new BakedQuad.MaterialInfo(
 						sprite,
 						ChunkSectionLayer.TRANSLUCENT,
@@ -169,18 +176,100 @@ public final class CosmeticaModelBakery {
 		));
 	}
 
+	// I hope this doesn't fix shading
+	private static void recalculateWinding(final Vector3fc[] positions, final long[] uvs, final Direction direction) {
+		float minX = 999.0F;
+		float minY = 999.0F;
+		float minZ = 999.0F;
+		float maxX = -999.0F;
+		float maxY = -999.0F;
+		float maxZ = -999.0F;
+
+		for(int i = 0; i < 4; ++i) {
+			Vector3fc position = positions[i];
+			float x = position.x();
+			float y = position.y();
+			float z = position.z();
+			if (x < minX) {
+				minX = x;
+			}
+
+			if (y < minY) {
+				minY = y;
+			}
+
+			if (z < minZ) {
+				minZ = z;
+			}
+
+			if (x > maxX) {
+				maxX = x;
+			}
+
+			if (y > maxY) {
+				maxY = y;
+			}
+
+			if (z > maxZ) {
+				maxZ = z;
+			}
+		}
+
+		FaceInfo info = FaceInfo.fromFacing(direction);
+
+		for(int vertex = 0; vertex < 4; ++vertex) {
+			FaceInfo.VertexInfo vertInfo = info.getVertexInfo(vertex);
+			float newX = vertInfo.xFace().select(minX, minY, minZ, maxX, maxY, maxZ);
+			float newY = vertInfo.yFace().select(minX, minY, minZ, maxX, maxY, maxZ);
+			float newZ = vertInfo.zFace().select(minX, minY, minZ, maxX, maxY, maxZ);
+			int vertexToSwap = findVertex(positions, vertex, newX, newY, newZ);
+			if (vertexToSwap == -1) {
+				throw new IllegalStateException("Can't find vertex to swap");
+			}
+
+			if (vertexToSwap != vertex) {
+				swap(positions, vertexToSwap, vertex);
+				swap(uvs, vertexToSwap, vertex);
+			}
+		}
+
+	}
+
+	private static int findVertex(final Vector3fc[] positions, final int start, final float x, final float y, final float z) {
+		for(int i = start; i < 4; ++i) {
+			Vector3fc position = positions[i];
+			if (x == position.x() && y == position.y() && z == position.z()) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private static void swap(final Vector3fc[] array, final int indexA, final int indexB) {
+		Vector3fc tmp = array[indexA];
+		array[indexA] = array[indexB];
+		array[indexB] = tmp;
+	}
+
+	private static void swap(final long[] array, final int indexA, final int indexB) {
+		long tmp = array[indexA];
+		array[indexA] = array[indexB];
+		array[indexB] = tmp;
+	}
+
 	// Vanilla Vertex Direction Calculations
-	@NotNull
+	@Nullable
 	private static Direction calculateFacing(final Vector3fc ...positions) {
 		Vector3f normal = new Vector3f();
 		GeometryUtils.normal(positions[0], positions[1], positions[2], normal);
 		return findClosestDirection(normal);
 	}
 
-	@NotNull
+	@Nullable
 	private static Direction findClosestDirection(final Vector3f direction) {
 		if (!direction.isFinite()) {
-			return Direction.UP;
+			return null;
 		} else {
 			Direction result = null;
 			float closestProduct = 0.0F;
@@ -193,7 +282,7 @@ public final class CosmeticaModelBakery {
 				}
 			}
 
-			return result == null ? Direction.UP : result;
+			return result;// result == null ? Direction.UP : result;
 		}
 	}
 
