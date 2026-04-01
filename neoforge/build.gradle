@@ -76,6 +76,7 @@ shadowJar {
     relocate 'javax.activation', 'cc.cosmetica.include.javax.activation'
     relocate 'javax.xml', 'cc.cosmetica.include.javax.xml'
 
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     mergeServiceFiles()
 
     configurations = [project.configurations.shadowCommon, project.configurations.shadow]

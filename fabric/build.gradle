@@ -66,6 +66,7 @@ shadowJar {
     exclude 'javax/annotation/**'
     exclude 'org/apache/commons/**'
 
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     mergeServiceFiles()
 
     configurations = [project.configurations.shadowCommon, project.configurations.shadow]
