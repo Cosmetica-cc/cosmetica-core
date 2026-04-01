@@ -398,7 +398,7 @@ public final class CosmeticaModelBakery {
 			corner = rotateCorner(corner, rotation.origin, Direction.Axis.X, rotation.x);
 		}
 		if (rotation.y != 0) {
-			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Y, rotation.y);
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Y, -rotation.y);
 		}
 		if (rotation.z != 0) {
 			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Z, rotation.z);
