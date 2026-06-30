@@ -19,6 +19,7 @@ package cc.cosmetica.core.render.texture;
 import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.impl.Logging;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.textures.GpuTexture;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.renderer.texture.SpriteContents;
@@ -40,18 +41,18 @@ public class ModelSprite extends TextureAtlasSprite {
 	 * @param frames the number of frames on the image.
 	 * @param onClose a callback to run when this sprite is closed.
 	 */
-	public ModelSprite(Identifier location, NativeImage image, int height, int frames, Runnable onClose) {
+	public ModelSprite(Identifier location, GpuTexture image, int height, int frames, Runnable onClose) {
 		// textureAtlas, info, mipLevels, uScale (atlasTextureWidth), vScale (atlasTextureHeight), width, height, image
 		super(null,
 				// dummy data for the animation metadata: we want to handle the animation ourselves.
 				new ModelSpriteContents(
 						location,
-						new FrameSize(image.getWidth(), height),
+						new FrameSize(image.getWidth(0), height),
 						image,
 						frames,
 						onClose),
 //						new AnimationMetadataSection(Optional.empty(), Optional.of(image.getWidth()), Optional.of(height), 69, false)),
-				image.getWidth(), height,
+				image.getWidth(0), height,
 				0, 0, 0
 		);
 
@@ -108,8 +109,8 @@ public class ModelSprite extends TextureAtlasSprite {
 	}
 
 	public static class ModelSpriteContents extends SpriteContents {
-		public ModelSpriteContents(Identifier resourceLocation, FrameSize frameSize, NativeImage image, int frames, Runnable onClose) {
-			super(resourceLocation, frameSize, image);
+		public ModelSpriteContents(Identifier resourceLocation, FrameSize frameSize, GpuTexture image, int frames, Runnable onClose) {
+			super(resourceLocation, frameSize, image); // Do we need to keep the NativeImage then?
 			this.frames = frames;
 			this.onClose = onClose;
 		}

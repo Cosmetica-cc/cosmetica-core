@@ -23,27 +23,15 @@ import cc.cosmetica.core.api.NametagConfig;
 import cc.cosmetica.core.render.HumanoidAccessoriesLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.player.PlayerModel;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.client.resources.model.EquipmentAssetManager;
-import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.LightCoordsUtil;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
-import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -135,55 +123,6 @@ public final class NametagRenderer {
 	//   Lore    //
 	// ========= //
 
-	/**
-	 * Render lore on a player.
-	 * @param entityRenderDispatcher the entity render dispatcher.
-	 * @param playerRenderState the render state for the player on which to render the lore.
-	 * @param playerModel the model of said player
-	 * @param stack the pose stack for rendering.
-	 * @param multiBufferSource the buffer source for rendering.
-	 * @param font the font to draw text with.
-	 * @param packedLight the environment light.
-	 * @param readjustNametagPosition whether to readjust the nametag position for the entity based on head accessories.
-	 * @param equipmentAssets the equipment asset manager (for checking if an elytra is equipped) if readjusting nametags.
-	 *                        May be null if readjustNametagPosition is false.
-	 */
-	public static void renderLore(EntityRenderDispatcher entityRenderDispatcher, AvatarRenderState playerRenderState, PlayerModel playerModel, PoseStack stack, MultiBufferSource multiBufferSource, Font font, int packedLight, boolean readjustNametagPosition,
-								  EquipmentAssetManager equipmentAssets) {
-		double squaredDistance = playerRenderState.distanceToCameraSq; //entityRenderDispatcher.distanceToSqr(player);
-
-		if (squaredDistance <= 4096.0D) {
-			Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(playerRenderState);
-
-			Objects.requireNonNull(entityRenderDispatcher.camera, "entityRenderDispatcher.camera must not be null");
-			Quaternionf fixedCameraOrientation = new Quaternionf(entityRenderDispatcher.camera.rotation());
-			fixedCameraOrientation.rotateY(Mth.DEG_TO_RAD * 180);
-
-			if (cosmetics.isPresent()) {
-				boolean cloak = playerRenderState.skin.cape() != null && playerRenderState.showCape;
-				boolean elytra = readjustNametagPosition && HumanoidAccessoriesLayer.hasLayer(playerRenderState.chestEquipment, EquipmentClientInfo.LayerType.WINGS, equipmentAssets);
-
-				renderLore(
-						stack,
-						fixedCameraOrientation,
-						font,
-						multiBufferSource,
-						cosmetics.get().getLore().orElse(null),
-						cosmetics.get().getAccessories(),
-						!playerRenderState.headEquipment.isEmpty(), //player.hasItemInSlot(EquipmentSlot.HEAD),
-						playerRenderState.bedOrientation == null && readjustNametagPosition, // !player.isSleeping(), // doNametagShift
-						playerRenderState.isDiscrete, // sneaking
-						playerRenderState.isUpsideDown, // upside down
-						playerRenderState.nameTagAttachment == null ? playerRenderState.boundingBoxHeight : (float) playerRenderState.nameTagAttachment.y, // player.getBbHeight(),
-						playerModel.head.xRot,
-						packedLight,
-						new HumanoidAccessoriesLayer.HumanoidRenderEquipper(playerRenderState),
-						cloak,
-						elytra);
-			}
-		}
-	}
-
 	public static Vec3 shiftNametags(AvatarRenderState state, PlayerModel model, Vec3 position,
 									 HumanoidAccessoriesLayer.ArmourEquipper equipper, boolean elytra) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
@@ -251,100 +190,12 @@ public final class NametagRenderer {
 						component,
 						!state.isDiscrete,
 						state.lightCoords,
-						state.distanceToCameraSq, arg4);
+						arg4);
 				stack.popPose();
 				stack.translate(0.0F, 0.15F, 0.0F);
 			}
 		}
 
-	}
-
-	/**
-	 * Render lore, but not necessarily bound to a player.
-	 */
-	public static void renderLore(PoseStack stack, Quaternionf cameraOrientation, Font font,
-								  MultiBufferSource multiBufferSource, @Nullable NametagConfig lore, Collection<Accessory> hats,
-								  boolean wearingHelmet, boolean doNametagShift, boolean discrete, boolean upsideDown,
-								  float playerHeight, float xRotHead, int packedLight,
-								  HumanoidAccessoriesLayer.ArmourEquipper equipper, boolean cloak, boolean elytra) {
-		// how much do we need to shift up nametags?
-
-		// upside down players don't need nametags shifted up
-		if (!upsideDown) {
-			float hatTopY = 0;
-
-			if (doNametagShift) {
-				for (Accessory accessory : hats) {
-					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-						if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak, elytra)) {
-							if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
-								// 8.0 - 4 == 4.0 is the default visual offset (see Accessory#attachmentTransform)
-								// -8 as this code was written for hats, but the base of the head is offset 0 now
-								// = -12
-								hatTopY = Math.max(hatTopY, (float) (accessory.getModel().getBoundingBox().maxY + accessory.getOffset().y*16.0 - 12.0));
-							}
-						}
-					}
-				}
-			}
-
-			if (hatTopY > 0) {
-				float normalizedAngleMultiplier = (float) -(Math.abs(xRotHead) / 1.57 - 1);
-				float lookAngleMultiplier;
-
-				if (normalizedAngleMultiplier == GLIDING_SWIMMING_CROUCHING) { // Gliding with elytra, swimming, or crouching
-					lookAngleMultiplier = 0;
-				} else {
-					lookAngleMultiplier = normalizedAngleMultiplier;
-				}
-
-				stack.translate(0, Math.max(hatTopY * lookAngleMultiplier, 0) / 16.0, 0);
-			}
-		}
-
-		// render lore
-		if (lore != null) {
-			Component component = Component.literal(lore.getPrefix() /* Prefix doubles as main text */);
-			CachedImage loreIcon = lore.getIcon().getImage();
-			boolean showLoreIcon = loreIcon.isLoaded();
-
-			boolean fullyRender = !discrete;
-
-			float height = playerHeight + 0.25F;
-
-			stack.translate(0, 0.1, 0);
-
-			stack.pushPose();
-			stack.translate(0.0D, height, 0.0D);
-			stack.mulPose(cameraOrientation);
-			stack.scale(-0.025F, -0.025F, 0.025F);
-			stack.scale(0.75F, 0.75F, 0.75F);
-			Matrix4f textModel = stack.last().pose();
-
-			float backgroundOpacity = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
-			int alphaARGB = (int) (backgroundOpacity * 255.0F) << 24;
-
-			float xOffset = (float) (-font.width(component) / 2);
-
-			// FIXME lore text disappears while sneaking for some reason
-			// It appears to be controlled by the same field that controls whether a nametag is visible behind blocks
-
-			if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
-			font.drawInBatch(component, xOffset, 0, 0x80FFFFFF, false, textModel, multiBufferSource, fullyRender ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, alphaARGB, packedLight);
-
-			if (fullyRender) {
-				if (showLoreIcon) prepareIcon(loreIcon, discrete, true);
-				font.drawInBatch(component, xOffset, 0, -1, false, textModel, multiBufferSource, Font.DisplayMode.NORMAL, 0, LightCoordsUtil.lightCoordsWithEmission(packedLight, 2));
-			}
-
-			stack.popPose();
-		}
-	}
-
-	public static int debug(Font instance, Component component, float offsetX, float offsetY, int color, boolean bl, Matrix4f transform, MultiBufferSource mbs, boolean bl2, int k, int i) {
-		k = 0;
-		instance.drawInBatch(component, offsetX, offsetY, color, bl, transform, mbs, bl2 ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, k, i);
-		return 0;
 	}
 
 	public static final class Icon {
