@@ -17,18 +17,13 @@
 package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
-import cc.cosmetica.core.impl.BlockModelManager;
-import cc.cosmetica.core.impl.CosmeticaModelBakery;
-import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.impl.LoggingCategory;
+import cc.cosmetica.core.impl.*;
 import cc.cosmetica.core.render.BlockModel;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.JsonElement;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;

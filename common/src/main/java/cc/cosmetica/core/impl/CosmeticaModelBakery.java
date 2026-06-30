@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.api.MultiBufferSource;
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.BlockModel;
 import cc.cosmetica.core.render.texture.ModelSprite;
@@ -28,7 +29,6 @@ import com.mojang.math.Quadrant;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.FaceInfo;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.GeometryUtils;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 

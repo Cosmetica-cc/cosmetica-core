@@ -20,11 +20,13 @@ import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
 import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
 import cc.cosmetica.core.util.VP8X;
+import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.TextureFormat;
+import com.mojang.blaze3d.textures.GpuTexture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TickableTexture;
@@ -93,7 +95,7 @@ public class CosmeticaTexture extends AbstractTexture {
     private int frame;
     private int currentFrames, currentTicksPerFrame, autoFrameInc;
     private int tick;
-    private NativeImage image;
+    private GpuTexture image;
 
     private void load() {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
@@ -218,7 +220,6 @@ public class CosmeticaTexture extends AbstractTexture {
 
         // upload call
         if (!RenderSystem.isOnRenderThread()) {
-            if (this.image == null) this.image = nativeImage; // just in case
             Minecraft.getInstance().execute(() -> this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc));
         } else {
             this.firstUpload(nativeImage, usedCache, nextFrames, nextFrameInc);
@@ -264,31 +265,50 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     private void firstUpload(NativeImage image, boolean trueImage, int nextFrames, int nextFrameInc) {
-        this.image = image;
+        GpuDevice gpuDevice = RenderSystem.getDevice();
+
+        // load full texutre on the gpu
+        // usage: 5. Flags representing allowed usages?
+        this.image = gpuDevice.createTexture((String)null, 5, GpuFormat.RGBA8_UNORM, image.getWidth(), image.getHeight(), 1, 1);
+
+        // e
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
         this.currentFrames = nextFrames;
         this.autoFrameInc = nextFrameInc;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
 
-        GpuDevice gpuDevice = RenderSystem.getDevice();
-        this.texture = gpuDevice.createTexture((String)null, 5, TextureFormat.RGBA8, this.image.getWidth(), this.frameHeight, 1, 1);
+        this.texture = gpuDevice.createTexture((String)null, 5, GpuFormat.RGBA8_UNORM, image.getWidth(), this.frameHeight, 1, 1);
         this.sampler = RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
         this.textureView = gpuDevice.createTextureView(this.texture);
 
-        this.upload(image, false);
+        this.upload(false);
         if (trueImage) {
             this.future = null;
             this.onFirstUpload.accept(image);
         }
+
+        // Close NativeImage! Stored on GPU.
+        image.close();
     }
 
-    private void upload(NativeImage image, boolean close) {
-        if (this.texture == null) {
+    private void upload(boolean close) {
+        if (this.image == null) {
+            throw new IllegalStateException("Tried to upload texture but image is null");
+        } else if (this.texture == null) {
             Logging.getInstance().warnOnce("texture upload", "Tried to upload texture but no texture");
         } else {
             GpuDevice gpuDevice = RenderSystem.getDevice();
-            gpuDevice.createCommandEncoder().writeToTexture(this.texture, image, 0, 0, 0, 0, image.getWidth(), this.frameHeight, 0, this.frameHeight * this.frame);
+            CommandEncoder gpuCommands = gpuDevice.createCommandEncoder();
+
+            gpuCommands.copyTextureToTexture(
+                    this.image, // source
+                    this.texture, // destination
+                    0,
+                    // dest X, Y; source X, Y
+                    0, 0,
+                    0, this.frameHeight * this.frame,
+                    image.getWidth(0), this.frameHeight);
 
             if (close) {
                 this.image.close();
@@ -297,13 +317,13 @@ public class CosmeticaTexture extends AbstractTexture {
     }
 
     void doTick() {
-        if (this.currentFrames > 1 && this.autoFrameInc >= 1 && this.image != null && ((NativeImageAccessorMixin) (Object) this.image).getPixels() != 0) {
+        if (this.currentFrames > 1 && this.autoFrameInc >= 1 && this.image != null && !this.image.isClosed()) {
             this.tick = (this.tick + 1) % this.currentTicksPerFrame;
 
             if (this.tick == 0) {
                 this.frame = (this.frame + this.autoFrameInc) % this.currentFrames;
                 //Debug.info("Uploading frame {}", this.frame);
-                this.upload(this.image, false);
+                this.upload(false);
             }
         }
     }
@@ -318,7 +338,7 @@ public class CosmeticaTexture extends AbstractTexture {
         if (!RenderSystem.isOnRenderThread())
             throw new IllegalStateException("Not on render thread!");
         this.frame = frame;
-        this.upload(this.image, false);
+        this.upload(false);
     }
 
     @Override
@@ -335,7 +355,7 @@ public class CosmeticaTexture extends AbstractTexture {
      * otherwise the loading image.
      * @return the current image this http texture is using.
      */
-    public NativeImage getCurrentImage() {
+    public GpuTexture getCurrentImage() {
         return this.image;
     }
 
