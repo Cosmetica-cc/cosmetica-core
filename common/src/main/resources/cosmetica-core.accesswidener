@@ -3,3 +3,4 @@ accessible	class	net/minecraft/network/protocol/game/ClientboundPlayerInfoUpdate
 accessible	field	net/minecraft/network/protocol/game/ClientboundPlayerInfoUpdatePacket$EntryBuilder	profile	Lcom/mojang/authlib/GameProfile;
 accessible	class	net/minecraft/client/gui/Font$PreparedTextBuilder
 extendable	method	net/minecraft/client/renderer/texture/SpriteContents	getFrameCount	()I
+accessible	class	net/minecraft/client/renderer/feature/phase/SimpleFeatureRenderPhase$FeatureSubmits

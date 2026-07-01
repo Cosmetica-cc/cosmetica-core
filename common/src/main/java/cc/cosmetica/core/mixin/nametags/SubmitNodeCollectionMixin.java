@@ -19,7 +19,8 @@ package cc.cosmetica.core.mixin.nametags;
 import cc.cosmetica.core.impl.IconSubmitter;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.SubmitNodeCollection;
-import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
+import net.minecraft.client.renderer.feature.phase.SimpleFeatureRenderPhase;
+import net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
@@ -35,7 +36,8 @@ import javax.annotation.Nullable;
 
 @Mixin(SubmitNodeCollection.class)
 public class SubmitNodeCollectionMixin implements IconSubmitter {
-    @Shadow @Final private NameTagFeatureRenderer.Storage nameTagSubmits;
+    @Shadow @Final private SimpleFeatureRenderPhase nameTags;
+    @Shadow @Final private TranslucentFeatureRenderPhase seeThroughNameTags;
 
     @Unique
     private @Nullable IconSubmission cosmeticacore$preparedIcon = null;
@@ -51,12 +53,24 @@ public class SubmitNodeCollectionMixin implements IconSubmitter {
     }
 
     @Inject(at = @At("RETURN"), method = "submitNameTag")
-    private void onSubmitNametag(PoseStack stack, Vec3 vec3, int i, Component component, boolean bl, int j, double d, CameraRenderState cameraRenderState, CallbackInfo ci) {
+    private void onSubmitNametag(PoseStack stack,
+                                 Vec3 nameTagAttachment,
+                                 int offset,
+                                 Component name,
+                                 boolean seeThrough,
+                                 int lightCoords,
+                                 CameraRenderState camera,
+                                 CallbackInfo ci) {
         if (this.cosmeticacore$preparedIcon != null) {
-            IconSubmitter iconSubmitter0 = (IconSubmitter) (Object) ((NameTagFeatureRendererStorageAccessor)this.nameTagSubmits).getNameTagSubmitsNormal().getLast();
+            var submitsByFeature = ((SimpleFeatureRenderPhaseAccessor)this.nameTags).getSubmitsByFeature();
+            var submit = submitsByFeature[submitsByFeature.length - 1];
+
+            IconSubmitter iconSubmitter0 = (IconSubmitter) submit;
             iconSubmitter0.cosmeticacore$submitIcon(this.cosmeticacore$preparedIcon);
-            if (bl) {
-                IconSubmitter iconSubmitter1 = (IconSubmitter) (Object) ((NameTagFeatureRendererStorageAccessor)this.nameTagSubmits).getNameTagSubmitsSeethrough().getLast();
+
+            if (seeThrough) {
+                var translucent = ((TranslucentFeatureRenderPhaseAccessor)this.seeThroughNameTags).getSubmits().getLast();
+                IconSubmitter iconSubmitter1 = (IconSubmitter) translucent;
                 iconSubmitter1.cosmeticacore$submitIcon(this.cosmeticacore$preparedIcon);
             }
             this.cosmeticacore$preparedIcon = null;

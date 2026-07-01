@@ -18,7 +18,6 @@ package cc.cosmetica.core.api.texture;
 
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
-import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
 import cc.cosmetica.core.util.VP8X;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -96,6 +95,7 @@ public class CosmeticaTexture extends AbstractTexture {
     private int currentFrames, currentTicksPerFrame, autoFrameInc;
     private int tick;
     private GpuTexture image;
+    private NativeImage imageCPU;
 
     private void load() {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
@@ -268,8 +268,11 @@ public class CosmeticaTexture extends AbstractTexture {
         GpuDevice gpuDevice = RenderSystem.getDevice();
 
         // load full texutre on the gpu
-        // usage: 5. Flags representing allowed usages?
+        // usage: 5. Bitflags representing allowed usages?
         this.image = gpuDevice.createTexture((String)null, 5, GpuFormat.RGBA8_UNORM, image.getWidth(), image.getHeight(), 1, 1);
+        // storing the image twice is easier than trying to hack SpriteContents to use GPU images
+        // See note at bottom of method
+        this.imageCPU = image;
 
         // e
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
@@ -288,8 +291,9 @@ public class CosmeticaTexture extends AbstractTexture {
             this.onFirstUpload.accept(image);
         }
 
-        // Close NativeImage! Stored on GPU.
-        image.close();
+        // FIXME Good future contribution: Make code work only storing one copy of the image (CPU or GPU) without losing crazy efficiency
+        // Would creating and destroying the GPU image for each texture each frame be a big overhead?
+//        image.close();
     }
 
     private void upload(boolean close) {
@@ -312,6 +316,7 @@ public class CosmeticaTexture extends AbstractTexture {
 
             if (close) {
                 this.image.close();
+                this.imageCPU.close();
             }
         }
     }
@@ -345,7 +350,13 @@ public class CosmeticaTexture extends AbstractTexture {
     public void close() {
         //Debug.info("Closing image on thread {} due to dispose. Are we allowed? {}", Thread.currentThread(), RenderSystem.isOnRenderThreadOrInit());
         Logging.getInstance().debug(LoggingCategory.ASSETS, "Closing image {}", this.url);
-        if (this.image != null) this.image.close();
+        if (this.image != null) {
+            this.image.close();
+            this.imageCPU.close();
+
+            this.image = null;
+            this.imageCPU = null;
+        }
         //Debug.info("Disposed of image.");
     }
 
@@ -355,8 +366,17 @@ public class CosmeticaTexture extends AbstractTexture {
      * otherwise the loading image.
      * @return the current image this http texture is using.
      */
-    public GpuTexture getCurrentImage() {
+    public GpuTexture getCurrentImageGpu() {
         return this.image;
+    }
+
+    /**
+     * Get the current image object associated with this http texture. This will be the full http texture if loaded,
+     * otherwise the loading image.
+     * @return the current image this http texture is using.
+     */
+    public NativeImage getCurrentImage() {
+        return this.imageCPU;
     }
 
     public int getFrameHeight() {

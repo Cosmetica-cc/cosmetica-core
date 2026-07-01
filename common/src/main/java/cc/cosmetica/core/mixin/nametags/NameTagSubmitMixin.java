@@ -17,13 +17,13 @@
 package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.impl.IconSubmitter;
-import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 import javax.annotation.Nullable;
 
-@Mixin(SubmitNodeStorage.NameTagSubmit.class)
+@Mixin(NameTagFeatureRenderer.Submit.class)
 public class NameTagSubmitMixin implements IconSubmitter {
     @Unique
     private @Nullable IconSubmission cosmeticacore$preparedIcon = null;

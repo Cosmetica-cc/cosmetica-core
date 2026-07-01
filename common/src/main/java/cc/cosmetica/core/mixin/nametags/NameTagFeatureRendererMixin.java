@@ -22,27 +22,23 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.feature.FeatureFrameContext;
 import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.List;
+
 @Mixin(NameTagFeatureRenderer.class)
 public class NameTagFeatureRendererMixin {
-    @Inject(method = "renderTranslucent",
-            at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/client/gui/Font;drawInBatch(Lnet/minecraft/network/chat/Component;FFIZLorg/joml/Matrix4fc;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)V"))
-    private void onRenderFontBatch0(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, Font font, CallbackInfo ci, @Local SubmitNodeStorage.NameTagSubmit nameTagSubmit) {
-        IconSubmitter.IconSubmission icon = ((IconSubmitter) (Object) nameTagSubmit).cosmeticacore$getPreparedIcon();
-        if (icon != null) {
-            NametagRenderer.prepareIcon(icon.icon(), icon.transparent(), icon.readjustTextPosition());
-        }
-    }
-
-    @Inject(method = "renderTranslucent",
-            at = @At(value = "INVOKE", ordinal = 1, target = "Lnet/minecraft/client/gui/Font;drawInBatch(Lnet/minecraft/network/chat/Component;FFIZLorg/joml/Matrix4fc;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)V"))
-    private void onRenderFontBatch1(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, Font font, CallbackInfo ci, @Local SubmitNodeStorage.NameTagSubmit nameTagSubmit) {
-        IconSubmitter.IconSubmission icon = ((IconSubmitter) (Object) nameTagSubmit).cosmeticacore$getPreparedIcon();
+    @Inject(method = "buildGroup",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/Font$PreparedText;visit(Lnet/minecraft/client/gui/Font$GlyphVisitor;)V"))
+    private void onBuildGroup(final FeatureFrameContext context, final List<NameTagFeatureRenderer.Submit> submits, CallbackInfo info,
+                              @Local NameTagFeatureRenderer.Submit submit) {
+        IconSubmitter.IconSubmission icon = ((IconSubmitter) (Object) submit).cosmeticacore$getPreparedIcon();
         if (icon != null) {
             NametagRenderer.prepareIcon(icon.icon(), icon.transparent(), icon.readjustTextPosition());
         }

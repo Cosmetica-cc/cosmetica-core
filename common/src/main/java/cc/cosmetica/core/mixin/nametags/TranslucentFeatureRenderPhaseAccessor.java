@@ -16,17 +16,17 @@
 
 package cc.cosmetica.core.mixin.nametags;
 
-import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
+import net.minecraft.client.renderer.feature.phase.SimpleFeatureRenderPhase;
+import net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase;
+import net.minecraft.client.renderer.feature.submit.TranslucentSubmit;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Mixin(NameTagFeatureRenderer.Storage.class)
-public interface NameTagFeatureRendererStorageAccessor {
+@Mixin(TranslucentFeatureRenderPhase.class)
+public interface TranslucentFeatureRenderPhaseAccessor {
     @Accessor
-    List<SubmitNodeStorage.NameTagSubmit> getNameTagSubmitsSeethrough();
-    @Accessor List<SubmitNodeStorage.NameTagSubmit> getNameTagSubmitsNormal();
+    List<TranslucentSubmit> getSubmits();
 }
