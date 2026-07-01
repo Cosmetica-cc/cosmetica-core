@@ -19,6 +19,7 @@ package cc.cosmetica.core.mixin.nametags;
 import cc.cosmetica.core.impl.IconSubmitter;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.SubmitNodeCollection;
+import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
 import net.minecraft.client.renderer.feature.phase.SimpleFeatureRenderPhase;
 import net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -63,7 +64,8 @@ public class SubmitNodeCollectionMixin implements IconSubmitter {
                                  CallbackInfo ci) {
         if (this.cosmeticacore$preparedIcon != null) {
             var submitsByFeature = ((SimpleFeatureRenderPhaseAccessor)this.nameTags).getSubmitsByFeature();
-            var submit = submitsByFeature[submitsByFeature.length - 1];
+            var submit = ((FeatureSubmitsAccessor) (submitsByFeature[NameTagFeatureRenderer.TYPE.id()]))
+                    .getUnbatched().getLast();
 
             IconSubmitter iconSubmitter0 = (IconSubmitter) submit;
             iconSubmitter0.cosmeticacore$submitIcon(this.cosmeticacore$preparedIcon);

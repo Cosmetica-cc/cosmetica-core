@@ -20,6 +20,7 @@
     "equipper.PlayerInfoMixin",
     "equipper.RemotePlayerMixin",
     "nametags.EntityRendererMixin",
+    "nametags.FeatureSubmitsAccessor",
     "nametags.FontStringRenderOutputMixin",
     "nametags.InventoryScreenMixin",
     "nametags.LivingEntityRendererMixin",

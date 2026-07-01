@@ -268,13 +268,12 @@ public class CosmeticaTexture extends AbstractTexture {
         GpuDevice gpuDevice = RenderSystem.getDevice();
 
         // load full texutre on the gpu
-        // usage: 5. Bitflags representing allowed usages?
-        this.image = gpuDevice.createTexture((String)null, 5, GpuFormat.RGBA8_UNORM, image.getWidth(), image.getHeight(), 1, 1);
+        this.image = gpuDevice.createTexture((String)null, GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_TEXTURE_BINDING, GpuFormat.RGBA8_UNORM, image.getWidth(), image.getHeight(), 1, 1);
         // storing the image twice is easier than trying to hack SpriteContents to use GPU images
         // See note at bottom of method
         this.imageCPU = image;
 
-        // e
+        // loading animation ticks per frame = 2
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
         this.currentFrames = nextFrames;
         this.autoFrameInc = nextFrameInc;
