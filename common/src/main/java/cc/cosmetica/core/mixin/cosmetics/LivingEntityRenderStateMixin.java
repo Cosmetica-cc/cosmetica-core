@@ -42,6 +42,11 @@ public class LivingEntityRenderStateMixin implements HasCosmeticsRenderState {
     }
 
     @Override
+    public void cosmeticacore$setCosmetics(@Nullable Cosmetics cosmetics) {
+        this.cosmeticacore$cosmetics = new WeakReference<>(cosmetics);
+    }
+
+    @Override
     public Optional<Cosmetics> cosmeticacore$getCosmetics() {
         return Optional.ofNullable(this.cosmeticacore$cosmetics.get());
     }

@@ -18,6 +18,7 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.Cosmetics;
 import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -27,10 +28,16 @@ import java.util.Optional;
  */
 public interface HasCosmeticsRenderState {
     /**
-     * Set the cosmetics on the render state.
-     * @param entity the cosmetics on the render state.
+     * Set the cosmetics on the render state from an entity.
+     * @param entity the entity to copy cosmetics from.
      */
     <T extends LivingEntity> void cosmeticacore$extractCosmeticsOf(T entity);
+
+    /**
+     * Directly set the cosmetics on the render state.
+     * @param cosmetics the cosmetics on the render state.
+     */
+    void cosmeticacore$setCosmetics(@Nullable Cosmetics cosmetics);
 
     /**
      * Get the cosmetics to render for this entity.
