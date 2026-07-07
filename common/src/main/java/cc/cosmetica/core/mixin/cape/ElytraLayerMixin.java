@@ -39,7 +39,7 @@ public abstract class ElytraLayerMixin {
 		if (layerType == EquipmentClientInfo.LayerType.WINGS) {
 			// return value should already be set to our elytra by the new PlayerSkin
 			// use translucent for cosmetica wings. Should not affect existing elytra as it does not use transparency.
-			return RenderTypes.armorTranslucent(resourceLocation); // fixme must test - i think this breaks glint? Use entity translucent
+			return RenderTypes.armorTranslucent(resourceLocation);
 		}
 
 		return RenderTypes.armorCutoutNoCull(resourceLocation);

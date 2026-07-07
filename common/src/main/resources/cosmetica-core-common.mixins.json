@@ -10,6 +10,7 @@
     "cape.ArmourStandRendererMixin",
     "cape.CapeLayerMixin",
     "cape.ElytraLayerMixin",
+    "cape.WingsLayerMixin",
     "cosmetics.ArmourStandModelMixin",
     "cosmetics.LivingEntityRendererMixin",
     "cosmetics.LivingEntityRenderStateMixin",
