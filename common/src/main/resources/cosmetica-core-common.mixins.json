@@ -14,6 +14,8 @@
     "cosmetics.ArmourStandModelMixin",
     "cosmetics.LivingEntityRendererMixin",
     "cosmetics.LivingEntityRenderStateMixin",
+    "cosmetics.SubmitNodeCollectionMixin",
+    "cosmetics.SubmitNodeStorageMixin",
     "equipper.ClientLevelMixin",
     "equipper.ClientPacketListenerMixin",
     "equipper.EntityMixin",

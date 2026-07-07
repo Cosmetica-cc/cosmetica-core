@@ -170,7 +170,8 @@ public final class CosmeticaModel {
 	 * @param z the z offset.
 	 * @param mirror whether to mirror the model.
 	 */
-	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror) {
+	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror,
+							 boolean partiallyTransparent, int outlineColour) {
 		List<BakedQuad> model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
@@ -182,46 +183,52 @@ public final class CosmeticaModel {
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		stack.translate(-0.5, -0.25, -0.5);
 
-		// TODO is this okay or should I make a custom submit
-		collector.submitBlockModel(
-				stack,
-				RenderTypes.armorTranslucent(this.getTexture()),
-				ImmutableList.of(new BlockStateModelPart() {
-					@Override
-					public List<BakedQuad> getQuads(@org.jspecify.annotations.Nullable Direction direction) {
-						if (direction == null) {
-							return model;
-						} else {
-							return ImmutableList.of();
-						}
-					}
+		// Submit block model with special marker to override tint colour (for team invisibles)
+		BlockStateModelPart modelpart = new BlockStateModelPart() {
+			@Override
+			public List<BakedQuad> getQuads(@org.jspecify.annotations.Nullable Direction direction) {
+				if (direction == null) {
+					return model;
+				} else {
+					return ImmutableList.of();
+				}
+			}
 
-					@Override
-					public boolean useAmbientOcclusion() {
-						return false;
-					}
+			@Override
+			public boolean useAmbientOcclusion() {
+				return false;
+			}
 
-					@Override
-					public Material.Baked particleMaterial() {
-						return null;
-					}
+			@Override
+			public Material.Baked particleMaterial() {
+				return null;
+			}
 
-					@Override
-					public @BakedQuad.MaterialFlags int materialFlags() {
-						return 0;
-					}
-				}),
-				BlockModelRenderState.EMPTY_TINTS,
-				// light, overlay, outline
-				packedLight, OverlayTexture.NO_OVERLAY, 0
-		);
+			@Override
+			public @BakedQuad.MaterialFlags int materialFlags() {
+				return 0;
+			}
+		};
 
-//		CosmeticaModelBakery.renderModel(
-//				model,
-//				stack,
-//				multiBufferSource,
-//				this.getTexture(),
-//				packedLight);
+		if (collector instanceof CosmeticaModelSubmitter submitter) {
+			submitter.submitCosmeticaModel(
+					stack,
+					RenderTypes.armorTranslucent(this.getTexture()),
+					ImmutableList.of(modelpart),
+					packedLight,
+					partiallyTransparent ? 0x26FFFFFF : -1,
+					outlineColour
+			);
+		} else {
+			collector.submitBlockModel(
+					stack,
+					RenderTypes.armorTranslucent(this.getTexture()),
+					ImmutableList.of(modelpart),
+					BlockModelRenderState.EMPTY_TINTS,
+					// light, overlay, outline
+					packedLight, OverlayTexture.NO_OVERLAY, outlineColour
+			);
+		}
 
 		stack.popPose();
 	}
