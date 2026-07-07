@@ -94,8 +94,8 @@ public class CosmeticaTexture extends AbstractTexture {
     private int frame;
     private int currentFrames, currentTicksPerFrame, autoFrameInc;
     private int tick;
-    private GpuTexture image;
-    private NativeImage imageCPU;
+    private NativeImage image;
+    private NativeImage[] imageFrames;
 
     private void load() {
         ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
@@ -267,11 +267,7 @@ public class CosmeticaTexture extends AbstractTexture {
     private void firstUpload(NativeImage image, boolean trueImage, int nextFrames, int nextFrameInc) {
         GpuDevice gpuDevice = RenderSystem.getDevice();
 
-        // load full texutre on the gpu
-        this.image = gpuDevice.createTexture((String)null, GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_TEXTURE_BINDING, GpuFormat.RGBA8_UNORM, image.getWidth(), image.getHeight(), 1, 1);
-        // storing the image twice is easier than trying to hack SpriteContents to use GPU images
-        // See note at bottom of method
-//        this.imageCPU = image;
+        this.image = null; // sanity check for next few lines, don't use this.image until after frame generation.
 
         // loading animation ticks per frame = 2
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
@@ -280,11 +276,17 @@ public class CosmeticaTexture extends AbstractTexture {
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
 
-        // debug just shove cropped image to imageCPU
-        this.imageCPU = new NativeImage(image.getWidth(), this.frameHeight, false);
-        for (int x = 0; x < this.imageCPU.getWidth(); x++) {
-            for (int y = 0; y < this.imageCPU.getHeight(); y++) {
-                this.imageCPU.setPixel(x, y, image.getPixel(x, y));
+        // Split image into frames
+        this.imageFrames = new NativeImage[this.currentFrames];
+
+        for (int frame = 0; frame < this.currentFrames; ++frame) {
+            NativeImage frameImage = new NativeImage(image.getWidth(), this.frameHeight, false);
+            this.imageFrames[frame] = frameImage;
+
+            for (int x = 0; x < image.getWidth(); x++) {
+                for (int y = 0; y < this.frameHeight; y++) {
+                    frameImage.setPixel(x, y, image.getPixel(x, y + this.frameHeight * frame));
+                }
             }
         }
 
@@ -292,15 +294,15 @@ public class CosmeticaTexture extends AbstractTexture {
         this.sampler = RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
         this.textureView = gpuDevice.createTextureView(this.texture);
 
+        // image can be used now
+        this.image = image;
+        System.out.println("I am uploading an image");
+
         this.upload(false);
         if (trueImage) {
             this.future = null;
             this.onFirstUpload.accept(image);
         }
-
-        // FIXME Good future contribution: Make code work only storing one copy of the image (CPU or GPU) without losing crazy efficiency
-        // Would creating and destroying the GPU image for each texture each frame be a big overhead?
-//        image.close();
     }
 
     private void upload(boolean close) {
@@ -312,20 +314,23 @@ public class CosmeticaTexture extends AbstractTexture {
             GpuDevice gpuDevice = RenderSystem.getDevice();
             CommandEncoder gpuCommands = gpuDevice.createCommandEncoder();
 
+            // Maybe investigate GPU method in future
 //            gpuCommands.copyTextureToTexture(
-//                    this.image, // source
+//                    this.imageGPU, // source
 //                    this.texture, // destination
 //                    0,
 //                    // dest X, Y; source X, Y
 //                    0, 0,
 //                    0, this.frameHeight * this.frame,
-//                    image.getWidth(0), this.frameHeight);
+//                    imageGPU.getWidth(0), this.frameHeight);
 
-            gpuCommands.writeToTexture(this.texture, this.imageCPU);
+            gpuCommands.writeToTexture(this.texture, this.imageFrames[this.frame]);
 
             if (close) {
                 this.image.close();
-                this.imageCPU.close();
+                for (NativeImage frameImage : this.imageFrames) {
+                    frameImage.close();
+                }
             }
         }
     }
@@ -361,23 +366,17 @@ public class CosmeticaTexture extends AbstractTexture {
         Logging.getInstance().debug(LoggingCategory.ASSETS, "Closing image {}", this.url);
         if (this.image != null) {
             this.image.close();
-            this.imageCPU.close();
-
             this.image = null;
-            this.imageCPU = null;
+
+            for (int i = 0; i < this.imageFrames.length; ++i) {
+                this.imageFrames[i].close();
+                this.imageFrames[i] = null;
+            }
         }
         //Debug.info("Disposed of image.");
     }
 
     // getters
-    /**
-     * Get the current image object associated with this http texture. This will be the full http texture if loaded,
-     * otherwise the loading image.
-     * @return the current image this http texture is using.
-     */
-    public GpuTexture getCurrentImageGpu() {
-        return this.image;
-    }
 
     /**
      * Get the current image object associated with this http texture. This will be the full http texture if loaded,
@@ -385,7 +384,7 @@ public class CosmeticaTexture extends AbstractTexture {
      * @return the current image this http texture is using.
      */
     public NativeImage getCurrentImage() {
-        return this.imageCPU;
+        return this.image;
     }
 
     public int getFrameHeight() {
