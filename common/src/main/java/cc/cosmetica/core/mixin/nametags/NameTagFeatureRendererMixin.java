@@ -17,6 +17,7 @@
 package cc.cosmetica.core.mixin.nametags;
 
 import cc.cosmetica.core.impl.IconSubmitter;
+import cc.cosmetica.core.impl.IconsMixinImpl;
 import cc.cosmetica.core.impl.NametagRenderer;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.gui.Font;
@@ -38,9 +39,6 @@ public class NameTagFeatureRendererMixin {
                     target = "Lnet/minecraft/client/gui/Font$PreparedText;visit(Lnet/minecraft/client/gui/Font$GlyphVisitor;)V"))
     private void onBuildGroup(final FeatureFrameContext context, final List<NameTagFeatureRenderer.Submit> submits, CallbackInfo info,
                               @Local NameTagFeatureRenderer.Submit submit) {
-        IconSubmitter.IconSubmission icon = ((IconSubmitter) (Object) submit).cosmeticacore$getPreparedIcon();
-        if (icon != null) {
-            NametagRenderer.prepareIcon(icon.icon(), icon.transparent(), icon.readjustTextPosition());
-        }
+        IconsMixinImpl.onNametagVisit(submit);
     }
 }
