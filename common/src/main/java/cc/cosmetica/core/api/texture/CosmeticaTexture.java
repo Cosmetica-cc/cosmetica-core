@@ -271,7 +271,7 @@ public class CosmeticaTexture extends AbstractTexture {
         this.image = gpuDevice.createTexture((String)null, GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_TEXTURE_BINDING, GpuFormat.RGBA8_UNORM, image.getWidth(), image.getHeight(), 1, 1);
         // storing the image twice is easier than trying to hack SpriteContents to use GPU images
         // See note at bottom of method
-        this.imageCPU = image;
+//        this.imageCPU = image;
 
         // loading animation ticks per frame = 2
         this.currentTicksPerFrame = trueImage ? this.realTicksPerFrame : 2;
@@ -279,6 +279,14 @@ public class CosmeticaTexture extends AbstractTexture {
         this.autoFrameInc = nextFrameInc;
         this.frameHeight = this.currentFrames == 0 ? image.getHeight() : image.getHeight() / this.currentFrames;
         this.frame = 0;
+
+        // debug just shove cropped image to imageCPU
+        this.imageCPU = new NativeImage(image.getWidth(), this.frameHeight, false);
+        for (int x = 0; x < this.imageCPU.getWidth(); x++) {
+            for (int y = 0; y < this.imageCPU.getHeight(); y++) {
+                this.imageCPU.setPixel(x, y, image.getPixel(x, y));
+            }
+        }
 
         this.texture = gpuDevice.createTexture((String)null, 5, GpuFormat.RGBA8_UNORM, image.getWidth(), this.frameHeight, 1, 1);
         this.sampler = RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
@@ -304,14 +312,16 @@ public class CosmeticaTexture extends AbstractTexture {
             GpuDevice gpuDevice = RenderSystem.getDevice();
             CommandEncoder gpuCommands = gpuDevice.createCommandEncoder();
 
-            gpuCommands.copyTextureToTexture(
-                    this.image, // source
-                    this.texture, // destination
-                    0,
-                    // dest X, Y; source X, Y
-                    0, 0,
-                    0, this.frameHeight * this.frame,
-                    image.getWidth(0), this.frameHeight);
+//            gpuCommands.copyTextureToTexture(
+//                    this.image, // source
+//                    this.texture, // destination
+//                    0,
+//                    // dest X, Y; source X, Y
+//                    0, 0,
+//                    0, this.frameHeight * this.frame,
+//                    image.getWidth(0), this.frameHeight);
+
+            gpuCommands.writeToTexture(this.texture, this.imageCPU);
 
             if (close) {
                 this.image.close();
