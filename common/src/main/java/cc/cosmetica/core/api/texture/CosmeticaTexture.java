@@ -296,7 +296,6 @@ public class CosmeticaTexture extends AbstractTexture {
 
         // image can be used now
         this.image = image;
-        System.out.println("I am uploading an image");
 
         this.upload(false);
         if (trueImage) {
