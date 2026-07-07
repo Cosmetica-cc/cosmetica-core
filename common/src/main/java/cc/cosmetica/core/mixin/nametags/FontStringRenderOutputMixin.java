@@ -51,8 +51,11 @@ public abstract class FontStringRenderOutputMixin {
 	@Unique
 	private boolean cosmeticacore$drawnIcon = false;
 
-	@Inject(at = @At("HEAD"), method="accept")
-	private void accept(int i, Style style, int j, CallbackInfoReturnable<Boolean> cir) {
+	@Inject(at = @At("HEAD"), method="accept(ILnet/minecraft/network/chat/Style;Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;)Z")
+	private void accept(
+			int i,
+			Style style,
+			BakedGlyph glyphIn, CallbackInfoReturnable<Boolean> cir) {
 		// check for first render pass
 		if (this.cosmeticacore$drawnIcon) {
 			return;

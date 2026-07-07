@@ -16,13 +16,8 @@
 
 package cc.cosmetica.core.mixin.nametags;
 
-import cc.cosmetica.core.impl.IconSubmitter;
 import cc.cosmetica.core.impl.IconsMixinImpl;
-import cc.cosmetica.core.impl.NametagRenderer;
 import com.llamalad7.mixinextras.sugar.Local;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.SubmitNodeCollection;
-import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.feature.FeatureFrameContext;
 import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,9 +31,9 @@ import java.util.List;
 public class NameTagFeatureRendererMixin {
     @Inject(method = "buildGroup",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/Font$PreparedText;visit(Lnet/minecraft/client/gui/Font$GlyphVisitor;)V"))
+                    target = "Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer;prepareText(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer$Submit;)Lnet/minecraft/client/gui/Font$PreparedText;"))
     private void onBuildGroup(final FeatureFrameContext context, final List<NameTagFeatureRenderer.Submit> submits, CallbackInfo info,
                               @Local NameTagFeatureRenderer.Submit submit) {
-        IconsMixinImpl.onNametagVisit(submit);
+        IconsMixinImpl.onNametagBuild(submit);
     }
 }

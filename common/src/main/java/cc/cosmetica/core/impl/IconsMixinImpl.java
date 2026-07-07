@@ -59,7 +59,7 @@ public class IconsMixinImpl {
      * Run on the nametag
      * @param submit the feature renderer submission.
      */
-    public static void onNametagVisit(NameTagFeatureRenderer.Submit submit) {
+    public static void onNametagBuild(NameTagFeatureRenderer.Submit submit) {
         IconSubmitter.IconSubmission icon = ((IconSubmitter) (Object) submit).cosmeticacore$getPreparedIcon();
         if (icon != null) {
             NametagRenderer.prepareIcon(icon.icon(), icon.transparent(), icon.readjustTextPosition());
