@@ -42,6 +42,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -275,7 +276,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 			case OFFHAND:
 				return state.mainArm == HumanoidArm.LEFT ? !state.rightHandItemStack.isEmpty() : !state.leftHandItemStack.isEmpty();
 			default:
-				return getItemBySlot(equipmentSlot) != null;
+				return getItemBySlot(equipmentSlot) != Items.AIR;
 			}
 		}
 
@@ -303,7 +304,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 			return ImmutableMap.of();
 		}
 
-		private @Nullable Item getItemBySlot(EquipmentSlot equipmentSlot) {
+		private @NotNull Item getItemBySlot(EquipmentSlot equipmentSlot) {
 			switch (equipmentSlot) {
 			case FEET:
 				return state.feetEquipment.getItem();
@@ -317,7 +318,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 			case MAINHAND:
 			case OFFHAND:
 			default:
-				return null; // unsupported
+				return Items.AIR; // unsupported
             }
 		}
 
