@@ -20,6 +20,7 @@ import cc.cosmetica.core.api.Accessory;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.mixin.PlayerModelAccessor;
+import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -36,11 +37,15 @@ import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Renderer for Cosmetic models on humanoid entities.
@@ -74,8 +79,8 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 
 	private void renderAccessory(Accessory accessory, PoseStack stack, SubmitNodeCollector collector, int light, boolean cloak, HumanoidRenderState state) {
 		// Check if accessory can be rendered
-		boolean elytra = hasLayer(state.chestEquipment, EquipmentClientInfo.LayerType.WINGS, equipmentAssets);
-		if (!canRenderAccessory(accessory, new HumanoidRenderEquipper(state), cloak, elytra)) {
+		ArmourEquipper equipper = createArmourEquipper(state, equipmentAssets);
+		if (!canRenderAccessory(accessory, equipper, cloak, equipper.getLayers(EquipmentSlot.CHEST))) {
 			return;
 		}
 
@@ -144,18 +149,24 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 		}
 	}
 
-	// Vanilla method for checking whether elytra renders or for humanoid models
-	public static boolean hasLayer(ItemStack itemStack, EquipmentClientInfo.LayerType layerType, EquipmentAssetManager equipmentAssets) {
-		Equippable equippable = itemStack.get(DataComponents.EQUIPPABLE);
-		if (equippable != null && !equippable.assetId().isEmpty()) {
-			EquipmentClientInfo equipmentClientInfo = equipmentAssets.get(equippable.assetId().get());
-			return !equipmentClientInfo.getLayers(layerType).isEmpty();
-		} else {
-			return false;
-		}
+	/**
+	 * May be mixin-ed to, in order to change logic. (Non-exposed API).
+	 */
+	public static ArmourEquipper createArmourEquipper(HumanoidRenderState state, EquipmentAssetManager equipmentAssets) {
+		return new HumanoidRenderEquipper(state, equipmentAssets);
 	}
 
-	public static boolean canRenderAccessory(Accessory accessory, ArmourEquipper equipper, boolean cloak, boolean hasElytra) {
+	public static boolean canRenderAccessory(Accessory accessory, ArmourEquipper equipper, boolean cloak, Map<EquipmentClientInfo.LayerType, List<EquipmentClientInfo.Layer>> chestLayers) {
+		boolean hasElytra = false;
+		boolean hasChestplate = false;
+
+		if (chestLayers.containsKey(EquipmentClientInfo.LayerType.WINGS) && !chestLayers.get(EquipmentClientInfo.LayerType.WINGS).isEmpty()) {
+			hasElytra = true;
+		}
+		if (chestLayers.containsKey(EquipmentClientInfo.LayerType.HUMANOID) && !chestLayers.get(EquipmentClientInfo.LayerType.HUMANOID).isEmpty()) {
+			hasChestplate = true;
+		}
+
 		Collection<Accessory.Flag> flags = accessory.getFlags();
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_HELMET)) {
@@ -169,7 +180,8 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 				if (flags.contains(Accessory.Flag.HIDE_WITH_ELYTRA)) {
 					return false;
 				}
-			} else {
+			}
+			if (hasChestplate) {
 				if (flags.contains(Accessory.Flag.HIDE_WITH_CHESTPLATE)) {
 					return false;
 				}
@@ -239,21 +251,20 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 	}
 
 	public interface ArmourEquipper {
-		ItemStack getItemBySlot(EquipmentSlot equipmentSlot);
+		boolean hasItemInSlot(EquipmentSlot equipmentSlot);
+		Map<EquipmentClientInfo.LayerType, List<EquipmentClientInfo.Layer>> getLayers(EquipmentSlot equipmentSlot);
 		boolean hasLeftShoulderEntity();
 		boolean hasRightShoulderEntity();
-
-		default boolean hasItemInSlot(EquipmentSlot equipmentSlot) {
-			return !getItemBySlot(equipmentSlot).isEmpty();
-		}
 	}
 
 	public static final class HumanoidRenderEquipper implements ArmourEquipper {
-		public HumanoidRenderEquipper(HumanoidRenderState state) {
+		public HumanoidRenderEquipper(HumanoidRenderState state, EquipmentAssetManager equipmentAssets) {
 			this.state = state;
+			this.equipmentAssets = equipmentAssets;
 		}
 
 		private final HumanoidRenderState state;
+		private final EquipmentAssetManager equipmentAssets;
 
 		@Override
 		public boolean hasItemInSlot(EquipmentSlot equipmentSlot) {
@@ -263,27 +274,49 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 			case OFFHAND:
 				return state.mainArm == HumanoidArm.LEFT ? !state.rightHandItemStack.isEmpty() : !state.leftHandItemStack.isEmpty();
 			default:
-				return ArmourEquipper.super.hasItemInSlot(equipmentSlot);
+				return getItemBySlot(equipmentSlot) != null;
 			}
 		}
 
 		@Override
-		public ItemStack getItemBySlot(EquipmentSlot equipmentSlot) {
+		public Map<EquipmentClientInfo.LayerType, List<EquipmentClientInfo.Layer>> getLayers(EquipmentSlot equipmentSlot) {
+			ItemStack stack = switch (equipmentSlot) {
+                case FEET -> state.feetEquipment;
+                case LEGS -> state.legsEquipment;
+                case CHEST, BODY -> state.chestEquipment;
+                case HEAD -> state.headEquipment;
+                // Unsupported
+				case MAINHAND -> ItemStack.EMPTY;
+                case OFFHAND -> ItemStack.EMPTY;
+                case SADDLE -> ItemStack.EMPTY;
+            };
+
+			if (!stack.isEmpty()) {
+				Equippable equippable = state.chestEquipment.get(DataComponents.EQUIPPABLE);
+				if (equippable != null && !equippable.assetId().isEmpty()) {
+					EquipmentClientInfo equipmentClientInfo = equipmentAssets.get(equippable.assetId().get());
+					return equipmentClientInfo.layers();
+				}
+			}
+
+			return ImmutableMap.of();
+		}
+
+		private Item getItemBySlot(EquipmentSlot equipmentSlot) {
 			switch (equipmentSlot) {
-			case MAINHAND:
-			default:
-				return ItemStack.EMPTY; // unsupported
-			case OFFHAND:
-				return ItemStack.EMPTY; // unsupported
 			case FEET:
-				return state.feetEquipment;
+				return state.feetEquipment.getItem();
 			case LEGS:
-				return state.legsEquipment;
+				return state.legsEquipment.getItem();
 			case CHEST:
 			case BODY:
-				return state.chestEquipment;
+				return state.chestEquipment.getItem();
 			case HEAD:
-				return state.headEquipment;
+				return state.headEquipment.getItem();
+			case MAINHAND:
+			case OFFHAND:
+			default:
+				return Items.AIR; // unsupported
             }
 		}
 

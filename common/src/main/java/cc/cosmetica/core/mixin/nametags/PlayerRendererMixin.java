@@ -56,8 +56,7 @@ public abstract class PlayerRendererMixin<AvatarlikeEntity extends Avatar & Clie
 			method = "submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V")
 	private void shiftNametags(AvatarRenderState avatarRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
 		if (avatarRenderState.nameTagAttachment != null) {
-			boolean elytra = HumanoidAccessoriesLayer.hasLayer(avatarRenderState.chestEquipment, EquipmentClientInfo.LayerType.WINGS, this.cosmeticacore$equipmentAssets);
-			avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment, new HumanoidAccessoriesLayer.HumanoidRenderEquipper(avatarRenderState), elytra);
+			avatarRenderState.nameTagAttachment = NametagRenderer.shiftNametags(avatarRenderState, this.getModel(), avatarRenderState.nameTagAttachment, new HumanoidAccessoriesLayer.HumanoidRenderEquipper(avatarRenderState, this.cosmeticacore$equipmentAssets));
 		}
 	}
 }

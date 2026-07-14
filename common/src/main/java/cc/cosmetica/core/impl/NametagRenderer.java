@@ -21,13 +21,16 @@ import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.NametagConfig;
 import cc.cosmetica.core.render.HumanoidAccessoriesLayer;
+import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.Accessory.AttachmentEnum;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -124,10 +127,11 @@ public final class NametagRenderer {
 	// ========= //
 
 	public static Vec3 shiftNametags(AvatarRenderState state, PlayerModel model, Vec3 position,
-									 HumanoidAccessoriesLayer.ArmourEquipper equipper, boolean elytra) {
+									 HumanoidAccessoriesLayer.ArmourEquipper equipper) {
 		Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(state);
 		boolean wearingHelmet = !state.headEquipment.isEmpty();
 		boolean cloak = state.skin.cape() != null && state.showCape;
+		final var chestLayers = equipper.getLayers(EquipmentSlot.CHEST);
 
 		if (!state.isUpsideDown && cosmetics.isPresent()) {
 			float hatTopY = 0;
@@ -135,7 +139,7 @@ public final class NametagRenderer {
 
 			for (Accessory accessory : cosmetics.get().getAccessories()) {
 				if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-					if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak, elytra)) {
+					if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak, chestLayers)) {
 						if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
 							hatTopY = Math.max(hatTopY, (float) (accessory.getModel().getBoundingBox().maxY + accessory.getOffset().y*16.0 - 12.0));
 						}
