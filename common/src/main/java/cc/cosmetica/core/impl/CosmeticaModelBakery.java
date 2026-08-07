@@ -17,6 +17,8 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import cc.cosmetica.core.impl.model.CosmeticaModel;
+import cc.cosmetica.core.impl.model.FaceInfo;
 import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -24,19 +26,17 @@ import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockElement;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -58,9 +58,9 @@ public final class CosmeticaModelBakery {
 	 * Bake the given block model with the texture at the given location.
 	 * @param location the location to get the texture for. Also used in debug messages.
 	 *                 Must refer to an {@link CosmeticaTexture}.
-	 * @param model the model to bake.
+	 * @param model the model to model.
 	 */
-	public static BakedModel bakeModel(ResourceLocation location, BlockModel model) {
+	public static List<BakedQuad> bakeModel(ResourceLocation location, BlockModel model) {
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
@@ -70,14 +70,154 @@ public final class CosmeticaModelBakery {
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});
 
-			return model.bake(
-					bakery,
-					l -> sprite,
-					BlockModelRotation.X0_Y0,
-					location /*this resource location in bake is just used for debugging in the case of errors*/);
+			RenderType renderType = RenderType.entityTranslucent(location);
+			List<BakedQuad> bakedQuads = new ArrayList<>(model.getElements().size() * 6);
+
+			for (BlockElement element : model.getElements()) {
+				Vector3f from = element.from;
+				Vector3f to = element.to;
+
+				final class QuadAdderHelper {
+					void addQuad(FaceInfo faceInfo, Direction direction) {
+						if (element.faces.containsKey(direction)) {
+							CosmeticaModelBakery.addQuad(
+									bakedQuads,
+									sprite,
+									renderType,
+									faceInfo,
+									from,
+									to,
+									element.faces.get(direction),
+									element.rotation
+							);
+						}
+					}
+				}
+
+				QuadAdderHelper helper = new QuadAdderHelper();
+
+				helper.addQuad(FaceInfo.NORTH, Direction.NORTH);
+				helper.addQuad(FaceInfo.EAST, Direction.EAST);
+				helper.addQuad(FaceInfo.SOUTH, Direction.SOUTH);
+				helper.addQuad(FaceInfo.WEST, Direction.WEST);
+				helper.addQuad(FaceInfo.UP, Direction.UP);
+				helper.addQuad(FaceInfo.DOWN, Direction.DOWN);
+			}
+
+			return bakedQuads;
+
+//			return model.model(
+//					bakery,
+//					l -> sprite,
+//					BlockModelRotation.X0_Y0,
+//					location /*this resource location in model is just used for debugging in the case of errors*/);
+
 		}
 
-		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
+		throw new IllegalArgumentException("Texture specified for Cosmetica model model must be a CosmeticaTexture.");
+	}
+
+	private static void addQuad(List<BakedQuad> output,
+								TextureAtlasSprite sprite, RenderType renderType,
+								cc.cosmetica.core.impl.model.FaceInfo faceInfo,
+								Vector3f from, Vector3f to,
+								BlockElementFace face,
+								CosmeticaModel.Rotation rotation) {
+		Vector3f corner0 = rotateCorner(faceInfo.vertexOrder[0].select(from, to), rotation);
+		corner0.mul(1/16.0f);
+		Vector3f corner1 = rotateCorner(faceInfo.vertexOrder[1].select(from, to), rotation);
+		corner1.mul(1/16.0f);
+		Vector3f corner2 = rotateCorner(faceInfo.vertexOrder[2].select(from, to), rotation);
+		corner2.mul(1/16.0f);
+		Vector3f corner3 = rotateCorner(faceInfo.vertexOrder[3].select(from, to), rotation);
+		corner3.mul(1/16.0f);
+
+		CuboidFace.UVs rawUVs = new CuboidFace.UVs(face.uv.x, face.uv.y, face.uv.z, face.uv.w);
+		final Quadrant[] quadrants = new Quadrant[] {
+				Quadrant.R0,
+				Quadrant.R90,
+				Quadrant.R180,
+				Quadrant.R270
+		};
+		final Quadrant uvRotation = quadrants[face.rotation/90 & 3];
+
+		final long[] uvs = new long[] {
+				UVPair.pack(
+						CuboidFace.getU(rawUVs, uvRotation, 0),
+						CuboidFace.getV(rawUVs, uvRotation, 0)
+				),
+				UVPair.pack(
+						CuboidFace.getU(rawUVs, uvRotation, 1),
+						CuboidFace.getV(rawUVs, uvRotation, 1)
+				),
+				UVPair.pack(
+						CuboidFace.getU(rawUVs, uvRotation, 2),
+						CuboidFace.getV(rawUVs, uvRotation, 2)
+				),
+				UVPair.pack(
+						CuboidFace.getU(rawUVs, uvRotation, 3),
+						CuboidFace.getV(rawUVs, uvRotation, 3)
+				)
+		};
+
+		output.add(new BakedQuad(
+				corner0, corner1, corner2, corner3,
+				uvs[0], uvs[1], uvs[2], uvs[3],
+				calculateFacing(corner0, corner1, corner2, corner3),
+				new BakedQuad.MaterialInfo(
+						sprite,
+						ChunkSectionLayer.TRANSLUCENT,
+						renderType,
+						0,
+						true,
+						0
+				)
+		));
+	}
+
+	// 26.2 utilities not in older versions
+
+
+
+
+	// Vanilla Vertex Direction Calculations
+	@NotNull
+	private static Direction calculateFacing(final Vector3f ...positions) {
+		Vector3f p0 = positions[0];
+		Vector3f p1 = positions[1];
+		Vector3f p2 = positions[2];
+		Vector3f normal = normal(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z());
+		return findClosestDirection(normal);
+	}
+
+	// Normal code adapted from JOML. JOML is under the MIT license.
+	// https://github.com/JOML-CI/JOML/blob/main/src/main/java/org/joml/GeometryUtils.java#L141
+	private static Vector3f normal(float v0x, float v0y, float v0z, float v1x, float v1y, float v1z, float v2x, float v2y, float v2z) {
+		return new Vector3f(
+				((v1y - v0y) * (v2z - v0z)) - ((v1z - v0z) * (v2y - v0y)),
+				((v1z - v0z) * (v2x - v0x)) - ((v1x - v0x) * (v2z - v0z)),
+				((v1x - v0x) * (v2y - v0y)) - ((v1y - v0y) * (v2x - v0x))
+		);
+	}
+
+	@NotNull
+	private static Direction findClosestDirection(final Vector3f direction) {
+		if (!Float.isFinite(direction.x()) || !Float.isFinite(direction.z()) || !Float.isFinite(direction.y())) {
+			return Direction.UP;
+		} else {
+			Direction result = null;
+			float closestProduct = 0.0F;
+
+			for (Direction dir : Direction.values()) {
+				float dotProduct = direction.dot(dir.getUnitVec3f());
+				if (dotProduct >= 0.0F && dotProduct > closestProduct) {
+					closestProduct = dotProduct;
+					result = dir;
+				}
+			}
+
+			return result == null ? Direction.UP : result;
+		}
 	}
 
 	// render
@@ -245,6 +385,19 @@ public final class CosmeticaModelBakery {
 		corners.add(to);
 
 		return corners;
+	}
+
+	private static Vector3f rotateCorner(Vector3f corner, CosmeticaModel.Rotation rotation) {
+		if (rotation.x != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.X, rotation.x);
+		}
+		if (rotation.y != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Y, -rotation.y);
+		}
+		if (rotation.z != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Z, rotation.z);
+		}
+		return corner;
 	}
 
 	private static Vector3f rotateCorner(Vector3f corner, Vector3f origin, Direction.Axis axis, float angle) {

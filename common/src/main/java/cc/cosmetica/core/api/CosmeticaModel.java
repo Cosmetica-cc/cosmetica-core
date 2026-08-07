@@ -84,7 +84,7 @@ public final class CosmeticaModel {
 	}
 
 	private void startBaking(BlockModel model) {
-		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
+		// TODO should this be if(onRenderThread) model else recordRenderCall(model)? Is the speed gain negligible?
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Scheduling baking for {}", this.texture);
 
 		RenderSystem.recordRenderCall(() -> {
@@ -156,7 +156,7 @@ public final class CosmeticaModel {
 	// ==== Direct Model/Image Overloads ==== //
 
 	/**
-	 * Get or bake a model for the given id.
+	 * Get or model a model for the given id.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
@@ -180,7 +180,7 @@ public final class CosmeticaModel {
 	}
 
 	/**
-	 * Get or bake a model for the given id, with a model override.
+	 * Get or model a model for the given id, with a model override.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.
@@ -232,7 +232,7 @@ public final class CosmeticaModel {
 	// ==== Cosmetica Core Overloads ==== //
 
 	/**
-	 * Get or bake a cosmetica model for the given id.
+	 * Get or model a cosmetica model for the given id.
 	 * @param id the id of the model. Should be unique per-model, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link ResourceLocation} pathnames.

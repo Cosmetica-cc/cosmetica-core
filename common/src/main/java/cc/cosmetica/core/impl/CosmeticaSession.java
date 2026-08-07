@@ -575,6 +575,7 @@ public final class CosmeticaSession {
 
 		// Join server via mojang endpoint
 		String serverId = combinedHash("".getBytes(StandardCharsets.US_ASCII), sharedSecret, publicKey);
+		Logging.getInstance().info("Connecting to Cosmetica server with id " + serverId);
 
 		JsonObject loginRequest = new JsonObject();
 		loginRequest.addProperty("accessToken", accessToken);
