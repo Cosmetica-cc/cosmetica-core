@@ -179,6 +179,7 @@ public final class CosmeticaSession {
 					} else {
 						Logging.getInstance().error("Could not connect to Africa", ex);
 					}
+					Logging.getInstance().warn("Africa User for failed connection: " + this.user);
 
 					// try reconnect again if it fails and we are still current auth
 					if (CosmeticaSession.this == getCurrentSession()) {
@@ -534,6 +535,8 @@ public final class CosmeticaSession {
 			}
 			return new LoginResult(false, GET_AUTH_SERVER_ERROR, "Error code " + e.getCode() + ": " + e.getMessage(), e);
 		}
+
+		Logging.getInstance().info("Logging in " + username + " with uuid " + uuid + " to Cosmetica servers");
 
 		// Initiate a session
 		JsonObject keyRequest = new JsonObject();
