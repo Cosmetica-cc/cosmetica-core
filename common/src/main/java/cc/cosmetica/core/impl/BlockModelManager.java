@@ -20,10 +20,13 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import cc.cosmetica.core.render.model.BlockModel;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
@@ -203,14 +206,13 @@ public class BlockModelManager {
 						if (json == null) return;
 
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
-							BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
-							blockModel.name = modelId;
+							JsonElement element = new JsonParser().parse(new InputStreamReader(is, StandardCharsets.UTF_8));
 
 							// calculate bounds
-							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
-							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", blockModel.name, aabb);
+							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(element);
+							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", modelId, aabb);
 
-							lambdaHack.setModel(blockModel, aabb);
+							lambdaHack.setModel(BlockModel.fromJson(element), aabb);
 						} catch (IOException | RuntimeException e) {
 							Logging.getInstance().error("Failed to parse model " + modelId, e);
 						}
