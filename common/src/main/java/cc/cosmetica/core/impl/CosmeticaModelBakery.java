@@ -141,44 +141,64 @@ public final class CosmeticaModelBakery {
 		};
 		final Quadrant uvRotation = quadrants[face.rotation/90 & 3];
 
-		final long[] uvs = new long[] {
-				UVPair.pack(
-						CuboidFace.getU(rawUVs, uvRotation, 0),
-						CuboidFace.getV(rawUVs, uvRotation, 0)
-				),
-				UVPair.pack(
-						CuboidFace.getU(rawUVs, uvRotation, 1),
-						CuboidFace.getV(rawUVs, uvRotation, 1)
-				),
-				UVPair.pack(
-						CuboidFace.getU(rawUVs, uvRotation, 2),
-						CuboidFace.getV(rawUVs, uvRotation, 2)
-				),
-				UVPair.pack(
-						CuboidFace.getU(rawUVs, uvRotation, 3),
-						CuboidFace.getV(rawUVs, uvRotation, 3)
-				)
-		};
+		final int[] uv0 = {};
+		final int[] uv1 = {};
+		final int[] uv2 = {};
+		final int[] uv3 = {};
+
+//				UVPair.pack(
+//						CuboidFace.getU(rawUVs, uvRotation, 0),
+//						CuboidFace.getV(rawUVs, uvRotation, 0)
+//				),
+//				UVPair.pack(
+//						CuboidFace.getU(rawUVs, uvRotation, 1),
+//						CuboidFace.getV(rawUVs, uvRotation, 1)
+//				),
+//				UVPair.pack(
+//						CuboidFace.getU(rawUVs, uvRotation, 2),
+//						CuboidFace.getV(rawUVs, uvRotation, 2)
+//				),
+//				UVPair.pack(
+//						CuboidFace.getU(rawUVs, uvRotation, 3),
+//						CuboidFace.getV(rawUVs, uvRotation, 3)
+//				)
 
 		output.add(new BakedQuad(
-				corner0, corner1, corner2, corner3,
-				uvs[0], uvs[1], uvs[2], uvs[3],
-				calculateFacing(corner0, corner1, corner2, corner3),
-				new BakedQuad.MaterialInfo(
+				generateVertexInfo(
+						corner0, corner1, corner2, corner3,
 						sprite,
-						ChunkSectionLayer.TRANSLUCENT,
-						renderType,
-						0,
-						true,
-						0
-				)
+						uv0, uv1, uv2, uv3),
+				0,
+				calculateFacing(corner0, corner1, corner2, corner3),
+				sprite,
+				true
 		));
 	}
 
+	private static int[] generateVertexInfo(Vector3f corner0, Vector3f corner1, Vector3f corner2, Vector3f corner3,
+									  TextureAtlasSprite textureAtlasSprite,
+									  int[] ...uvs) {
+		final int stride = 8;
+		int[] vertices = new int[4 * stride];
+		Vector3f[] corners = { corner0, corner1, corner2, corner3 };
+
+		for (int i = 0; i < 4; i++) {
+			int base = stride * i;
+			Vector3f corner = corners[i];
+			int[] uv = uvs[i];
+
+			vertices[base] = Float.floatToRawIntBits(corner.x());
+			vertices[base + 1] = Float.floatToRawIntBits(corner.y());
+			vertices[base + 2] = Float.floatToRawIntBits(corner.z());
+			vertices[base + 3] = -1;
+			vertices[base + 4] = Float.floatToRawIntBits(textureAtlasSprite.getU(uv[0]));
+			vertices[base + 5] = Float.floatToRawIntBits(textureAtlasSprite.getV(uv[1]));
+		}
+
+		return vertices;
+	}
+
 	// 26.2 utilities not in older versions
-
-
-
 
 	// Vanilla Vertex Direction Calculations
 	@NotNull
