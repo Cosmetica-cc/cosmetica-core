@@ -295,54 +295,27 @@ public final class CosmeticaModelBakery {
 	// Bounding Box calculation //
 	// ======================== //
 
-	public static AABB calculateBoundingBox(JsonElement model) {
+	public static AABB calculateBoundingBox(BlockModel model) {
 		// Find all corners
 		Collection<Vector3f> allCorners = new ArrayList<>();
 
-		for (JsonElement e : model.getAsJsonObject().get("elements").getAsJsonArray()) {
-			JsonObject element = e.getAsJsonObject();
+		for (BlockModel.Element element : model.getElements()) {
+			Vector3f from = element.from();
+			Vector3f to = element.to();
 
-			JsonArray from = element.getAsJsonArray("from");
-			JsonArray to = element.getAsJsonArray("to");
-
-			Collection<Vector3f> corners = getUniqueCorners(
-					new Vector3f(from.get(0).getAsFloat(), from.get(1).getAsFloat(), from.get(2).getAsFloat()),
-					new Vector3f(to.get(0).getAsFloat(), to.get(1).getAsFloat(), to.get(2).getAsFloat())
-			);
+			Collection<Vector3f> corners = getUniqueCorners(from, to);
 
 			// rotate corners if on a rotated element
-			if (element.has("rotation")) {
+			if (element.rotation().x != 0 || element.rotation().y != 0 || element.rotation().z != 0) {
 				Collection<Vector3f> rotated = new HashSet<>();
 
-				JsonObject rotation = element.getAsJsonObject("rotation");
+				BlockModel.Rotation rotation = element.rotation();
 
 				for (Vector3f corner : corners) {
-					JsonArray originJson = rotation.get("origin").getAsJsonArray();
-					Vector3f origin = new Vector3f(
-							originJson.get(0).getAsFloat(),
-							originJson.get(1).getAsFloat(),
-							originJson.get(2).getAsFloat()
-					);
-
-					String axisJson = rotation.get("axis").getAsString();
-					Direction.Axis axis;
-					switch (axisJson.toLowerCase(Locale.ROOT)) {
-						case "x": axis = Direction.Axis.X; break;
-						case "y": axis = Direction.Axis.Y; break;
-						case "z": axis = Direction.Axis.Z; break;
-						default:
-							Logging.getInstance().warn("Bad axis for model element. Got " + axisJson);
-							axis = Direction.Axis.Y;
-							break;
-						}
-
-//					origin.mul(16);
 					rotated.add(
 							rotateCorner(
 									corner,
-									origin,
-									axis,
-									rotation.get("angle").getAsFloat()
+									rotation
 							));
 				}
 

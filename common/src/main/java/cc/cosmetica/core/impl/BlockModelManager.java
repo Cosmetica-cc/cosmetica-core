@@ -207,12 +207,13 @@ public class BlockModelManager {
 
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
 							JsonElement element = new JsonParser().parse(new InputStreamReader(is, StandardCharsets.UTF_8));
+							BlockModel blockModel = BlockModel.fromJson(element);
 
 							// calculate bounds
-							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(element);
+							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
 							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", modelId, aabb);
 
-							lambdaHack.setModel(BlockModel.fromJson(element), aabb);
+							lambdaHack.setModel(blockModel, aabb);
 						} catch (IOException | RuntimeException e) {
 							Logging.getInstance().error("Failed to parse model " + modelId, e);
 						}
