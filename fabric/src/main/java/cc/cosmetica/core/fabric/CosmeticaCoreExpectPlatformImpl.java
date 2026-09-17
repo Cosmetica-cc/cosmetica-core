@@ -17,6 +17,7 @@
 package cc.cosmetica.core.fabric;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 
 import java.nio.file.Path;
 
@@ -34,5 +35,22 @@ public class CosmeticaCoreExpectPlatformImpl {
 
 	public static boolean isDev() {
 		return FabricLoader.getInstance().isDevelopmentEnvironment();
+	}
+
+	public static String getModVersion() {
+		FabricLoader loader = FabricLoader.getInstance();
+		ModContainer container;
+
+		if (loader.isModLoaded("cosmetica")) {
+			container = loader.getModContainer("cosmetica").get();
+		} else {
+			container = loader.getModContainer("cosmetica-core").get();
+		}
+
+		return container.getMetadata().getId() + " " + container.getMetadata().getVersion().getFriendlyString();
+	}
+
+	public static String getModLoader() {
+		return "fabric";
 	}
 }

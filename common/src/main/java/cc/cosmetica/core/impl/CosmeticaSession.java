@@ -16,6 +16,7 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.AsyncApi;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.LoginResult;
@@ -146,6 +147,8 @@ public final class CosmeticaSession {
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
 					authData.add("client", new JsonPrimitive(this.clientName));
 					authData.add("minecraft", new JsonPrimitive(Minecraft.getInstance().getLaunchedVersion()));
+					authData.add("mod-version", new JsonPrimitive(CosmeticaCoreExpectPlatform.getModVersion()));
+					authData.add("modloader", new JsonPrimitive(CosmeticaCoreExpectPlatform.getModLoader()));
 					sendEvent(websocket1, "auth", authData);
 
 					// Resubscribe to events

@@ -18,12 +18,14 @@ package cc.cosmetica.core;
 
 import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.impl.LoggingCategory;
 import cc.cosmetica.core.util.LifetimeResources;
 
 import java.io.IOException;
 
 public class CosmeticaCore {
     public static void onInitialiseClient() {
+        Logging.getInstance().debug(LoggingCategory.LOOKUP, "Detected version: " + CosmeticaCoreExpectPlatform.getModVersion());
         BlockModelManager.IMAGE_CACHE_MANAGER.clearOldEntries();
     }
 
