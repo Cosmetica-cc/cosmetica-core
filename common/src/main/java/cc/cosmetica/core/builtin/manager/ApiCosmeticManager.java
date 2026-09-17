@@ -161,7 +161,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 
 		if (response == null) {
-			Logging.getInstance().debug(LoggingCategory.LOOKUP, "Skipping update for {} (no data)", profile);
+			Logging.getInstance().info("Skipping player data update for {} (no data)", profile);
 			return;
 		}
 
