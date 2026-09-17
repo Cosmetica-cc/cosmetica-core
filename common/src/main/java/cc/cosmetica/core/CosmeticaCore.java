@@ -18,6 +18,7 @@ package cc.cosmetica.core;
 
 import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.util.LifetimeResources;
 
 import java.io.IOException;
 
@@ -32,5 +33,7 @@ public class CosmeticaCore {
         } catch (IOException e) {
             Logging.getInstance().error("Failed to save image cache metadata", e);
         }
+
+        LifetimeResources.shutdown();
     }
 }

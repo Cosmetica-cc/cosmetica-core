@@ -19,11 +19,11 @@ package cc.cosmetica.core.api.texture;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
 import cc.cosmetica.core.mixin.texture.NativeImageAccessorMixin;
+import cc.cosmetica.core.util.LifetimeResources;
 import cc.cosmetica.core.util.VP8X;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.Tickable;
@@ -328,7 +328,7 @@ public class CosmeticaTexture extends AbstractTexture {
         return this.tilesheetFrames;
     }
 
-    private static final ExecutorService BACKGROUND_TASK_EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private static final ExecutorService BACKGROUND_TASK_EXECUTOR = LifetimeResources.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), Executors.defaultThreadFactory());
 
     private static class AnimatedInputStream {
         AnimatedInputStream(InputStream stream, int frames) {

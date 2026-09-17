@@ -21,6 +21,7 @@ import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.LoginResult;
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.util.Response;
+import cc.cosmetica.core.util.LifetimeResources;
 import cc.cosmetica.core.util.Websocket;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -297,7 +298,7 @@ public final class CosmeticaSession {
 
 	/* Constants */
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, "Cosmetica Reconnector"));
+	private static final ScheduledExecutorService SCHEDULER = LifetimeResources.newScheduler("Cosmetica Reconnector");
 	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
 
 	/* Keep track of subscriptions so we can re-subscribe on reconnect / making a new session */

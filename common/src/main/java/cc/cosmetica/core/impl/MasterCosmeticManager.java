@@ -18,6 +18,7 @@ package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.CosmeticManager;
 import cc.cosmetica.core.api.Cosmetics;
+import cc.cosmetica.core.util.LifetimeResources;
 import gg.cloaks.javaclient.model.PlayerResponse;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
@@ -49,7 +49,7 @@ public final class MasterCosmeticManager {
 	public static final ExecutorService HTTP_THREAD_POOL;
 	static {
 		AtomicInteger integer = new AtomicInteger(1);
-		HTTP_THREAD_POOL = Executors.newFixedThreadPool(30, r -> new Thread(r, "Cosmetica Worker #" + integer.getAndIncrement()));
+		HTTP_THREAD_POOL = LifetimeResources.newFixedThreadPool(30, r -> new Thread(r, "Cosmetica Worker #" + integer.getAndIncrement()));
 	}
 
 	// sorted collection of cosmetic managers
