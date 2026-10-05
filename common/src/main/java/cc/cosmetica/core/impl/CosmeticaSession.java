@@ -146,6 +146,7 @@ public final class CosmeticaSession {
 					authData.add("uuid", new JsonPrimitive(this.user.toString()));
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
 					authData.add("client", new JsonPrimitive(this.clientName));
+					// anonymised aggregated data for version popularity
 					authData.add("minecraft", new JsonPrimitive(Minecraft.getInstance().getLaunchedVersion()));
 					authData.add("mod-version", new JsonPrimitive(CosmeticaCoreExpectPlatform.getModVersion()));
 					authData.add("modloader", new JsonPrimitive(CosmeticaCoreExpectPlatform.getModLoader()));

@@ -25,7 +25,7 @@ import java.io.IOException;
 
 public class CosmeticaCore {
     public static void onInitialiseClient() {
-        Logging.getInstance().debug(LoggingCategory.LOOKUP, "Detected version: " + CosmeticaCoreExpectPlatform.getModVersion());
+        Logging.getInstance().debug(LoggingCategory.LOOKUP, "Running Cosmetica version: " + CosmeticaCoreExpectPlatform.getModVersion());
         BlockModelManager.IMAGE_CACHE_MANAGER.clearOldEntries();
     }
 
