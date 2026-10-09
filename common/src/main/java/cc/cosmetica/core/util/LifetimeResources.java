@@ -33,6 +33,14 @@ public class LifetimeResources {
         return service;
     }
 
+    public static ExecutorService newSingleThreadExecutor(String threadName) {
+        return registerExecutor(Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r);
+            t.setName(threadName);
+            return t;
+        }));
+    }
+
     public static ExecutorService newFixedThreadPool(int size, ThreadFactory threadFactory) {
         return registerExecutor(Executors.newFixedThreadPool(size, threadFactory));
     }
@@ -40,6 +48,11 @@ public class LifetimeResources {
     public static ScheduledExecutorService newScheduler(String name) {
         return registerExecutor(Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, name)));
     }
+
+    public static ScheduledExecutorService newScheduler(int threads, ThreadFactory threadFactory) {
+        return registerExecutor(Executors.newScheduledThreadPool(threads, threadFactory));
+    }
+
 
     public static void shutdown() {
         Logging.getInstance().info("Shutting down Cosmetica executors and schedulers");
