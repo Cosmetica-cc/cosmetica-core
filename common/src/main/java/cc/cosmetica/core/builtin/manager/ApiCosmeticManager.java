@@ -23,6 +23,8 @@ import cc.cosmetica.core.api.PlayerCosmetics;
 import cc.cosmetica.core.builtin.ApiCosmeticsHolder;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
+import cc.cosmetica.core.impl.MasterCosmeticManager;
+import cc.cosmetica.core.util.LifetimeResources;
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -39,6 +41,8 @@ import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Stores cosmetics from the API for other players.
@@ -63,6 +67,14 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 	private static final char[] ALLOWED_USERNAME_CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".toCharArray();
 
+	private static final ExecutorService REMOTE_USER_LOOKUP_THREAD_POOL;
+	static {
+		AtomicInteger integer = new AtomicInteger(1);
+		final int threads = Integer.parseInt(System.getProperty("cosmetica.lookupThreadPool", "30"));
+		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Remote lookup thread pool threads: {}", threads);
+		REMOTE_USER_LOOKUP_THREAD_POOL = LifetimeResources.newFixedThreadPool(threads, r -> new Thread(r, "Cosmetica Lookup #" + integer.getAndIncrement()));
+	}
+
 	/**
 	 * Look up and store Cosmetica data for the given game profile.
 	 * @param profileIn the profile to look up and store data for.
@@ -79,6 +91,8 @@ public class ApiCosmeticManager implements CosmeticManager {
 			profile = profileIn;
 		}
 		UUID uuid = profile.getId();
+
+		boolean isSelf = profile.equals(Minecraft.getInstance().getUser().getGameProfile());
 
 		if (textureProperty == null || !textureProperty.hasSignature()) {
 			// use request via uuid or name if we cannot use the packet
@@ -114,7 +128,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 					}
 					return null;
 				}
-			}).exceptionally(e -> {
+			}, isSelf ? MasterCosmeticManager.HTTP_THREAD_POOL : REMOTE_USER_LOOKUP_THREAD_POOL).exceptionally(e -> {
 				Logging.getInstance().error("Error fetching player data by name/id.", e);
 				return null;
 			}).thenAcceptAsync(r -> {if (r != null) updatePlayer(profile, r, uuid.version() == 3);}, Minecraft.getInstance()) // TODO null check (if player leaves/worldchange, but warn. do we know skin load and player add order?)
@@ -141,7 +155,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 					}
 					return null;
 				}
-			}).thenAcceptAsync(r -> updatePlayer(profile, r, false), Minecraft.getInstance())
+			}, isSelf ? MasterCosmeticManager.HTTP_THREAD_POOL : REMOTE_USER_LOOKUP_THREAD_POOL).thenAcceptAsync(r -> updatePlayer(profile, r, false), Minecraft.getInstance())
 					.exceptionally(t -> {
 						Logging.getInstance().error("Failed to load player data", t);
 						return null;

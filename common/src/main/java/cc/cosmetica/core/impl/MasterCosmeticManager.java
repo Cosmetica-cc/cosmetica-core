@@ -49,7 +49,9 @@ public final class MasterCosmeticManager {
 	public static final ExecutorService HTTP_THREAD_POOL;
 	static {
 		AtomicInteger integer = new AtomicInteger(1);
-		HTTP_THREAD_POOL = LifetimeResources.newFixedThreadPool(30, r -> new Thread(r, "Cosmetica Worker #" + integer.getAndIncrement()));
+		final int threads = Integer.parseInt(System.getProperty("cosmetica.mainThreadPool", "4"));
+		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Main thread pool threads: {}", threads);
+		HTTP_THREAD_POOL = LifetimeResources.newFixedThreadPool(threads, r -> new Thread(r, "Cosmetica Worker #" + integer.getAndIncrement()));
 	}
 
 	// sorted collection of cosmetic managers
