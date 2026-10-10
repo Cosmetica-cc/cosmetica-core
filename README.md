@@ -11,7 +11,7 @@ Cosmetica Core can be included from the Cosmetica Maven. Check the maven website
 Adding Cosmetica Maven to repositories:
 ```groovy
 repositories {
-    maven { url 'https://maven.cosmetica.cc/' }
+    maven { url 'https://maven.cloaks.gg/' }
 }
 ```
 
@@ -21,25 +21,25 @@ We highly recommend bundling this with Jar-In-Jar or Shadow as well (not shown h
 ### Common
 ```groovy
 dependencies {
-    modImplementation "cc.cosmetica:kupe:${rootProject.kupe_version}-${rootProject.minecraft_version}"
+    modImplementation "cc.cosmetica:cosmetica-core:${rootProject.cosmetica_core_version}-${rootProject.minecraft_version}"
 }
 ```
 ### Fabric
 ```groovy
 dependencies {
-    modImplementation "cc.cosmetica:kupe-fabric:${rootProject.kupe_version}-${rootProject.minecraft_version}"
+    modImplementation "cc.cosmetica:cosmetica-core-fabric:${rootProject.cosmetica_core_version}-${rootProject.minecraft_version}"
 }
 ```
 ### Forge
 ```groovy
 dependencies {
-    modImplementation "cc.cosmetica:kupe-forge:${rootProject.kupe_version}-${rootProject.minecraft_version}"
+    modImplementation "cc.cosmetica:cosmetica-core-forge:${rootProject.cosmetica_core_version}-${rootProject.minecraft_version}"
 }
 ```
 
 ### NeoForge
 ```groovy
 dependencies {
-    modImplementation "cc.cosmetica:kupe-neoforge:${rootProject.kupe_version}-${rootProject.minecraft_version}"
+    modImplementation "cc.cosmetica:cosmetica-core-neoforge:${rootProject.cosmetica_core_version}-${rootProject.minecraft_version}"
 }
 ```

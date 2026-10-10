@@ -17,9 +17,12 @@
 package cc.cosmetica.core.forge;
 
 import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Forge implementation of CosmeticaCore expect platform.
@@ -35,5 +38,31 @@ public class CosmeticaCoreExpectPlatformImpl {
 
 	public static boolean isDev() {
 		return !FMLEnvironment.production;
+	}
+
+	public static String getModVersion() {
+		List<ModInfo> mods = FMLLoader.getLoadingModList().getMods();
+
+		ModInfo theMod = null;
+		for (ModInfo mod : mods) {
+			if ("cosmetica".equals(mod.getModId())) {
+				theMod = mod;
+				break;
+			}
+			if ("cosmetica-core".equals(mod.getModId())) {
+				theMod = mod;
+			}
+		}
+
+		// this shouldn't happen. cosmetica core will always be loaded.
+		if (theMod == null) {
+			return "cosmetica-core 0.0.0-0.0.0";
+		}
+
+		return theMod.getModId() + " " + theMod.getConfigElement("version").orElse("1");
+	}
+
+	public static String getModLoader() {
+		return "forge";
 	}
 }

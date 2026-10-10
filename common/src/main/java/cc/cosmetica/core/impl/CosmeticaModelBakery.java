@@ -17,7 +17,12 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import cc.cosmetica.core.render.model.BlockModel;
+import cc.cosmetica.core.render.model.FaceInfo;
 import cc.cosmetica.core.render.texture.ModelSprite;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Vector3f;
@@ -25,19 +30,18 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockElement;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -59,9 +63,9 @@ public final class CosmeticaModelBakery {
 	 * Bake the given block model with the texture at the given location.
 	 * @param location the location to get the texture for. Also used in debug messages.
 	 *                 Must refer to an {@link CosmeticaTexture}.
-	 * @param model the model to bake.
+	 * @param model the model to model.
 	 */
-	public static BakedModel bakeModel(ResourceLocation location, BlockModel model) {
+	public static List<BakedQuad> bakeModel(ResourceLocation location, BlockModel model) {
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
@@ -71,37 +75,171 @@ public final class CosmeticaModelBakery {
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});
 
-			return model.bake(
-					bakery,
-					l -> sprite,
-					BlockModelRotation.X0_Y0,
-					location /*this resource location in bake is just used for debugging in the case of errors*/);
+			RenderType renderType = RenderType.entityTranslucent(location);
+			List<BakedQuad> bakedQuads = new ArrayList<>(model.getElementCount() * 6);
+
+			for (BlockModel.Element element : model.getElements()) {
+				Vector3f from = element.from();
+				Vector3f to = element.to();
+
+				final class QuadAdderHelper {
+					void addQuad(FaceInfo faceInfo, Direction direction) {
+						CosmeticaModelBakery.addQuad(
+								bakedQuads,
+								sprite,
+								renderType,
+								faceInfo,
+								from,
+								to,
+								element.getFace(direction),
+								element.rotation()
+						);
+					}
+				}
+
+				QuadAdderHelper helper = new QuadAdderHelper();
+
+				helper.addQuad(FaceInfo.NORTH, Direction.NORTH);
+				helper.addQuad(FaceInfo.EAST, Direction.EAST);
+				helper.addQuad(FaceInfo.SOUTH, Direction.SOUTH);
+				helper.addQuad(FaceInfo.WEST, Direction.WEST);
+				helper.addQuad(FaceInfo.UP, Direction.UP);
+				helper.addQuad(FaceInfo.DOWN, Direction.DOWN);
+			}
+
+			return bakedQuads;
+
+//			return model.model(
+//					bakery,
+//					l -> sprite,
+//					BlockModelRotation.X0_Y0,
+//					location /*this resource location in model is just used for debugging in the case of errors*/);
+
 		}
 
-		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
+		throw new IllegalArgumentException("Texture specified for Cosmetica model model must be a CosmeticaTexture.");
+	}
+
+	private static void addQuad(List<BakedQuad> output,
+								TextureAtlasSprite sprite, RenderType renderType,
+								FaceInfo faceInfo,
+								Vector3f from, Vector3f to,
+								BlockModel.Face face,
+								BlockModel.Rotation rotation) {
+		Vector3f corner0 = rotateCorner(faceInfo.vertexOrder[0].select(from, to), rotation);
+		corner0.mul(1/16.0f);
+		Vector3f corner1 = rotateCorner(faceInfo.vertexOrder[1].select(from, to), rotation);
+		corner1.mul(1/16.0f);
+		Vector3f corner2 = rotateCorner(faceInfo.vertexOrder[2].select(from, to), rotation);
+		corner2.mul(1/16.0f);
+		Vector3f corner3 = rotateCorner(faceInfo.vertexOrder[3].select(from, to), rotation);
+		corner3.mul(1/16.0f);
+
+		final int quadrant = face.rotation/90 & 3;
+
+		final float[] uv0 = { face.getU(0 + quadrant), face.getV(0 + quadrant) };
+		final float[] uv1 = { face.getU(1 + quadrant), face.getV(1 + quadrant) };
+		final float[] uv2 = { face.getU(2 + quadrant), face.getV(2 + quadrant) };
+		final float[] uv3 = { face.getU(3 + quadrant), face.getV(3 + quadrant) };
+
+		output.add(new BakedQuad(
+				generateVertexInfo(
+						corner0, corner1, corner2, corner3,
+						sprite,
+						uv0, uv1, uv2, uv3),
+				0,
+				calculateFacing(corner0, corner1, corner2, corner3),
+				sprite,
+				true
+		));
+	}
+
+	private static int[] generateVertexInfo(Vector3f corner0, Vector3f corner1, Vector3f corner2, Vector3f corner3,
+									  TextureAtlasSprite textureAtlasSprite,
+									  float[] ...uvs) {
+		final int stride = 8;
+		int[] vertices = new int[4 * stride];
+		Vector3f[] corners = { corner0, corner1, corner2, corner3 };
+
+		for (int i = 0; i < 4; i++) {
+			int base = stride * i;
+			Vector3f corner = corners[i];
+			float[] uv = uvs[i];
+
+			vertices[base] = Float.floatToRawIntBits(corner.x());
+			vertices[base + 1] = Float.floatToRawIntBits(corner.y());
+			vertices[base + 2] = Float.floatToRawIntBits(corner.z());
+			vertices[base + 3] = -1;
+			vertices[base + 4] = Float.floatToRawIntBits(textureAtlasSprite.getU(uv[0]));
+			vertices[base + 5] = Float.floatToRawIntBits(textureAtlasSprite.getV(uv[1]));
+		}
+
+		return vertices;
+	}
+
+	// 26.2 utilities not in older versions
+
+	// Vanilla Vertex Direction Calculations
+	@NotNull
+	private static Direction calculateFacing(final Vector3f ...positions) {
+		Vector3f p0 = positions[0];
+		Vector3f p1 = positions[1];
+		Vector3f p2 = positions[2];
+		Vector3f normal = normal(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z());
+		return findClosestDirection(normal);
+	}
+
+	// Normal code adapted from JOML. JOML is under the MIT license.
+	// https://github.com/JOML-CI/JOML/blob/main/src/main/java/org/joml/GeometryUtils.java#L141
+	private static Vector3f normal(float v0x, float v0y, float v0z, float v1x, float v1y, float v1z, float v2x, float v2y, float v2z) {
+		return new Vector3f(
+				((v1y - v0y) * (v2z - v0z)) - ((v1z - v0z) * (v2y - v0y)),
+				((v1z - v0z) * (v2x - v0x)) - ((v1x - v0x) * (v2z - v0z)),
+				((v1x - v0x) * (v2y - v0y)) - ((v1y - v0y) * (v2x - v0x))
+		);
+	}
+
+	@NotNull
+	private static Direction findClosestDirection(final Vector3f direction) {
+		if (!Float.isFinite(direction.x()) || !Float.isFinite(direction.z()) || !Float.isFinite(direction.y())) {
+			return Direction.UP;
+		} else {
+			Direction result = null;
+			float closestProduct = 0.0F;
+
+			for (Direction dir : Direction.values()) {
+				float dotProduct = direction.dot(dir.step());
+				if (dotProduct >= 0.0F && dotProduct > closestProduct) {
+					closestProduct = dotProduct;
+					result = dir;
+				}
+			}
+
+			return result == null ? Direction.UP : result;
+		}
 	}
 
 	// render
 
-	public static void renderModel(BakedModel model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
+	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
 		stack.pushPose();
-		boolean isGUI3D = model.isGui3d();
+		boolean isGUI3D = false; // model.isGui3d(); TODO is this right
 		float transformStrength = 0.25F;
 		float rotation = 0.0f;
-		float transform = model.getTransforms().getTransform(ItemTransforms.TransformType.GROUND).scale.y();
+		float transform = 1; // model.getTransforms().getTransform(ItemTransforms.TransformType.GROUND).scale.y();
 		stack.translate(0.0D, rotation + transformStrength * transform, 0.0D);
-		float xScale = model.getTransforms().ground.scale.x();
-		float yScale = model.getTransforms().ground.scale.y();
-		float zScale = model.getTransforms().ground.scale.z();
+		float xScale = 1; //model.getTransforms().ground.scale.x();
+		float yScale = 1; //model.getTransforms().ground.scale.y();
+		float zScale = 1; //model.getTransforms().ground.scale.z();
 
 		stack.pushPose();
 
-		final ItemTransforms.TransformType transformType = ItemTransforms.TransformType.FIXED;
+//		final ItemTransforms.TransformType transformType = ItemTransforms.TransformType.FIXED;
 		int overlayTyp = OverlayTexture.NO_OVERLAY;
 		// ItemRenderer#render start
 		stack.pushPose();
 
-		model.getTransforms().getTransform(transformType).apply(false, stack);
+//		model.getTransforms().getTransform(transformType).apply(false, stack);
 		stack.translate(-0.5D, -0.5D, -0.5D);
 
 		RenderType renderType = RenderType.entityTranslucent(texture); // hopefully this is the right one
@@ -121,20 +259,21 @@ public final class CosmeticaModelBakery {
 
 	// vanilla code that I don't want to rewrite:
 
-	private static void renderModelLists(BakedModel bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer) {
+	private static void renderModelLists(List<BakedQuad> bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer) {
 		Random random = new Random();
 		final long seed = 42L;
-		Direction[] var10 = Direction.values();
-		int var11 = var10.length;
 
-		for(int var12 = 0; var12 < var11; ++var12) {
-			Direction direction = var10[var12];
-			random.setSeed(seed);
-			renderQuadList(poseStack, vertexConsumer, bakedModel.getQuads(null, direction, random), packedLight, overlayType);
-		}
+//		Direction[] var10 = Direction.values();
+//		int var11 = var10.length;
+
+//		for(int var12 = 0; var12 < var11; ++var12) {
+//			Direction direction = var10[var12];
+//			random.setSeed(seed);
+//			renderQuadList(poseStack, vertexConsumer, bakedModel.getQuads(null, direction, random), packedLight, overlayType);
+//		}
 
 		random.setSeed(seed);
-		renderQuadList(poseStack, vertexConsumer, bakedModel.getQuads(null, null, random), packedLight, overlayType);
+		renderQuadList(poseStack, vertexConsumer, bakedModel, packedLight, overlayType);
 	}
 
 	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> list, int i, int j) {
@@ -160,22 +299,23 @@ public final class CosmeticaModelBakery {
 		// Find all corners
 		Collection<Vector3f> allCorners = new ArrayList<>();
 
-		for (BlockElement element : model.getElements()) {
-			Collection<Vector3f> corners = getUniqueCorners(element.from, element.to);
+		for (BlockModel.Element element : model.getElements()) {
+			Vector3f from = element.from();
+			Vector3f to = element.to();
+
+			Collection<Vector3f> corners = getUniqueCorners(from, to);
 
 			// rotate corners if on a rotated element
-			if (element.rotation != null) {
+			if (element.rotation().x != 0 || element.rotation().y != 0 || element.rotation().z != 0) {
 				Collection<Vector3f> rotated = new HashSet<>();
 
+				BlockModel.Rotation rotation = element.rotation();
+
 				for (Vector3f corner : corners) {
-					Vector3f origin = element.rotation.origin.copy();
-					origin.mul(16);
 					rotated.add(
 							rotateCorner(
 									corner,
-									origin,
-									element.rotation.axis,
-									element.rotation.angle
+									rotation
 							));
 				}
 
@@ -246,6 +386,19 @@ public final class CosmeticaModelBakery {
 		corners.add(to);
 
 		return corners;
+	}
+
+	private static Vector3f rotateCorner(Vector3f corner, BlockModel.Rotation rotation) {
+		if (rotation.x != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.X, rotation.x);
+		}
+		if (rotation.y != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Y, -rotation.y);
+		}
+		if (rotation.z != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Z, rotation.z);
+		}
+		return corner;
 	}
 
 	private static Vector3f rotateCorner(Vector3f corner, Vector3f origin, Direction.Axis axis, float angle) {

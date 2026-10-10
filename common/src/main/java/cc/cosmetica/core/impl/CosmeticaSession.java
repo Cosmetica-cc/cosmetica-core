@@ -16,11 +16,13 @@
 
 package cc.cosmetica.core.impl;
 
+import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.AsyncApi;
 import cc.cosmetica.core.api.CosmeticaAPI;
 import cc.cosmetica.core.api.LoginResult;
 import cc.cosmetica.core.builtin.manager.SelfCosmeticManager;
 import cc.cosmetica.core.util.Response;
+import cc.cosmetica.core.util.LifetimeResources;
 import cc.cosmetica.core.util.Websocket;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -144,7 +146,10 @@ public final class CosmeticaSession {
 					authData.add("uuid", new JsonPrimitive(this.user.toString()));
 					authData.add("token", new JsonPrimitive(africaSession.getToken()));
 					authData.add("client", new JsonPrimitive(this.clientName));
+					// anonymised aggregated data for version popularity
 					authData.add("minecraft", new JsonPrimitive(Minecraft.getInstance().getLaunchedVersion()));
+					authData.add("mod-version", new JsonPrimitive(CosmeticaCoreExpectPlatform.getModVersion()));
+					authData.add("modloader", new JsonPrimitive(CosmeticaCoreExpectPlatform.getModLoader()));
 					sendEvent(websocket1, "auth", authData);
 
 					// Resubscribe to events
@@ -179,6 +184,7 @@ public final class CosmeticaSession {
 					} else {
 						Logging.getInstance().error("Could not connect to Africa", ex);
 					}
+					Logging.getInstance().warn("Africa User for failed connection: " + this.user);
 
 					// try reconnect again if it fails and we are still current auth
 					if (CosmeticaSession.this == getCurrentSession()) {
@@ -296,7 +302,7 @@ public final class CosmeticaSession {
 
 	/* Constants */
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-	private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, "Cosmetica Reconnector"));
+	private static final ScheduledExecutorService SCHEDULER = LifetimeResources.newScheduler("Cosmetica Reconnector");
 	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
 
 	/* Keep track of subscriptions so we can re-subscribe on reconnect / making a new session */
@@ -535,6 +541,8 @@ public final class CosmeticaSession {
 			return new LoginResult(false, GET_AUTH_SERVER_ERROR, "Error code " + e.getCode() + ": " + e.getMessage(), e);
 		}
 
+		Logging.getInstance().info("Logging in " + username + " with uuid " + uuid + " to Cosmetica servers");
+
 		// Initiate a session
 		JsonObject keyRequest = new JsonObject();
 		keyRequest.addProperty("username", username);
@@ -572,6 +580,7 @@ public final class CosmeticaSession {
 
 		// Join server via mojang endpoint
 		String serverId = combinedHash("".getBytes(StandardCharsets.US_ASCII), sharedSecret, publicKey);
+		Logging.getInstance().info("Connecting to Cosmetica server with id " + serverId);
 
 		JsonObject loginRequest = new JsonObject();
 		loginRequest.addProperty("accessToken", accessToken);
