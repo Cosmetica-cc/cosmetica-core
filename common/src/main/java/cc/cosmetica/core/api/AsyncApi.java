@@ -22,6 +22,7 @@ import gg.cloaks.javaclient.ApiException;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 /**
@@ -43,7 +44,19 @@ public final class AsyncApi<API> {
      * @return a {@link CompletableFuture} that promises the response of the request.
      */
     public <T> CompletableFuture<T> requestAsync(Function<API, T> request) {
-        return CompletableFuture.supplyAsync(() -> request.apply(this.api), MasterCosmeticManager.HTTP_THREAD_POOL)
+        return requestAsync(request, MasterCosmeticManager.HTTP_THREAD_POOL);
+    }
+
+    /**
+     * Perform a task async on the Cosmetica threadpool. Intended for API requests to cosmetica.
+     * If the request returns a 401, the API instance will be deauthenticated.
+     *
+     * @param request the request to perform.
+     * @param <T>     the type of the promise.
+     * @return a {@link CompletableFuture} that promises the response of the request.
+     */
+    public <T> CompletableFuture<T> requestAsync(Function<API, T> request, Executor executor) {
+        return CompletableFuture.supplyAsync(() -> request.apply(this.api), executor)
                 .exceptionally(t -> {
                     if (t instanceof CompletionException)
                         t = t.getCause();

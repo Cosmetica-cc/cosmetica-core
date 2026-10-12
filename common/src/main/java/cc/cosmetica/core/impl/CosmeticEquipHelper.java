@@ -59,7 +59,7 @@ public class CosmeticEquipHelper {
             Cosmetics next = this.cosmeticGetter.apply(manager);
 
             if (next != ((Deque<Cosmetics>)this.cosmetics).peekLast()) {
-                Logging.getInstance().debug(LoggingCategory.COSMETICS, "New cosmetics detected. Refreshing for {}", uuid);
+                Logging.getInstance().info("New cosmetics detected. Refreshing for {}", uuid);
                 // load new cosmetics
                 updateCosmetics(manager, onUpdate);
             }
