@@ -16,7 +16,7 @@
 
 package cc.cosmetica.core.render.model;
 
-import com.mojang.math.Vector3f;
+import org.joml.Vector3f;
 
 /**
  * Better than 1.16.5's faceinfo.
