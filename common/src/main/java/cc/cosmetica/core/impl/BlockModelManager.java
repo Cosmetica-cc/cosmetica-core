@@ -205,11 +205,11 @@ public class BlockModelManager {
 						if (json == null) return false;
 
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
-							JsonElement element = new JsonParser().parse(new InputStreamReader(is, StandardCharsets.UTF_8));
+							JsonElement element = JsonParser.parseReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 							BlockModel blockModel = BlockModel.fromJson(element);
 
 							// calculate bounds
-							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(JsonParser.parseString(json));
+							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
 							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", modelId, aabb);
 
 							lambdaHack.setModel(blockModel, aabb);
