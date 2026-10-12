@@ -22,12 +22,10 @@ public final class Ids {
     private Ids() {}
 
     public static ResourceLocation minecraft(String value) {
-//        return ResourceLocation.withDefaultNamespace(value);
-        return new ResourceLocation("minecraft", value);
+        return ResourceLocation.withDefaultNamespace(value);
     }
 
     public static ResourceLocation fromString(String value) {
-//        return ResourceLocation.tryBySeparator(value, ':');
-        return new ResourceLocation(value);
+        return ResourceLocation.tryBySeparator(value, ':');
     }
 }

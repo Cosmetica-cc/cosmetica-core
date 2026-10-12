@@ -92,7 +92,7 @@ public class ApiCosmeticManager implements CosmeticManager {
 		}
 		UUID uuid = profile.getId();
 
-		boolean isSelf = profile.equals(Minecraft.getInstance().getUser().getGameProfile());
+		boolean isSelf = profile.equals(Minecraft.getInstance().getGameProfile());
 
 		if (textureProperty == null || !textureProperty.hasSignature()) {
 			// use request via uuid or name if we cannot use the packet
