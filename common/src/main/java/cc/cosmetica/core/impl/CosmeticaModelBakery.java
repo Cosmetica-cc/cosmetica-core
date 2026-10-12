@@ -123,14 +123,14 @@ public final class CosmeticaModelBakery {
 								Vector3f from, Vector3f to,
 								BlockModel.Face face,
 								BlockModel.Rotation rotation) {
-		Vector3f corner0 = rotateCorner(faceInfo.vertexOrder[0].select(from, to), rotation);
-		corner0.mul(1/16.0f);
-		Vector3f corner1 = rotateCorner(faceInfo.vertexOrder[1].select(from, to), rotation);
-		corner1.mul(1/16.0f);
-		Vector3f corner2 = rotateCorner(faceInfo.vertexOrder[2].select(from, to), rotation);
-		corner2.mul(1/16.0f);
-		Vector3f corner3 = rotateCorner(faceInfo.vertexOrder[3].select(from, to), rotation);
-		corner3.mul(1/16.0f);
+		Vector3f corner0 = rotateCorner(faceInfo.vertexOrder[0].select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner1 = rotateCorner(faceInfo.vertexOrder[1].select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner2 = rotateCorner(faceInfo.vertexOrder[2].select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner3 = rotateCorner(faceInfo.vertexOrder[3].select(from, to), rotation)
+				.div(16.0f);
 
 		final int quadrant = face.rotation/90 & 3;
 
@@ -158,6 +158,8 @@ public final class CosmeticaModelBakery {
 		int[] vertices = new int[4 * stride];
 		Vector3f[] corners = { corner0, corner1, corner2, corner3 };
 
+		final float oneSixteenth = 1 / 16.0f;
+
 		for (int i = 0; i < 4; i++) {
 			int base = stride * i;
 			Vector3f corner = corners[i];
@@ -167,8 +169,8 @@ public final class CosmeticaModelBakery {
 			vertices[base + 1] = Float.floatToRawIntBits(corner.y());
 			vertices[base + 2] = Float.floatToRawIntBits(corner.z());
 			vertices[base + 3] = -1;
-			vertices[base + 4] = Float.floatToRawIntBits(textureAtlasSprite.getU(uv[0]));
-			vertices[base + 5] = Float.floatToRawIntBits(textureAtlasSprite.getV(uv[1]));
+			vertices[base + 4] = Float.floatToRawIntBits(textureAtlasSprite.getU(uv[0] * oneSixteenth));
+			vertices[base + 5] = Float.floatToRawIntBits(textureAtlasSprite.getV(uv[1] * oneSixteenth));
 		}
 
 		return vertices;
