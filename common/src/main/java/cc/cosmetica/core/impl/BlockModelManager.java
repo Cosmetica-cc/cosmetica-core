@@ -20,10 +20,13 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import cc.cosmetica.core.render.model.BlockModel;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
@@ -194,30 +197,38 @@ public class BlockModelManager {
 
 			// load model
 			final CosmeticaModel lambdaHack = model;
+			// store in cache
+			MODEL_CACHE.cacheWeakly(modelId, model);
+
+			// Load model from JSON source
 			jsonSource.get()
 					.exceptionally(ex -> { // handle non-success responses
 						Logging.getInstance().error("Failed to download block model for {}", ex, modelId);
 						return null;
 					})
-					.thenAccept(json -> {
-						if (json == null) return;
+					.thenApply(json -> {
+						if (json == null) return false;
 
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
-							BlockModel blockModel = BlockModel.fromStream(new InputStreamReader(is, StandardCharsets.UTF_8));
-							blockModel.name = modelId;
+							JsonElement element = new JsonParser().parse(new InputStreamReader(is, StandardCharsets.UTF_8));
+							BlockModel blockModel = BlockModel.fromJson(element);
 
 							// calculate bounds
 							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
-							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", blockModel.name, aabb);
+							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", modelId, aabb);
 
 							lambdaHack.setModel(blockModel, aabb);
+							return true;
 						} catch (IOException | RuntimeException e) {
 							Logging.getInstance().error("Failed to parse model " + modelId, e);
+							return false;
+						}
+					})
+					.thenAccept(success -> {
+						if (!success) {
+							MODEL_CACHE.revoke(modelId, lambdaHack);
 						}
 					});
-
-			// store in cache
-			MODEL_CACHE.cacheWeakly(modelId, model);
 		}
 
 		return model;
@@ -380,15 +391,32 @@ public class BlockModelManager {
 
 		synchronized void cacheWeakly(String id, T t) {
 			if (id == null)
-				throw new IllegalStateException("Cannot store ID null");
+				throw new IllegalArgumentException("Cannot store ID null");
 			if (t == null)
-				throw new IllegalStateException("Cannot store a value of null");
+				throw new IllegalArgumentException("Cannot store a value of null");
 
 			// in case overriding
 			if (!cache.containsKey(id))
 				cachedIds.add(id);
 
 			cache.put(id, new WeakReference<>(t));
+		}
+
+		synchronized void revoke(String id, T t) {
+			if (id == null)
+				throw new IllegalArgumentException("Cannot revoke a null id");
+			if (t == null)
+				throw new IllegalArgumentException("Cannot revoke a null expected value");
+
+			WeakReference<T> ref = cache.get(id);
+			if (ref != null && ref.get() == t) {
+				cache.remove(id);
+				cachedIds.remove(id);
+
+				if (gcIndex >= cachedIds.size()) {
+					gcIndex = 0;
+				}
+			}
 		}
 
 		/**
@@ -419,7 +447,7 @@ public class BlockModelManager {
 				// not necessary if removed as the next item shifts back
 			}
 
-			// This is safe because CACHED_MODEL_IDS is only shrunk in this method.
+			// This is safe because CACHED_MODEL_IDS is only shrunk in this method and revoke which both do this.
 			if (gcIndex >= cachedIds.size()) {
 				gcIndex = 0;
 			}
