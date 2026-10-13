@@ -31,10 +31,6 @@
     "nametags.SubmitNodeCollectionMixin",
     "network.ApiCosmeticsHolderPlayerInfoMixin",
     "network.ClientboundPlayerInfoUpdatePacketActionMixin",
-<<<<<<< HEAD
-=======
-    "texture.ModelManagerMixin",
->>>>>>> 1.21.11
     "texture.NativeImageAccessorMixin"
   ],
   "mixins": [
