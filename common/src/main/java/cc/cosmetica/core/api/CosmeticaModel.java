@@ -170,6 +170,8 @@ public final class CosmeticaModel {
 	 * @param y the y offset.
 	 * @param z the z offset.
 	 * @param mirror whether to mirror the model.
+	 * @param partiallyTransparent whether the model should render partially transparent, like an invisible on-team player.
+	 * @param outlineColour the outline colour ARGB.
 	 */
 	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror,
 							 boolean partiallyTransparent, int outlineColour) {
