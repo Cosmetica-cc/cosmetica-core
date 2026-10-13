@@ -21,7 +21,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -138,14 +138,14 @@ public final class BlockModel {
     }
 
     public static final class Face {
-        private Face(Vector4f uv, ResourceLocation texture, int rotation) {
+        private Face(Vector4f uv, Identifier texture, int rotation) {
             this.uv = uv;
             this.texture = texture;
             this.rotation = rotation;
         }
 
         public final Vector4f uv;
-        public final ResourceLocation texture;
+        public final Identifier texture;
         /**
          * Rotation, a multiple of 90.
          */
@@ -184,8 +184,8 @@ public final class BlockModel {
         int textureWidth = textureSize.get(0).getAsInt();
         int textureHeight = textureSize.get(1).getAsInt();
 
-        Map<String, ResourceLocation> textures = new HashMap<>();
-        ResourceLocation missingTexture = Ids.minecraft("missing");
+        Map<String, Identifier> textures = new HashMap<>();
+        Identifier missingTexture = Ids.minecraft("missing");
 
         if (object.has("textures")) {
             JsonObject jTextures = object.getAsJsonObject("textures");
@@ -237,7 +237,7 @@ public final class BlockModel {
         }
     }
 
-    private static Element elementFromJson(JsonElement json, Function<String, ResourceLocation> textures) {
+    private static Element elementFromJson(JsonElement json, Function<String, Identifier> textures) {
         JsonObject jElement = json.getAsJsonObject();
         JsonObject jFaces = jElement.getAsJsonObject("faces");
 
@@ -310,7 +310,7 @@ public final class BlockModel {
         return new Vector3f(json.get(0).getAsFloat(), json.get(1).getAsFloat(), json.get(2).getAsFloat());
     }
 
-    private static Face faceFromJson(JsonElement json, Function<String, ResourceLocation> textures) {
+    private static Face faceFromJson(JsonElement json, Function<String, Identifier> textures) {
         JsonObject object = json.getAsJsonObject();
         JsonArray jUV = object.getAsJsonArray("uv");
         if (jUV.size() != 4) {
@@ -324,7 +324,7 @@ public final class BlockModel {
                 jUV.get(3).getAsFloat()
         );
 
-        ResourceLocation texture = textures.apply(object.get("texture").getAsString());
+        Identifier texture = textures.apply(object.get("texture").getAsString());
 
         return new Face(uv, texture, object.has("rotation") ? object.get("rotation").getAsInt() : 0);
     }

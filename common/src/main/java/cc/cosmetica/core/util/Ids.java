@@ -16,16 +16,16 @@
 
 package cc.cosmetica.core.util;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public final class Ids {
     private Ids() {}
 
-    public static ResourceLocation minecraft(String value) {
-        return ResourceLocation.withDefaultNamespace(value);
+    public static Identifier minecraft(String value) {
+        return Identifier.withDefaultNamespace(value);
     }
 
-    public static ResourceLocation fromString(String value) {
-        return ResourceLocation.tryBySeparator(value, ':');
+    public static Identifier fromString(String value) {
+        return Identifier.tryBySeparator(value, ':');
     }
 }

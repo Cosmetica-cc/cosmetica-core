@@ -23,18 +23,15 @@ import cc.cosmetica.core.render.texture.ModelSprite;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelDebugName;
-import net.minecraft.client.resources.model.SpriteGetter;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
@@ -42,6 +39,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.joml.GeometryUtils;
 import org.joml.Vector3f;
 
 import java.util.*;
@@ -136,11 +134,28 @@ public final class CosmeticaModelBakery {
 		final float[] uv2 = { face.getU(2 + quadrant), face.getV(2 + quadrant) };
 		final float[] uv3 = { face.getU(3 + quadrant), face.getV(3 + quadrant) };
 
+		final long[] uvs = new long[] {
+				UVPair.pack(
+						uv0[0] / 16.0f,
+						uv0[1] / 16.0f
+				),
+				UVPair.pack(
+						uv1[0] / 16.0f,
+						uv1[1] / 16.0f
+				),
+				UVPair.pack(
+						uv2[0] / 16.0f,
+						uv2[1] / 16.0f
+				),
+				UVPair.pack(
+						uv3[0] / 16.0f,
+						uv3[1] / 16.0f
+				)
+		};
+
 		output.add(new BakedQuad(
-				generateVertexInfo(
-						corner0, corner1, corner2, corner3,
-						sprite,
-						uv0, uv1, uv2, uv3),
+				corner0, corner1, corner2, corner3,
+				uvs[0], uvs[1], uvs[2], uvs[3],
 				0,
 				calculateFacing(corner0, corner1, corner2, corner3),
 				sprite,
@@ -149,51 +164,12 @@ public final class CosmeticaModelBakery {
 		));
 	}
 
-	private static int[] generateVertexInfo(Vector3f corner0, Vector3f corner1, Vector3f corner2, Vector3f corner3,
-									  TextureAtlasSprite textureAtlasSprite,
-									  float[] ...uvs) {
-		final int stride = 8;
-		int[] vertices = new int[4 * stride];
-		Vector3f[] corners = { corner0, corner1, corner2, corner3 };
-
-		final float oneSixteenth = 1 / 16.0f;
-
-		for (int i = 0; i < 4; i++) {
-			int base = stride * i;
-			Vector3f corner = corners[i];
-			float[] uv = uvs[i];
-
-			vertices[base] = Float.floatToRawIntBits(corner.x());
-			vertices[base + 1] = Float.floatToRawIntBits(corner.y());
-			vertices[base + 2] = Float.floatToRawIntBits(corner.z());
-			vertices[base + 3] = -1;
-			vertices[base + 4] = Float.floatToRawIntBits(textureAtlasSprite.getU(uv[0] * oneSixteenth));
-			vertices[base + 5] = Float.floatToRawIntBits(textureAtlasSprite.getV(uv[1] * oneSixteenth));
-		}
-
-		return vertices;
-	}
-
-	// 26.2 utilities not in older versions
-
 	// Vanilla Vertex Direction Calculations
 	@NotNull
 	private static Direction calculateFacing(final Vector3f ...positions) {
-		Vector3f p0 = positions[0];
-		Vector3f p1 = positions[1];
-		Vector3f p2 = positions[2];
-		Vector3f normal = normal(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z());
+		Vector3f normal = new Vector3f();
+		GeometryUtils.normal(positions[0], positions[1], positions[2], normal);
 		return findClosestDirection(normal);
-	}
-
-	// Normal code adapted from JOML. JOML is under the MIT license.
-	// https://github.com/JOML-CI/JOML/blob/main/src/main/java/org/joml/GeometryUtils.java#L141
-	private static Vector3f normal(float v0x, float v0y, float v0z, float v1x, float v1y, float v1z, float v2x, float v2y, float v2z) {
-		return new Vector3f(
-				((v1y - v0y) * (v2z - v0z)) - ((v1z - v0z) * (v2y - v0y)),
-				((v1z - v0z) * (v2x - v0x)) - ((v1x - v0x) * (v2z - v0z)),
-				((v1x - v0x) * (v2y - v0y)) - ((v1y - v0y) * (v2x - v0x))
-		);
 	}
 
 	@NotNull

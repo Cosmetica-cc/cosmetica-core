@@ -17,11 +17,9 @@
 package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
-import cc.cosmetica.core.impl.BlockModelManager;
-import cc.cosmetica.core.impl.CosmeticaModelBakery;
-import cc.cosmetica.core.impl.Logging;
-import cc.cosmetica.core.impl.LoggingCategory;
+import cc.cosmetica.core.impl.*;
 import cc.cosmetica.core.render.model.BlockModel;
+import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.Minecraft;
@@ -30,10 +28,15 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.SingleVariant;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.AxisAngle4f;
@@ -42,6 +45,7 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -171,8 +175,9 @@ public final class CosmeticaModel {
 	 * @param z the z offset.
 	 * @param mirror whether to mirror the model.
 	 */
-	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror) {
-		BlockModelPart model = this.getBakedModel();
+	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror,
+							 boolean partiallyTransparent, int outlineColour) {
+		List<BakedQuad> model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.0f;
@@ -183,22 +188,18 @@ public final class CosmeticaModel {
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		stack.translate(-0.5, -0.25, -0.5);
 
-		collector.submitBlockModel(
+		int[] is = new int[4];
+		Arrays.fill(is, partiallyTransparent ? 0x26FFFFFF : -1);
+		collector.submitItem(
 				stack,
+				ItemDisplayContext.NONE,
+				// light, overlay, outline colour
+				packedLight, OverlayTexture.NO_OVERLAY, outlineColour,
+				is,
+				model,
 				RenderTypes.armorTranslucent(this.getTexture()),
-				new SingleVariant(model),
-				// rgb
-				1, 1, 1,
-				// light, overlay, outline
-				packedLight, OverlayTexture.NO_OVERLAY, 0
+				ItemStackRenderState.FoilType.NONE
 		);
-
-//		CosmeticaModelBakery.renderModel(
-//				model,
-//				stack,
-//				multiBufferSource,
-//				this.getTexture(),
-//				packedLight);
 
 		stack.popPose();
 	}

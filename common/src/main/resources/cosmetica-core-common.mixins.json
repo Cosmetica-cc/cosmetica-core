@@ -28,8 +28,8 @@
     "nametags.PlayerRendererMixin",
     "nametags.PlayerTabOverlayMixin",
     "nametags.SubmitNodeCollectionMixin",
-    "network.ClientboundPlayerInfoUpdatePacketActionMixin",
     "network.ApiCosmeticsHolderPlayerInfoMixin",
+    "network.ClientboundPlayerInfoUpdatePacketActionMixin",
     "texture.ModelManagerMixin",
     "texture.NativeImageAccessorMixin"
   ],
