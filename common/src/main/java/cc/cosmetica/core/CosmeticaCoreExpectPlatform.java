@@ -47,4 +47,18 @@ public class CosmeticaCoreExpectPlatform {
 	public static boolean isDev() {
 		throw new AssertionError();
 	}
+
+	/**
+	 * Get the mod version of cosmetica, or core if cosmetica is not loaded.
+	 * @return Format: "Mod-Id Version"
+	 */
+	@ExpectPlatform
+	public static String getModVersion() {
+		throw new AssertionError();
+	}
+
+	@ExpectPlatform
+	public static String getModLoader() {
+		throw new AssertionError();
+	}
 }

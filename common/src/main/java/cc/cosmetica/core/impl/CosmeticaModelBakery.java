@@ -17,34 +17,32 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import cc.cosmetica.core.render.model.BlockModel;
+import cc.cosmetica.core.render.model.FaceInfo;
 import cc.cosmetica.core.render.texture.ModelSprite;
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.Variant;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.*;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.ModelDebugName;
+import net.minecraft.client.resources.model.SpriteGetter;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.*;
 
@@ -66,9 +64,9 @@ public final class CosmeticaModelBakery {
 	 * Bake the given block model with the texture at the given location.
 	 * @param location the location to get the texture for. Also used in debug messages.
 	 *                 Must refer to an {@link CosmeticaTexture}.
-	 * @param model the model to bake.
+	 * @param model the model to model.
 	 */
-	public static BlockModelPart bakeModel(Identifier location, BlockModel model) {
+	public static List<BakedQuad> bakeModel(Identifier location, BlockModel model) {
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
 		AbstractTexture modelTexture = Minecraft.getInstance().getTextureManager().getTexture(location);
 
@@ -77,96 +75,168 @@ public final class CosmeticaModelBakery {
 			ModelSprite sprite = new ModelSprite(location, texture.getCurrentImage(),
 					texture.getFrameHeight(), texture.getFrameCount(),
 					() -> {});
-			final String debugName = location.toString();
+			RenderType renderType = RenderTypes.entityTranslucent(location);
 
-			return new Variant(location).bake(new ModelBaker() {
-				// ModelBakery.PartCacheImpl
-				private final PartCache cache = new PartCache() {
-					private final Interner<Vector3fc> vectors = Interners.newStrongInterner();
+			List<BakedQuad> bakedQuads = new ArrayList<>(model.getElementCount() * 6);
 
-					public Vector3fc vector(Vector3fc vector3fc) {
-						return this.vectors.intern(vector3fc);
+			for (BlockModel.Element element : model.getElements()) {
+				Vector3f from = element.from();
+				Vector3f to = element.to();
+
+				final class QuadAdderHelper {
+					void addQuad(FaceInfo faceInfo, Direction direction) {
+						CosmeticaModelBakery.addQuad(
+								bakedQuads,
+								sprite,
+								renderType,
+								faceInfo,
+								from,
+								to,
+								element.getFace(direction),
+								element.rotation()
+						);
 					}
-				};
-
-				@Override
-				public ResolvedModel getModel(Identifier resourceLocation) {
-					return new ResolvedModel() {
-						@Override
-						public UnbakedModel wrapped() {
-							return model;
-						}
-
-						@Override
-						public @Nullable ResolvedModel parent() {
-							return null;
-						}
-
-						@Override
-						public String debugName() {
-							return debugName;
-						}
-					};
 				}
 
-				@Override
-				public BlockModelPart missingBlockModelPart() {
-					throw new IllegalStateException();
-//					return ((ModelBakeryAccessor) bakery).getMissingModel();
-				}
+				QuadAdderHelper helper = new QuadAdderHelper();
 
-				@Override
-				public PartCache parts() {
-					return this.cache;
-				}
+				helper.addQuad(FaceInfo.NORTH, Direction.NORTH);
+				helper.addQuad(FaceInfo.EAST, Direction.EAST);
+				helper.addQuad(FaceInfo.SOUTH, Direction.SOUTH);
+				helper.addQuad(FaceInfo.WEST, Direction.WEST);
+				helper.addQuad(FaceInfo.UP, Direction.UP);
+				helper.addQuad(FaceInfo.DOWN, Direction.DOWN);
+			}
 
-				@Override
-				public SpriteGetter sprites() {
-					return new SpriteGetter() {
-						@Override
-						public TextureAtlasSprite get(Material material, ModelDebugName modelDebugName) {
-							return sprite;
-						}
-
-						@Override
-						public TextureAtlasSprite reportMissingReference(String string, ModelDebugName modelDebugName) {
-							return sprite;
-						}
-					};
-				}
-
-				@Override
-				public <T> T compute(SharedOperationKey<T> sharedOperationKey) {
-					return sharedOperationKey.compute(this);
-				}
-			});
+			return bakedQuads;
 		}
 
-		throw new IllegalArgumentException("Texture specified for Cosmetica model bake must be a CosmeticaTexture.");
+		throw new IllegalArgumentException("Texture specified for Cosmetica model model must be a CosmeticaTexture.");
+	}
+
+	private static void addQuad(List<BakedQuad> output,
+								TextureAtlasSprite sprite, RenderType renderType,
+								FaceInfo faceInfo,
+								Vector3f from, Vector3f to,
+								BlockModel.Face face,
+								BlockModel.Rotation rotation) {
+		Vector3f corner0 = rotateCorner(faceInfo.vertexOrder[0].select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner1 = rotateCorner(faceInfo.vertexOrder[1].select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner2 = rotateCorner(faceInfo.vertexOrder[2].select(from, to), rotation)
+				.div(16.0f);
+		Vector3f corner3 = rotateCorner(faceInfo.vertexOrder[3].select(from, to), rotation)
+				.div(16.0f);
+
+		final int quadrant = face.rotation/90 & 3;
+
+		final float[] uv0 = { face.getU(0 + quadrant), face.getV(0 + quadrant) };
+		final float[] uv1 = { face.getU(1 + quadrant), face.getV(1 + quadrant) };
+		final float[] uv2 = { face.getU(2 + quadrant), face.getV(2 + quadrant) };
+		final float[] uv3 = { face.getU(3 + quadrant), face.getV(3 + quadrant) };
+
+		output.add(new BakedQuad(
+				generateVertexInfo(
+						corner0, corner1, corner2, corner3,
+						sprite,
+						uv0, uv1, uv2, uv3),
+				0,
+				calculateFacing(corner0, corner1, corner2, corner3),
+				sprite,
+				true,
+				0
+		));
+	}
+
+	private static int[] generateVertexInfo(Vector3f corner0, Vector3f corner1, Vector3f corner2, Vector3f corner3,
+									  TextureAtlasSprite textureAtlasSprite,
+									  float[] ...uvs) {
+		final int stride = 8;
+		int[] vertices = new int[4 * stride];
+		Vector3f[] corners = { corner0, corner1, corner2, corner3 };
+
+		final float oneSixteenth = 1 / 16.0f;
+
+		for (int i = 0; i < 4; i++) {
+			int base = stride * i;
+			Vector3f corner = corners[i];
+			float[] uv = uvs[i];
+
+			vertices[base] = Float.floatToRawIntBits(corner.x());
+			vertices[base + 1] = Float.floatToRawIntBits(corner.y());
+			vertices[base + 2] = Float.floatToRawIntBits(corner.z());
+			vertices[base + 3] = -1;
+			vertices[base + 4] = Float.floatToRawIntBits(textureAtlasSprite.getU(uv[0] * oneSixteenth));
+			vertices[base + 5] = Float.floatToRawIntBits(textureAtlasSprite.getV(uv[1] * oneSixteenth));
+		}
+
+		return vertices;
+	}
+
+	// 26.2 utilities not in older versions
+
+	// Vanilla Vertex Direction Calculations
+	@NotNull
+	private static Direction calculateFacing(final Vector3f ...positions) {
+		Vector3f p0 = positions[0];
+		Vector3f p1 = positions[1];
+		Vector3f p2 = positions[2];
+		Vector3f normal = normal(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z());
+		return findClosestDirection(normal);
+	}
+
+	// Normal code adapted from JOML. JOML is under the MIT license.
+	// https://github.com/JOML-CI/JOML/blob/main/src/main/java/org/joml/GeometryUtils.java#L141
+	private static Vector3f normal(float v0x, float v0y, float v0z, float v1x, float v1y, float v1z, float v2x, float v2y, float v2z) {
+		return new Vector3f(
+				((v1y - v0y) * (v2z - v0z)) - ((v1z - v0z) * (v2y - v0y)),
+				((v1z - v0z) * (v2x - v0x)) - ((v1x - v0x) * (v2z - v0z)),
+				((v1x - v0x) * (v2y - v0y)) - ((v1y - v0y) * (v2x - v0x))
+		);
+	}
+
+	@NotNull
+	private static Direction findClosestDirection(final Vector3f direction) {
+		if (!Float.isFinite(direction.x()) || !Float.isFinite(direction.z()) || !Float.isFinite(direction.y())) {
+			return Direction.UP;
+		} else {
+			Direction result = null;
+			float closestProduct = 0.0F;
+
+			for (Direction dir : Direction.values()) {
+				float dotProduct = direction.dot(dir.step());
+				if (dotProduct >= 0.0F && dotProduct > closestProduct) {
+					closestProduct = dotProduct;
+					result = dir;
+				}
+			}
+
+			return result == null ? Direction.UP : result;
+		}
 	}
 
 	// render
-	public static void renderModel(BlockModelPart model, PoseStack stack, MultiBufferSource multiBufferSource, Identifier texture, int packedLight) {
+	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, Identifier texture, int packedLight) {
 		VertexConsumer consumer = multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture));
 
 		int[] tints = new int[0];
-		for (Direction direction : Direction.values()) {
-			List<BakedQuad> quads = model.getQuads(direction);
-			renderQuadList(
-					stack,
-					consumer,
-					quads,
-					tints,
-					packedLight,
-					OverlayTexture.NO_OVERLAY
-					);
-		}
+//		for (Direction direction : Direction.values()) {
+//			List<BakedQuad> quads = model.getQuads(direction);
+//			renderQuadList(
+//					stack,
+//					consumer,
+//					quads,
+//					tints,
+//					packedLight,
+//					OverlayTexture.NO_OVERLAY
+//			);
+//		}
 
-		List<BakedQuad> quads = model.getQuads(null);
 		renderQuadList(
 				stack,
 				consumer,
-				quads,
+				model,
 				tints,
 				packedLight,
 				OverlayTexture.NO_OVERLAY
@@ -207,53 +277,27 @@ public final class CosmeticaModelBakery {
 	// Bounding Box calculation //
 	// ======================== //
 
-	public static AABB calculateBoundingBox(JsonElement model) {
+	public static AABB calculateBoundingBox(BlockModel model) {
 		// Find all corners
 		Collection<Vector3f> allCorners = new ArrayList<>();
 
-		for (JsonElement e : model.getAsJsonObject().get("elements").getAsJsonArray()) {
-			JsonObject element = e.getAsJsonObject();
+		for (BlockModel.Element element : model.getElements()) {
+			Vector3f from = element.from();
+			Vector3f to = element.to();
 
-			JsonArray from = element.getAsJsonArray("from");
-			JsonArray to = element.getAsJsonArray("to");
-
-			Collection<Vector3f> corners = getUniqueCorners(
-					new Vector3f(from.get(0).getAsFloat(), from.get(1).getAsFloat(), from.get(2).getAsFloat()),
-					new Vector3f(to.get(0).getAsFloat(), to.get(1).getAsFloat(), to.get(2).getAsFloat())
-			);
+			Collection<Vector3f> corners = getUniqueCorners(from, to);
 
 			// rotate corners if on a rotated element
-			if (element.has("rotation")) {
+			if (element.rotation().x != 0 || element.rotation().y != 0 || element.rotation().z != 0) {
 				Collection<Vector3f> rotated = new HashSet<>();
 
-				JsonObject rotation = element.getAsJsonObject("rotation");
+				BlockModel.Rotation rotation = element.rotation();
 
 				for (Vector3f corner : corners) {
-					JsonArray originJson = rotation.get("origin").getAsJsonArray();
-					Vector3f origin = new Vector3f(
-							originJson.get(0).getAsFloat(),
-							originJson.get(1).getAsFloat(),
-							originJson.get(2).getAsFloat()
-					);
-
-					String axisJson = rotation.get("axis").getAsString();
-					Direction.Axis axis = switch (axisJson.toLowerCase(Locale.ROOT)) {
-						case "x" -> Direction.Axis.X;
-						case "y" -> Direction.Axis.Y;
-						case "z" -> Direction.Axis.Z;
-						default -> {
-							Logging.getInstance().warn("Bad axis for model element. Got " + axisJson);
-							yield Direction.Axis.Y;
-						}
-					};
-
-//					origin.mul(16);
 					rotated.add(
 							rotateCorner(
 									corner,
-									origin,
-									axis,
-									rotation.get("angle").getAsFloat()
+									rotation
 							));
 				}
 
@@ -324,6 +368,19 @@ public final class CosmeticaModelBakery {
 		corners.add(to);
 
 		return corners;
+	}
+
+	private static Vector3f rotateCorner(Vector3f corner, BlockModel.Rotation rotation) {
+		if (rotation.x != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.X, rotation.x);
+		}
+		if (rotation.y != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Y, -rotation.y);
+		}
+		if (rotation.z != 0) {
+			corner = rotateCorner(corner, rotation.origin, Direction.Axis.Z, rotation.z);
+		}
+		return corner;
 	}
 
 	private static Vector3f rotateCorner(Vector3f corner, Vector3f origin, Direction.Axis axis, float angle) {

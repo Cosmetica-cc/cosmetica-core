@@ -21,13 +21,14 @@ import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
+import cc.cosmetica.core.render.model.BlockModel;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.SingleVariant;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -41,6 +42,7 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -55,7 +57,7 @@ public final class CosmeticaModel {
 	}
 
 	private final Identifier texture;
-	private BlockModelPart model;
+	private List<BakedQuad> model;
 	private BlockModel unbakedModel; // cleared when the model is baked!
 	private AABB boundingBox;
 	private boolean textureLoaded;
@@ -90,7 +92,7 @@ public final class CosmeticaModel {
 	}
 
 	private void startBaking(BlockModel model) {
-		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
+		// TODO should this be if(onRenderThread) model else recordRenderCall(model)? Is the speed gain negligible?
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Scheduling baking for {}", this.texture);
 
 		Minecraft.getInstance().schedule(() -> {
@@ -113,7 +115,7 @@ public final class CosmeticaModel {
 	 * @return the baked model for this cosmetic model, or null if it has not been baked yet.
 	 */
 	@Nullable
-	public BlockModelPart getBakedModel() {
+	public List<BakedQuad> getBakedModel() {
 		return this.model;
 	}
 
@@ -137,7 +139,7 @@ public final class CosmeticaModel {
 	 * @param mirror whether to mirror the model.
 	 */
 	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
-		BlockModelPart model = this.getBakedModel();
+		List<BakedQuad> model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
 		float o = 1.0f;
@@ -209,7 +211,7 @@ public final class CosmeticaModel {
 	// ==== Direct Model/Image Overloads ==== //
 
 	/**
-	 * Get or bake a model for the given id.
+	 * Get or model a model for the given id.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.
@@ -233,7 +235,7 @@ public final class CosmeticaModel {
 	}
 
 	/**
-	 * Get or bake a model for the given id, with a model override.
+	 * Get or model a model for the given id, with a model override.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.
@@ -285,7 +287,7 @@ public final class CosmeticaModel {
 	// ==== Cosmetica Core Overloads ==== //
 
 	/**
-	 * Get or bake a cosmetica model for the given id.
+	 * Get or model a cosmetica model for the given id.
 	 * @param id the id of the model. Should be unique per-model, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.
