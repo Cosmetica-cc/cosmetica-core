@@ -17,22 +17,21 @@
 package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
-import cc.cosmetica.core.impl.*;
-import cc.cosmetica.core.render.BlockModel;
-import com.google.common.collect.ImmutableList;
+import cc.cosmetica.core.impl.BlockModelManager;
+import cc.cosmetica.core.impl.CosmeticaModelBakery;
+import cc.cosmetica.core.impl.Logging;
+import cc.cosmetica.core.impl.LoggingCategory;
+import cc.cosmetica.core.render.model.BlockModel;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.BlockModelRenderState;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.AxisAngle4f;
@@ -41,6 +40,7 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -91,7 +91,7 @@ public final class CosmeticaModel {
 	}
 
 	private void startBaking(BlockModel model) {
-		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
+		// TODO should this be if(onRenderThread) model else recordRenderCall(model)? Is the speed gain negligible?
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Scheduling baking for {}", this.texture);
 
 		Minecraft.getInstance().schedule(() -> {
@@ -169,6 +169,8 @@ public final class CosmeticaModel {
 	 * @param y the y offset.
 	 * @param z the z offset.
 	 * @param mirror whether to mirror the model.
+	 * @param partiallyTransparent whether the model should render partially transparent, like an invisible on-team player.
+	 * @param outlineColour the outline colour ARGB.
 	 */
 	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror,
 							 boolean partiallyTransparent, int outlineColour) {
@@ -183,52 +185,64 @@ public final class CosmeticaModel {
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		stack.translate(-0.5, -0.25, -0.5);
 
-		// Submit block model with special marker to override tint colour (for team invisibles)
-		BlockStateModelPart modelpart = new BlockStateModelPart() {
-			@Override
-			public List<BakedQuad> getQuads(@org.jspecify.annotations.Nullable Direction direction) {
-				if (direction == null) {
-					return model;
-				} else {
-					return ImmutableList.of();
-				}
-			}
+//		// Submit block model with special marker to override tint colour (for team invisibles)
+//		BlockStateModelPart modelpart = new BlockStateModelPart() {
+//			@Override
+//			public List<BakedQuad> getQuads(@org.jspecify.annotations.Nullable Direction direction) {
+//				if (direction == null) {
+//					return model;
+//				} else {
+//					return ImmutableList.of();
+//				}
+//			}
+//
+//			@Override
+//			public boolean useAmbientOcclusion() {
+//				return false;
+//			}
+//
+//			@Override
+//			public Material.Baked particleMaterial() {
+//				return null;
+//			}
+//
+//			@Override
+//			public @BakedQuad.MaterialFlags int materialFlags() {
+//				return 0;
+//			}
+//		};
+//
+//		if (collector instanceof CosmeticaModelSubmitter submitter) {
+//			submitter.submitCosmeticaModel(
+//					stack,
+//					RenderTypes.armorTranslucent(this.getTexture()),
+//					ImmutableList.of(modelpart),
+//					packedLight,
+//					partiallyTransparent ? 0x26FFFFFF : -1,
+//					outlineColour
+//			);
+//		} else {
+//			collector.submitBlockModel(
+//					stack,
+//					RenderTypes.armorTranslucent(this.getTexture()),
+//					ImmutableList.of(modelpart),
+//					BlockModelRenderState.EMPTY_TINTS,
+//					// light, overlay, outline
+//					packedLight, OverlayTexture.NO_OVERLAY, outlineColour
+//			);
+//		}
 
-			@Override
-			public boolean useAmbientOcclusion() {
-				return false;
-			}
-
-			@Override
-			public Material.Baked particleMaterial() {
-				return null;
-			}
-
-			@Override
-			public @BakedQuad.MaterialFlags int materialFlags() {
-				return 0;
-			}
-		};
-
-		if (collector instanceof CosmeticaModelSubmitter submitter) {
-			submitter.submitCosmeticaModel(
-					stack,
-					RenderTypes.armorTranslucent(this.getTexture()),
-					ImmutableList.of(modelpart),
-					packedLight,
-					partiallyTransparent ? 0x26FFFFFF : -1,
-					outlineColour
-			);
-		} else {
-			collector.submitBlockModel(
-					stack,
-					RenderTypes.armorTranslucent(this.getTexture()),
-					ImmutableList.of(modelpart),
-					BlockModelRenderState.EMPTY_TINTS,
-					// light, overlay, outline
-					packedLight, OverlayTexture.NO_OVERLAY, outlineColour
-			);
-		}
+		int[] is = new int[4];
+		Arrays.fill(is, partiallyTransparent ? 0x26FFFFFF : -1);
+		collector.submitItem(
+				stack,
+				ItemDisplayContext.NONE,
+				// light, overlay, outline colour
+				packedLight, OverlayTexture.NO_OVERLAY, outlineColour,
+				is,
+				model,
+				ItemStackRenderState.FoilType.NONE
+		);
 
 		stack.popPose();
 	}
@@ -241,7 +255,7 @@ public final class CosmeticaModel {
 	// ==== Direct Model/Image Overloads ==== //
 
 	/**
-	 * Get or bake a model for the given id.
+	 * Get or model a model for the given id.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.
@@ -265,7 +279,7 @@ public final class CosmeticaModel {
 	}
 
 	/**
-	 * Get or bake a model for the given id, with a model override.
+	 * Get or model a model for the given id, with a model override.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.
@@ -317,7 +331,7 @@ public final class CosmeticaModel {
 	// ==== Cosmetica Core Overloads ==== //
 
 	/**
-	 * Get or bake a cosmetica model for the given id.
+	 * Get or model a cosmetica model for the given id.
 	 * @param id the id of the model. Should be unique per-model, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.

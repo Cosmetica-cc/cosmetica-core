@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package cc.cosmetica.core.render;
+package cc.cosmetica.core.render.model;
 
+import cc.cosmetica.core.util.Ids;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -34,13 +34,15 @@ import java.util.function.Function;
  * Unbaked block model.
  */
 public final class BlockModel {
-    private BlockModel(List<Element> elements, Vector2i textureSize) {
+    private BlockModel(List<Element> elements, int textureWidth, int textureHeight) {
+        this.textureWidth = textureWidth;
+        this.textureHeight = textureHeight;
         this.elements = elements;
-        this.textureSize = textureSize;
     }
 
     private final List<Element> elements;
-    private final Vector2i textureSize;
+    private final int textureWidth;
+    private final int textureHeight;
 
     public Iterable<Element> getElements() {
         return this.elements;
@@ -50,13 +52,17 @@ public final class BlockModel {
         return this.elements.size();
     }
 
-    public Vector2i getTextureSize() {
-        return this.textureSize;
+    public int getTextureWidth() {
+        return this.textureWidth;
+    }
+
+    public int getTextureHeight() {
+        return this.textureHeight;
     }
 
     public static final class Element {
         private Element(Face north, Face east, Face south, Face west, Face up, Face down,
-                       Vector3f from, Vector3f to, Rotation rotation, @Nullable String name) {
+                        Vector3f from, Vector3f to, Rotation rotation, @Nullable String name) {
             this.north = north;
             this.east = east;
             this.south = south;
@@ -82,14 +88,15 @@ public final class BlockModel {
         private Rotation rotation;
 
         public Face getFace(@NotNull Direction direction) {
-            return switch (direction) {
-                case DOWN -> this.down;
-                case UP -> this.up;
-                case NORTH -> this.north;
-                case SOUTH -> this.south;
-                case WEST -> this.west;
-                case EAST -> this.east;
-            };
+            switch (direction) {
+                case DOWN: return this.down;
+                case UP: return this.up;
+                case NORTH: return this.north;
+                case SOUTH: return this.south;
+                case WEST: return this.west;
+                case EAST: return this.east;
+                default: throw new IllegalArgumentException("Invalid direction " + direction);
+            }
         }
 
         public Vector3f from() {
@@ -143,6 +150,15 @@ public final class BlockModel {
          * Rotation, a multiple of 90.
          */
         public final int rotation;
+
+        public float getU(final int index) {
+            return (index % 4) > 1 ? this.uv.z() : this.uv.x();
+        }
+
+        public float getV(final int index) {
+            final int im4 = index % 4;
+            return im4 > 0 && im4 < 3 ? this.uv.w() : this.uv.y();
+        }
     }
 
     // Factories
@@ -169,12 +185,12 @@ public final class BlockModel {
         int textureHeight = textureSize.get(1).getAsInt();
 
         Map<String, Identifier> textures = new HashMap<>();
-        Identifier missingTexture = Identifier.withDefaultNamespace("missing");
+        Identifier missingTexture = Ids.minecraft("missing");
 
         if (object.has("textures")) {
             JsonObject jTextures = object.getAsJsonObject("textures");
-            for (Map.Entry<String, JsonElement> entry : jTextures.asMap().entrySet()) {
-                textures.put("#" + entry.getKey(), Identifier.tryBySeparator(entry.getValue().getAsString(), ':'));
+            for (Map.Entry<String, JsonElement> entry : jTextures.entrySet()) {
+                textures.put("#" + entry.getKey(), Ids.fromString(entry.getValue().getAsString()));
             }
         }
 
@@ -194,7 +210,7 @@ public final class BlockModel {
             }
         }
 
-        return new BlockModel(elements, new Vector2i(textureWidth, textureHeight));
+        return new BlockModel(elements, textureWidth, textureHeight);
     }
 
     private static void attachGroups(List<Element> elements, JsonElement jGroup, String parent) {
@@ -252,13 +268,22 @@ public final class BlockModel {
                 float angle = jRotation.get("angle").getAsFloat();
                 String axis = jRotation.get("axis").getAsString();
 
-                rotation = switch (axis) {
-                    case "x", "X" -> new Rotation(angle, 0, 0, origin);
-                    case "y", "Y" -> new Rotation(0, angle, 0, origin);
-                    case "z", "Z" -> new Rotation(0, 0, angle, origin);
-                    default ->
-                            throw new IllegalStateException("Unknown axis '" + axis + "'");
-                };
+                switch (axis) {
+                    case "x":
+                    case "X":
+                        rotation = new Rotation(angle, 0, 0, origin);
+                        break;
+                    case "y":
+                    case "Y":
+                        rotation = new Rotation(0, angle, 0, origin);
+                        break;
+                    case "z":
+                    case "Z":
+                        rotation = new Rotation(0, 0, angle, origin);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown axis '" + axis + "'");
+                }
             } else {
                 rotation = new Rotation(
                         jRotation.get("x").getAsFloat(),

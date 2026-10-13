@@ -20,7 +20,7 @@ import cc.cosmetica.core.CosmeticaCoreExpectPlatform;
 import cc.cosmetica.core.api.CachedImage;
 import cc.cosmetica.core.api.CosmeticaModel;
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
-import cc.cosmetica.core.render.BlockModel;
+import cc.cosmetica.core.render.model.BlockModel;
 import com.google.gson.JsonElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -201,14 +201,14 @@ public class BlockModelManager {
 						if (json == null) return false;
 
 						try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
-							// BlockStateModelLoader
-							JsonElement element = StrictJsonParser.parse(new InputStreamReader(is));
+							JsonElement element = StrictJsonParser.parse(new InputStreamReader(is, StandardCharsets.UTF_8));
+							BlockModel blockModel = BlockModel.fromJson(element);
 
 							// calculate bounds
-							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(element);
+							AABB aabb = CosmeticaModelBakery.calculateBoundingBox(blockModel);
 							Logging.getInstance().debug(LoggingCategory.ASSETS, "Bounding Box calculation for {}: {}", modelId, aabb);
 
-							lambdaHack.setModel(BlockModel.fromJson(element), aabb);
+							lambdaHack.setModel(blockModel, aabb);
 							return true;
 						} catch (IOException | RuntimeException e) {
 							Logging.getInstance().error("Failed to parse model " + modelId, e);
