@@ -19,7 +19,7 @@ package cc.cosmetica.core.impl;
 import cc.cosmetica.core.mixin.nametags.FeatureSubmitsAccessor;
 import cc.cosmetica.core.mixin.nametags.SimpleFeatureRenderPhaseAccessor;
 import cc.cosmetica.core.mixin.nametags.TranslucentFeatureRenderPhaseAccessor;
-import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
+import net.minecraft.client.renderer.feature.TextFeatureRenderer;
 import net.minecraft.client.renderer.feature.phase.SimpleFeatureRenderPhase;
 import net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase;
 
@@ -38,7 +38,7 @@ public class IconsMixinImpl {
                                 boolean seeThrough) {
         if (preparedIcon != null) {
             var submitsByFeature = ((SimpleFeatureRenderPhaseAccessor)nameTags).getSubmitsByFeature();
-            var submit = ((FeatureSubmitsAccessor) (submitsByFeature[NameTagFeatureRenderer.TYPE.id()]))
+            var submit = ((FeatureSubmitsAccessor) (submitsByFeature[TextFeatureRenderer.TYPE.id()]))
                     .getUnbatched().getLast();
 
             IconSubmitter iconSubmitter0 = (IconSubmitter) submit;
@@ -59,7 +59,7 @@ public class IconsMixinImpl {
      * Run on the nametag
      * @param submit the feature renderer submission.
      */
-    public static void onNametagBuild(NameTagFeatureRenderer.Submit submit) {
+    public static void onNametagBuild(TextFeatureRenderer.Submit submit) {
         IconSubmitter.IconSubmission icon = ((IconSubmitter) (Object) submit).cosmeticacore$getPreparedIcon();
         if (icon != null) {
             NametagRenderer.prepareIcon(icon.icon(), icon.transparent(), icon.readjustTextPosition());

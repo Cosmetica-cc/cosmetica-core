@@ -27,7 +27,7 @@ import cc.cosmetica.core.util.Websocket;
 import com.google.gson.*;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import com.mojang.authlib.yggdrasil.ProfileResult;
+import com.mojang.authlib.services.ProfileResult;
 import gg.cloaks.javaclient.ApiClient;
 import gg.cloaks.javaclient.ApiException;
 import gg.cloaks.javaclient.Configuration;

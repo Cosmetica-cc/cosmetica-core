@@ -158,8 +158,10 @@ public final class CosmeticaModelBakery {
 						sprite,
 						ChunkSectionLayer.TRANSLUCENT,
 						renderType,
+						renderType, // glint
+						renderType, // special glint
 						0,
-						true,
+						null,
 						0
 				)
 		));

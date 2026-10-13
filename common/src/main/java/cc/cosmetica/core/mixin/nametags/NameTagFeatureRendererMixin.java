@@ -19,7 +19,7 @@ package cc.cosmetica.core.mixin.nametags;
 import cc.cosmetica.core.impl.IconsMixinImpl;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.renderer.feature.FeatureFrameContext;
-import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
+import net.minecraft.client.renderer.feature.TextFeatureRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,13 +27,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(NameTagFeatureRenderer.class)
+@Mixin(TextFeatureRenderer.class)
 public class NameTagFeatureRendererMixin {
     @Inject(method = "buildGroup",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer;prepareText(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer$Submit;)Lnet/minecraft/client/gui/Font$PreparedText;"))
-    private void onBuildGroup(final FeatureFrameContext context, final List<NameTagFeatureRenderer.Submit> submits, CallbackInfo info,
-                              @Local NameTagFeatureRenderer.Submit submit) {
+    private void onBuildGroup(final FeatureFrameContext context, final List<TextFeatureRenderer.Submit> submits, CallbackInfo info,
+                              @Local TextFeatureRenderer.Submit submit) {
         IconsMixinImpl.onNametagBuild(submit);
     }
 }

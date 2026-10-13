@@ -108,8 +108,7 @@ public class NonHumanCapeLayer<T extends LivingEntityRenderState, M extends Enti
 				type,
 				i,
 				OverlayTexture.NO_OVERLAY,
-				renderState.outlineColor,
-				null);
+				renderState.outlineColor);
 		stack.popPose();
 	}
 

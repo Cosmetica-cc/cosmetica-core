@@ -30,11 +30,13 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.geometry.ItemQuads;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.AxisAngle4f;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -145,7 +147,11 @@ public final class CosmeticaModel {
 		modelPart.translateAndRotate(stack);
 		stack.scale(o, -o, -o);
 		if (mirror) stack.scale(-1, 1, 1);
-		stack.mulPose(new Quaternionf(new AxisAngle4f((float)Math.PI, YP))); // pi radians on y axis
+
+		Matrix4f rotation = new Matrix4f();
+		rotation.rotate(new Quaternionf(new AxisAngle4f((float)Math.PI, YP))); // pi radians on y axis
+
+		stack.mulPose(rotation);
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		stack.translate(-0.5, -0.25, -0.5);
 
@@ -181,56 +187,13 @@ public final class CosmeticaModel {
 		modelPart.translateAndRotate(stack);
 		stack.scale(o, -o, -o);
 		if (mirror) stack.scale(-1, 1, 1);
-		stack.mulPose(new Quaternionf(new AxisAngle4f((float)Math.PI, YP))); // pi radians on y axis
+
+		Matrix4f rotation = new Matrix4f();
+		rotation.rotate(new Quaternionf(new AxisAngle4f((float)Math.PI, YP))); // pi radians on y axis
+
+		stack.mulPose(rotation);
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		stack.translate(-0.5, -0.25, -0.5);
-
-//		// Submit block model with special marker to override tint colour (for team invisibles)
-//		BlockStateModelPart modelpart = new BlockStateModelPart() {
-//			@Override
-//			public List<BakedQuad> getQuads(@org.jspecify.annotations.Nullable Direction direction) {
-//				if (direction == null) {
-//					return model;
-//				} else {
-//					return ImmutableList.of();
-//				}
-//			}
-//
-//			@Override
-//			public boolean useAmbientOcclusion() {
-//				return false;
-//			}
-//
-//			@Override
-//			public Material.Baked particleMaterial() {
-//				return null;
-//			}
-//
-//			@Override
-//			public @BakedQuad.MaterialFlags int materialFlags() {
-//				return 0;
-//			}
-//		};
-//
-//		if (collector instanceof CosmeticaModelSubmitter submitter) {
-//			submitter.submitCosmeticaModel(
-//					stack,
-//					RenderTypes.armorTranslucent(this.getTexture()),
-//					ImmutableList.of(modelpart),
-//					packedLight,
-//					partiallyTransparent ? 0x26FFFFFF : -1,
-//					outlineColour
-//			);
-//		} else {
-//			collector.submitBlockModel(
-//					stack,
-//					RenderTypes.armorTranslucent(this.getTexture()),
-//					ImmutableList.of(modelpart),
-//					BlockModelRenderState.EMPTY_TINTS,
-//					// light, overlay, outline
-//					packedLight, OverlayTexture.NO_OVERLAY, outlineColour
-//			);
-//		}
 
 		int[] is = new int[4];
 		Arrays.fill(is, partiallyTransparent ? 0x26FFFFFF : -1);
@@ -240,7 +203,7 @@ public final class CosmeticaModel {
 				// light, overlay, outline colour
 				packedLight, OverlayTexture.NO_OVERLAY, outlineColour,
 				is,
-				model,
+				ItemQuads.split(model),
 				ItemStackRenderState.FoilType.NONE
 		);
 
