@@ -139,7 +139,7 @@ public class HumanoidAccessoriesLayer<S extends HumanoidRenderState, M extends H
 			accessory.getModel().submitOnPart(
 					part, stack, collector, light,
 					(float) offset.x + additionalXOffset, (float) offset.y, (float) offset.z,
-					accessory.isMirrored()
+					accessory.isMirrored(), state.isInvisible, state.outlineColor
 			);
 		}
 	}

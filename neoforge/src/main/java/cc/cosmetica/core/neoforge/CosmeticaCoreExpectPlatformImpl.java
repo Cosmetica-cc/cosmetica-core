@@ -17,9 +17,12 @@
 package cc.cosmetica.core.neoforge;
 
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.moddiscovery.ModInfo;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * NeoForge implementation of CosmeticaCore expect platform.
@@ -31,6 +34,28 @@ public class CosmeticaCoreExpectPlatformImpl {
 
 	public static Path getConfigDirectory() {
 		return FMLPaths.CONFIGDIR.get();
+	}
+
+	public static String getModVersion() {
+		List<ModInfo> mods = FMLLoader.getCurrent().getLoadingModList().getMods();
+
+		ModInfo theMod = null;
+		for (ModInfo mod : mods) {
+			if ("cosmetica".equals(mod.getModId())) {
+				theMod = mod;
+				break;
+			}
+			if ("cosmetica-core".equals(mod.getModId())) {
+				theMod = mod;
+			}
+		}
+
+		// this shouldn't happen. cosmetica core will always be loaded.
+		if (theMod == null) {
+			return "cosmetica-core 0.0.0-0.0.0";
+		}
+
+		return theMod.getModId() + " " + theMod.getConfigElement("version").orElse("1");
 	}
 
 	public static boolean isDev() {

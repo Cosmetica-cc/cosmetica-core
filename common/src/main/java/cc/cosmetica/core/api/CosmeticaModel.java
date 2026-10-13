@@ -21,23 +21,18 @@ import cc.cosmetica.core.impl.BlockModelManager;
 import cc.cosmetica.core.impl.CosmeticaModelBakery;
 import cc.cosmetica.core.impl.Logging;
 import cc.cosmetica.core.impl.LoggingCategory;
-import cc.cosmetica.core.render.BlockModel;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.JsonElement;
+import cc.cosmetica.core.render.model.BlockModel;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.cloaks.javaclient.model.AnimatedTextureCosmetic;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.BlockModelRenderState;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.AxisAngle4f;
@@ -46,6 +41,7 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -96,7 +92,7 @@ public final class CosmeticaModel {
 	}
 
 	private void startBaking(BlockModel model) {
-		// TODO should this be if(onRenderThread) bake else recordRenderCall(bake)? Is the speed gain negligible?
+		// TODO should this be if(onRenderThread) model else recordRenderCall(model)? Is the speed gain negligible?
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Scheduling baking for {}", this.texture);
 
 		Minecraft.getInstance().schedule(() -> {
@@ -175,7 +171,8 @@ public final class CosmeticaModel {
 	 * @param z the z offset.
 	 * @param mirror whether to mirror the model.
 	 */
-	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror) {
+	public void submitOnPart(ModelPart modelPart, PoseStack stack, SubmitNodeCollector collector, int packedLight, float x, float y, float z, boolean mirror,
+							 boolean partiallyTransparent, int outlineColour) {
 		List<BakedQuad> model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
@@ -187,46 +184,17 @@ public final class CosmeticaModel {
 		stack.translate(x, y, z); // vanilla: 0.0 second param
 		stack.translate(-0.5, -0.25, -0.5);
 
-		// TODO is this okay or should I make a custom submit
-		collector.submitBlockModel(
+		int[] is = new int[4];
+		Arrays.fill(is, partiallyTransparent ? 0x26FFFFFF : -1);
+		collector.submitItem(
 				stack,
-				RenderTypes.armorTranslucent(this.getTexture()),
-				ImmutableList.of(new BlockStateModelPart() {
-					@Override
-					public List<BakedQuad> getQuads(@org.jspecify.annotations.Nullable Direction direction) {
-						if (direction == null) {
-							return model;
-						} else {
-							return ImmutableList.of();
-						}
-					}
-
-					@Override
-					public boolean useAmbientOcclusion() {
-						return false;
-					}
-
-					@Override
-					public Material.Baked particleMaterial() {
-						return null;
-					}
-
-					@Override
-					public @BakedQuad.MaterialFlags int materialFlags() {
-						return 0;
-					}
-				}),
-				BlockModelRenderState.EMPTY_TINTS,
-				// light, overlay, outline
-				packedLight, OverlayTexture.NO_OVERLAY, 0
+				ItemDisplayContext.NONE,
+				// light, overlay, outline colour
+				packedLight, OverlayTexture.NO_OVERLAY, outlineColour,
+				is,
+				model,
+				ItemStackRenderState.FoilType.NONE
 		);
-
-//		CosmeticaModelBakery.renderModel(
-//				model,
-//				stack,
-//				multiBufferSource,
-//				this.getTexture(),
-//				packedLight);
 
 		stack.popPose();
 	}
@@ -239,7 +207,7 @@ public final class CosmeticaModel {
 	// ==== Direct Model/Image Overloads ==== //
 
 	/**
-	 * Get or bake a model for the given id.
+	 * Get or model a model for the given id.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.
@@ -263,7 +231,7 @@ public final class CosmeticaModel {
 	}
 
 	/**
-	 * Get or bake a model for the given id, with a model override.
+	 * Get or model a model for the given id, with a model override.
 	 * @param id the id of the model. Should be unique per-model.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.
@@ -315,7 +283,7 @@ public final class CosmeticaModel {
 	// ==== Cosmetica Core Overloads ==== //
 
 	/**
-	 * Get or bake a cosmetica model for the given id.
+	 * Get or model a cosmetica model for the given id.
 	 * @param id the id of the model. Should be unique per-model, per category.
 	 *           Allowed characters are the union of characters allowed in base64 strings, and characters allowed in
 	 *           {@link Identifier} pathnames.

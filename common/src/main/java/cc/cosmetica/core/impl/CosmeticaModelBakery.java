@@ -17,17 +17,15 @@
 package cc.cosmetica.core.impl;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
-import cc.cosmetica.core.render.BlockModel;
+import cc.cosmetica.core.render.model.BlockModel;
+import cc.cosmetica.core.render.model.FaceInfo;
 import cc.cosmetica.core.render.texture.ModelSprite;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.QuadInstance;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Quadrant;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.builders.UVPair;
-import net.minecraft.client.renderer.FaceInfo;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -46,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.GeometryUtils;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -62,7 +59,7 @@ public final class CosmeticaModelBakery {
 	 * Bake the given block model with the texture at the given location.
 	 * @param location the location to get the texture for. Also used in debug messages.
 	 *                 Must refer to an {@link CosmeticaTexture}.
-	 * @param model the model to bake.
+	 * @param model the model to model.
 	 */
 	public static List<BakedQuad> bakeModel(Identifier location, BlockModel model) {
 		Logging.getInstance().debug(LoggingCategory.ASSETS, "Computing Baked Model: {}", location);
@@ -117,13 +114,13 @@ public final class CosmeticaModelBakery {
 								Vector3f from, Vector3f to,
 								BlockModel.Face face,
 								BlockModel.Rotation rotation) {
-		Vector3f corner0 = rotateCorner(faceInfo.getVertexInfo(0).select(from, to), rotation)
+		Vector3f corner0 = rotateCorner(faceInfo.vertexOrder[0].select(from, to), rotation)
 				.div(16.0f);
-		Vector3f corner1 = rotateCorner(faceInfo.getVertexInfo(1).select(from, to), rotation)
+		Vector3f corner1 = rotateCorner(faceInfo.vertexOrder[1].select(from, to), rotation)
 				.div(16.0f);
-		Vector3f corner2 = rotateCorner(faceInfo.getVertexInfo(2).select(from, to), rotation)
+		Vector3f corner2 = rotateCorner(faceInfo.vertexOrder[2].select(from, to), rotation)
 				.div(16.0f);
-		Vector3f corner3 = rotateCorner(faceInfo.getVertexInfo(3).select(from, to), rotation)
+		Vector3f corner3 = rotateCorner(faceInfo.vertexOrder[3].select(from, to), rotation)
 				.div(16.0f);
 
 		CuboidFace.UVs rawUVs = new CuboidFace.UVs(face.uv.x, face.uv.y, face.uv.z, face.uv.w);
@@ -202,24 +199,13 @@ public final class CosmeticaModelBakery {
 	// ==============
 
 	// render
+
 	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight) {
 //		VertexConsumer consumer = multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture));
 
 		QuadInstance instance = new QuadInstance();
 
 		int[] tints = new int[0];
-//		for (Direction direction : Direction.values()) {
-//			List<BakedQuad> quads = model.getQuads(direction);
-//			renderQuadList(
-//					instance,
-//					stack.last(),
-//					multiBufferSource,
-//					quads,
-//					tints,
-//					packedLight,
-//					OverlayTexture.NO_OVERLAY
-//					);
-//		}
 
         renderQuadList(
 				instance,
@@ -274,53 +260,27 @@ public final class CosmeticaModelBakery {
 	// Bounding Box calculation //
 	// ======================== //
 
-	public static AABB calculateBoundingBox(JsonElement model) {
+	public static AABB calculateBoundingBox(BlockModel model) {
 		// Find all corners
 		Collection<Vector3f> allCorners = new ArrayList<>();
 
-		for (JsonElement e : model.getAsJsonObject().get("elements").getAsJsonArray()) {
-			JsonObject element = e.getAsJsonObject();
+		for (BlockModel.Element element : model.getElements()) {
+			Vector3f from = element.from();
+			Vector3f to = element.to();
 
-			JsonArray from = element.getAsJsonArray("from");
-			JsonArray to = element.getAsJsonArray("to");
-
-			Collection<Vector3f> corners = getUniqueCorners(
-					new Vector3f(from.get(0).getAsFloat(), from.get(1).getAsFloat(), from.get(2).getAsFloat()),
-					new Vector3f(to.get(0).getAsFloat(), to.get(1).getAsFloat(), to.get(2).getAsFloat())
-			);
+			Collection<Vector3f> corners = getUniqueCorners(from, to);
 
 			// rotate corners if on a rotated element
-			if (element.has("rotation")) {
+			if (element.rotation().x != 0 || element.rotation().y != 0 || element.rotation().z != 0) {
 				Collection<Vector3f> rotated = new HashSet<>();
 
-				JsonObject rotation = element.getAsJsonObject("rotation");
+				BlockModel.Rotation rotation = element.rotation();
 
 				for (Vector3f corner : corners) {
-					JsonArray originJson = rotation.get("origin").getAsJsonArray();
-					Vector3f origin = new Vector3f(
-							originJson.get(0).getAsFloat(),
-							originJson.get(1).getAsFloat(),
-							originJson.get(2).getAsFloat()
-					);
-
-					String axisJson = rotation.get("axis").getAsString();
-					Direction.Axis axis = switch (axisJson.toLowerCase(Locale.ROOT)) {
-						case "x" -> Direction.Axis.X;
-						case "y" -> Direction.Axis.Y;
-						case "z" -> Direction.Axis.Z;
-						default -> {
-							Logging.getInstance().warn("Bad axis for model element. Got " + axisJson);
-							yield Direction.Axis.Y;
-						}
-					};
-
-//					origin.mul(16);
 					rotated.add(
 							rotateCorner(
 									corner,
-									origin,
-									axis,
-									rotation.get("angle").getAsFloat()
+									rotation
 							));
 				}
 
