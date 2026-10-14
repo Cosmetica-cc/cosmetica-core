@@ -54,6 +54,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class CosmeticaTexture extends AbstractTexture {
@@ -394,7 +395,8 @@ public class CosmeticaTexture extends AbstractTexture {
         return this.tilesheetFrames;
     }
 
-    private static final ExecutorService BACKGROUND_TASK_EXECUTOR = LifetimeResources.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), Executors.defaultThreadFactory());
+    private static final AtomicInteger threadNumber = new AtomicInteger(1);
+    private static final ExecutorService BACKGROUND_TASK_EXECUTOR = LifetimeResources.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), "Cosmetica Texture Downloader #");
 
     private static class AnimatedInputStream {
         AnimatedInputStream(InputStream stream, int frames) {
