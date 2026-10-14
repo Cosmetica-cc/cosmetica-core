@@ -17,6 +17,7 @@
 package cc.cosmetica.core.api;
 
 import cc.cosmetica.core.api.texture.CosmeticaTexture;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.Identifier;
 
@@ -76,5 +77,5 @@ public final class CachedImage {
 		this.loaded = true;
 	}
 
-	public static final CachedImage NO_TEXTURE = new CachedImage(TextureManager.INTENTIONAL_MISSING_TEXTURE, 0);
+	public static final CachedImage NO_TEXTURE = new CachedImage(MissingTextureAtlasSprite.getLocation(), 0);
 }

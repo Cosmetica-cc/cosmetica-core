@@ -31,7 +31,7 @@ import java.util.List;
 public class NameTagFeatureRendererMixin {
     @Inject(method = "buildGroup",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer;prepareText(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/feature/NameTagFeatureRenderer$Submit;)Lnet/minecraft/client/gui/Font$PreparedText;"))
+                    target = "Lnet/minecraft/client/renderer/feature/TextFeatureRenderer;renderText(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/renderer/feature/TextFeatureRenderer$GlyphRenderer;Lnet/minecraft/client/renderer/feature/TextFeatureRenderer$Content$Text;)V"))
     private void onBuildGroup(final FeatureFrameContext context, final List<TextFeatureRenderer.Submit> submits, CallbackInfo info,
                               @Local TextFeatureRenderer.Submit submit) {
         IconsMixinImpl.onNametagBuild(submit);
