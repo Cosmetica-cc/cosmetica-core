@@ -326,7 +326,7 @@ public final class CosmeticaSession {
 		authenticationInstance = new CosmeticaSession(defaultClient, "", "core default", null);
 
 		// close socket before shutdown
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> getCurrentSession().closeSocket()));
+		LifetimeResources.addShutdownHook(() -> getCurrentSession().closeSocket());
 
 		// start ping for websockets
 		pingAfrica();

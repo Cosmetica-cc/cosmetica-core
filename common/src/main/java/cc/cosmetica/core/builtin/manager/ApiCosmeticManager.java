@@ -69,10 +69,9 @@ public class ApiCosmeticManager implements CosmeticManager {
 
 	private static final ExecutorService REMOTE_USER_LOOKUP_THREAD_POOL;
 	static {
-		AtomicInteger integer = new AtomicInteger(1);
 		final int threads = Integer.parseInt(System.getProperty("cosmetica.lookupThreadPool", "30"));
 		Logging.getInstance().debug(LoggingCategory.LOOKUP, "Remote lookup thread pool threads: {}", threads);
-		REMOTE_USER_LOOKUP_THREAD_POOL = LifetimeResources.newFixedThreadPool(threads, r -> new Thread(r, "Cosmetica Lookup #" + integer.getAndIncrement()));
+		REMOTE_USER_LOOKUP_THREAD_POOL = LifetimeResources.newFixedThreadPool(threads, "Cosmetica Lookup #");
 	}
 
 	/**

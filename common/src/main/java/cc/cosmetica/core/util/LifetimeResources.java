@@ -17,17 +17,21 @@
 package cc.cosmetica.core.util;
 
 import cc.cosmetica.core.impl.Logging;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LifetimeResources {
     private static final List<ExecutorService> EXECUTORS = new ArrayList<>();
     private static final List<ExecutorService> HARD_EXECUTORS = new ArrayList<>();
+    private static final List<Runnable> SHUTDOWN_HOOKS = new ArrayList<>();
 
     public static <T extends ExecutorService> T registerExecutor(T service) {
         EXECUTORS.add(service);
@@ -47,8 +51,13 @@ public class LifetimeResources {
         }));
     }
 
-    public static ExecutorService newFixedThreadPool(int size, ThreadFactory threadFactory) {
-        return registerExecutor(Executors.newFixedThreadPool(size, threadFactory));
+    public static ExecutorService newFixedThreadPool(int size, String commonName) {
+        final AtomicInteger number = new AtomicInteger(1);
+        return registerExecutor(Executors.newFixedThreadPool(size, r -> {
+            Thread t = new Thread(r);
+            t.setName(commonName + number.getAndIncrement());
+            return t;
+        }));
     }
 
     public static ScheduledExecutorService newScheduler(String name) {
@@ -63,9 +72,21 @@ public class LifetimeResources {
         return registerExecutor(Executors.newScheduledThreadPool(threads, threadFactory));
     }
 
+    public static void addShutdownHook(@NotNull Runnable runnable) {
+        Objects.requireNonNull(runnable);
+        SHUTDOWN_HOOKS.add(runnable);
+    }
 
     public static void shutdown() {
         Logging.getInstance().info("Shutting down Cosmetica executors and schedulers");
+
+        for (Runnable runnable : SHUTDOWN_HOOKS) {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                Logging.getInstance().error("A shutdown hook failed", e);
+            }
+        }
 
         for (ExecutorService executor : EXECUTORS) {
             executor.shutdown();
