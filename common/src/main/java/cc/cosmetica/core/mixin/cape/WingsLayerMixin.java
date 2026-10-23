@@ -20,7 +20,7 @@ import cc.cosmetica.core.api.Cosmetics;
 import cc.cosmetica.core.api.ImageCosmetic;
 import net.minecraft.client.renderer.entity.layers.WingsLayer;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,7 +36,7 @@ public class WingsLayerMixin {
     @Inject(at = @At("HEAD"), method = "getPlayerElytraTexture", cancellable = true)
     private static void addCosmeticEquipperElytras(
             final HumanoidRenderState renderState,
-            CallbackInfoReturnable<ResourceLocation> info)
+            CallbackInfoReturnable<Identifier> info)
     {
         Optional<Cosmetics> cosmetics = Cosmetics.getCosmetics(renderState);
         if (cosmetics.isPresent()) {
