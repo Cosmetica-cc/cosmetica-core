@@ -192,9 +192,6 @@ public final class NametagRenderer {
 		if (!upsideDown) {
 			float hatTopY = 0;
 
-			HumanoidAccessoriesLayer.ArmourEquipper equipper = new HumanoidAccessoriesLayer.EntityEquipper(entity);
-			boolean elytra = equipper.getItemBySlot(EquipmentSlot.CHEST).getItem() == Items.ELYTRA;
-
 			if (doNametagShift) {
 				for (Accessory accessory : hats) {
 					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
