@@ -6,7 +6,24 @@ This is intended as a base for other mods, such as clients, to build upon. The [
 
 ## Using this in your projects
 
-Cosmetica Core can be included from the Cosmetica Maven. Check the maven website for the latest version for your Minecraft version and platform.
+Cosmetica Core can be included from the Cosmetica Maven. Check the maven website for the latest version for your Minecraft version and platform. We will try keep the following list up-to-date too, but cannot guarantee it:
+
+| Minecraft | Cosmetica Core | Platforms Supported |
+| --------- | -------------- | ------------------- |
+| 1.16.5    | 2.1.11-1.16.5  | forge, fabric       |
+| 1.17.1    | 2.1.11-1.17.1  | forge, fabric       |
+| 1.18.2    | 2.1.11-1.18.2  | forge, fabric       |
+| 1.19.2    | 2.1.11-1.19.2  | forge, fabric       |
+| 1.19.4    | 2.1.11-1.19.4  | forge, fabric       |
+| 1.20.1    | 2.1.11-1.20.1  | forge, fabric       |
+| 1.21.1    | 2.1.11-1.21.1  | forge, fabric, neoforge |
+| 1.21.4    | 2.1.11-1.21.4  | forge, fabric, neoforge |
+| 1.21.8    | 2.1.11-1.21.8  | forge, fabric, neoforge |
+| 1.21.11   | 2.1.11-1.21.11 | forge, fabric, neoforge |
+| 26.1      | 2.1.11-26.1    | fabric, neoforge |
+| 26.2      | 2.1.11-26.2    | fabric, neoforge |
+| 26.3      | 2.1.11-26.3    | fabric, neoforge |
+
 
 Adding Cosmetica Maven to repositories:
 ```groovy
