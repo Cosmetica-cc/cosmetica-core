@@ -306,7 +306,7 @@ public final class CosmeticaSession {
 
 	/* Constants */
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-	private static final ScheduledExecutorService SCHEDULER = LifetimeResources.newScheduler("Cosmetica Reconnector");
+	private static final ScheduledExecutorService SCHEDULER = LifetimeResources.newSchedulerUnsafeShutdown("Cosmetica Reconnector");
 	private static final String BASE_PATH = System.getProperty("cosmetica.api", "https://api.cloaks.gg");
 
 	/* Keep track of subscriptions so we can re-subscribe on reconnect / making a new session */

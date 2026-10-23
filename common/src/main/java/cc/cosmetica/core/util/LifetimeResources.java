@@ -27,9 +27,15 @@ import java.util.concurrent.ThreadFactory;
 
 public class LifetimeResources {
     private static final List<ExecutorService> EXECUTORS = new ArrayList<>();
+    private static final List<ExecutorService> HARD_EXECUTORS = new ArrayList<>();
 
     public static <T extends ExecutorService> T registerExecutor(T service) {
         EXECUTORS.add(service);
+        return service;
+    }
+
+    public static <T extends ExecutorService> T registerExecutorUnsafeShutdown(T service) {
+        HARD_EXECUTORS.add(service);
         return service;
     }
 
@@ -49,6 +55,10 @@ public class LifetimeResources {
         return registerExecutor(Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, name)));
     }
 
+    public static ScheduledExecutorService newSchedulerUnsafeShutdown(String name) {
+        return registerExecutorUnsafeShutdown(Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, name)));
+    }
+
     public static ScheduledExecutorService newScheduler(int threads, ThreadFactory threadFactory) {
         return registerExecutor(Executors.newScheduledThreadPool(threads, threadFactory));
     }
@@ -59,6 +69,9 @@ public class LifetimeResources {
 
         for (ExecutorService executor : EXECUTORS) {
             executor.shutdown();
+        }
+        for (ExecutorService executor : HARD_EXECUTORS) {
+            executor.shutdownNow();
         }
     }
 }
