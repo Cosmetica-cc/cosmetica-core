@@ -216,7 +216,7 @@ public final class CosmeticaModelBakery {
 	}
 
 	// render
-	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
+	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight, float alpha) {
 		VertexConsumer consumer = multiBufferSource.getBuffer(RenderType.armorTranslucent(texture));
 
 		int[] tints = new int[0];
