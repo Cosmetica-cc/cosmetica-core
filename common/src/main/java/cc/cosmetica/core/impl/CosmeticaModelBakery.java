@@ -213,7 +213,7 @@ public final class CosmeticaModelBakery {
 
 	// render
 
-	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
+	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight, float alpha) {
 		stack.pushPose();
 		boolean isGUI3D = false; // model.isGui3d(); TODO is this right
 		float transformStrength = 0.25F;
@@ -236,7 +236,7 @@ public final class CosmeticaModelBakery {
 
 		RenderType renderType = RenderType.entityTranslucent(texture); // hopefully this is the right one
 		VertexConsumer vertexConsumer4 = multiBufferSource.getBuffer(renderType);
-		renderModelLists(model, packedLight, overlayTyp, stack, vertexConsumer4);
+		renderModelLists(model, packedLight, overlayTyp, stack, vertexConsumer4, alpha);
 
 		stack.popPose();
 		// ItemRenderer#render end
@@ -251,7 +251,7 @@ public final class CosmeticaModelBakery {
 
 	// vanilla code that I don't want to rewrite:
 
-	private static void renderModelLists(List<BakedQuad> bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer) {
+	private static void renderModelLists(List<BakedQuad> bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer, float a) {
 		RandomSource random = RandomSource.create();
 		final long seed = 42L;
 
@@ -265,21 +265,19 @@ public final class CosmeticaModelBakery {
 //		}
 
 		random.setSeed(seed);
-		renderQuadList(poseStack, vertexConsumer, bakedModel, packedLight, overlayType);
+		renderQuadList(poseStack, vertexConsumer, bakedModel, packedLight, overlayType, a);
 	}
 
-	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> list, int i, int j) {
+	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> list, int i, int j, float a) {
 		PoseStack.Pose pose = poseStack.last();
-		Iterator var9 = list.iterator();
 
-		while(var9.hasNext()) {
-			BakedQuad bakedQuad = (BakedQuad)var9.next();
-			int k = -1;
+		for (BakedQuad bakedQuad : list) {
+			int rgb = -1;
 
-			float f = (float)(k >> 16 & 255) / 255.0F;
-			float g = (float)(k >> 8 & 255) / 255.0F;
-			float h = (float)(k & 255) / 255.0F;
-			vertexConsumer.putBulkData(pose, bakedQuad, f, g, h, 1.0f, i, j);
+			float r = (float)(rgb >> 16 & 255) / 255.0F;
+			float g = (float)(rgb >> 8 & 255) / 255.0F;
+			float b = (float)(rgb & 255) / 255.0F;
+			vertexConsumer.putBulkData(pose, bakedQuad, r, g, b, a, i, j);
 		}
 	}
 

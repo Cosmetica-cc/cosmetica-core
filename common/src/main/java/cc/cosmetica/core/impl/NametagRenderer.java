@@ -36,6 +36,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import net.minecraft.world.item.Items;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
@@ -190,6 +191,9 @@ public final class NametagRenderer {
 		// upside down players don't need nametags shifted up
 		if (!upsideDown) {
 			float hatTopY = 0;
+
+			HumanoidAccessoriesLayer.ArmourEquipper equipper = new HumanoidAccessoriesLayer.EntityEquipper(entity);
+			boolean elytra = equipper.getItemBySlot(EquipmentSlot.CHEST).getItem() == Items.ELYTRA;
 
 			if (doNametagShift) {
 				for (Accessory accessory : hats) {
