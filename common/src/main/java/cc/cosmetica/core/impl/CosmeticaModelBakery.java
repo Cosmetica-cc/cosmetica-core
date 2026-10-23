@@ -20,9 +20,6 @@ import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.model.BlockModel;
 import cc.cosmetica.core.render.model.FaceInfo;
 import cc.cosmetica.core.render.texture.ModelSprite;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -238,33 +235,34 @@ public final class CosmeticaModelBakery {
 				model,
 				tints,
 				packedLight,
-				OverlayTexture.NO_OVERLAY
+				OverlayTexture.NO_OVERLAY,
+				alpha
 		);
 	}
 
 	// Adapted from ItemRenderer
-	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> quads, int[] tintLayers, int lighting, int overlay) {
+	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> quads, int[] tintLayers, int lighting, int overlay, float alpha) {
 		PoseStack.Pose pose = poseStack.last();
 
 		for (BakedQuad bakedQuad : quads) {
-			float f;
+			float a;
+			float r;
 			float g;
-			float h;
-			float l;
+			float b;
 			if (bakedQuad.isTinted()) {
 				int k = getLayerColorSafe(tintLayers, bakedQuad.tintIndex());
-				f = ARGB.alpha(k) / 255.0F;
-				g = ARGB.red(k) / 255.0F;
-				h = ARGB.green(k) / 255.0F;
-				l = ARGB.blue(k) / 255.0F;
+				a = alpha * (ARGB.alpha(k) / 255.0F);
+				r = ARGB.red(k) / 255.0F;
+				g = ARGB.green(k) / 255.0F;
+				b = ARGB.blue(k) / 255.0F;
 			} else {
-				f = 1.0F;
+				a = alpha;
+				r = 1.0F;
 				g = 1.0F;
-				h = 1.0F;
-				l = 1.0F;
+				b = 1.0F;
 			}
 
-			vertexConsumer.putBulkData(pose, bakedQuad, g, h, l, f, lighting, overlay);
+			vertexConsumer.putBulkData(pose, bakedQuad, r, g, b, a, lighting, overlay);
 		}
 	}
 
