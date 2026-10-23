@@ -200,8 +200,7 @@ public final class CosmeticaModelBakery {
 	// ==============
 
 	// render
-
-	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight) {
+	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float alpha) {
 //		VertexConsumer consumer = multiBufferSource.getBuffer(RenderTypes.armorTranslucent(texture));
 
 		QuadInstance instance = new QuadInstance();
@@ -215,7 +214,8 @@ public final class CosmeticaModelBakery {
                 model,
 				tints,
 				packedLight,
-				OverlayTexture.NO_OVERLAY
+				OverlayTexture.NO_OVERLAY,
+				alpha
 		);
 	}
 
@@ -228,7 +228,8 @@ public final class CosmeticaModelBakery {
 			final Iterable<BakedQuad> model,
 			final int[] tintLayers,
 			final int lightCoords,
-			final int overlayCoords
+			final int overlayCoords,
+			float alpha
 	) {
 		instance.setLightCoords(lightCoords);
 		instance.setOverlayCoords(overlayCoords);
@@ -239,7 +240,14 @@ public final class CosmeticaModelBakery {
 		for (BakedQuad quad : model) {
 			BakedQuad.MaterialInfo material = quad.materialInfo();
 			RenderType renderType = material.itemRenderType();
-			instance.setColor(getLayerColorSafe(tintLayers, material));
+
+			int argb = getLayerColorSafe(tintLayers, material);
+			if (alpha < 1.0f) {
+				int a = (argb >>> 24) & 0xFF;
+				int newA = (int)(alpha * a);
+				argb = (newA << 24) | (argb & 0xFFFFFF);
+			}
+			instance.setColor(argb);
 
 //			if (submit.outlineColor() != 0) {
 //				outlineBufferSource.getBuffer(renderType).putBakedQuad(pose, quad, instance);

@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LifetimeResources {
@@ -55,11 +52,17 @@ public class LifetimeResources {
     }
 
     public static ScheduledExecutorService newScheduler(String name) {
-        return registerExecutor(Executors.newSingleThreadScheduledExecutor(t -> new Thread(t, name)));
+        ScheduledThreadPoolExecutor service = new ScheduledThreadPoolExecutor(1, t -> new Thread(t, name));
+        service.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+        service.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        return registerExecutor(service);
     }
 
     public static ScheduledExecutorService newScheduler(int threads, ThreadFactory threadFactory) {
-        return registerExecutor(Executors.newScheduledThreadPool(threads, threadFactory));
+        ScheduledThreadPoolExecutor service = new ScheduledThreadPoolExecutor(threads, threadFactory);
+        service.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+        service.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        return registerExecutor(service);
     }
 
     public static void addShutdownHook(@NotNull Runnable runnable) {

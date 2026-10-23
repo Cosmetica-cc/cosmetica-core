@@ -128,6 +128,11 @@ public final class CosmeticaModel {
 		return this.boundingBox;
 	}
 
+	@Deprecated
+	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
+		this.renderOnPart(modelPart, stack, multiBufferSource, packedLight, x, y, z, mirror, false);
+	}
+
 	/**
 	 * Render this model cosmetic on the given part, with the given transform.
 	 * @param modelPart the model part on which to render.
@@ -138,8 +143,9 @@ public final class CosmeticaModel {
 	 * @param y the y offset.
 	 * @param z the z offset.
 	 * @param mirror whether to mirror the model.
+	 * @param partiallyTransparent whether to render as an invisible friendly (partially transparent).
 	 */
-	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror) {
+	public void renderOnPart(ModelPart modelPart, PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, float x, float y, float z, boolean mirror, boolean partiallyTransparent) {
 		List<BakedQuad> model = this.getBakedModel();
 		if (model == null) return; // if it is not loaded, has errors with the baked model or cannot render it for another reason will return null
 		stack.pushPose();
@@ -159,7 +165,8 @@ public final class CosmeticaModel {
 				model,
 				stack,
 				multiBufferSource,
-				packedLight);
+				packedLight,
+				partiallyTransparent ? 0.15f : 1.0f);
 		// 26.1: removed texture parameter (buffers sourced from model)
 
 		stack.popPose();
