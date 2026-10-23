@@ -20,30 +20,32 @@ import cc.cosmetica.core.api.texture.CosmeticaTexture;
 import cc.cosmetica.core.render.model.BlockModel;
 import cc.cosmetica.core.render.model.FaceInfo;
 import cc.cosmetica.core.render.texture.ModelSprite;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
+import com.mojang.math.Vector4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.system.MemoryStack;
 
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.*;
 
 /**
@@ -222,7 +224,7 @@ public final class CosmeticaModelBakery {
 
 	// render
 
-	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight) {
+	public static void renderModel(List<BakedQuad> model, PoseStack stack, MultiBufferSource multiBufferSource, ResourceLocation texture, int packedLight, float alpha) {
 		stack.pushPose();
 		boolean isGUI3D = false; // model.isGui3d(); TODO is this right
 		float transformStrength = 0.25F;
@@ -245,7 +247,7 @@ public final class CosmeticaModelBakery {
 
 		RenderType renderType = RenderType.entityTranslucent(texture); // hopefully this is the right one
 		VertexConsumer vertexConsumer4 = multiBufferSource.getBuffer(renderType);
-		renderModelLists(model, packedLight, overlayTyp, stack, vertexConsumer4);
+		renderModelLists(model, packedLight, overlayTyp, stack, vertexConsumer4, alpha);
 
 		stack.popPose();
 		// ItemRenderer#render end
@@ -260,7 +262,7 @@ public final class CosmeticaModelBakery {
 
 	// vanilla code that I don't want to rewrite:
 
-	private static void renderModelLists(List<BakedQuad> bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer) {
+	private static void renderModelLists(List<BakedQuad> bakedModel, int packedLight, int overlayType, PoseStack poseStack, VertexConsumer vertexConsumer, float a) {
 		RandomSource random = RandomSource.create();
 		final long seed = 42L;
 
@@ -274,21 +276,51 @@ public final class CosmeticaModelBakery {
 //		}
 
 		random.setSeed(seed);
-		renderQuadList(poseStack, vertexConsumer, bakedModel, packedLight, overlayType);
+		renderQuadList(poseStack, vertexConsumer, bakedModel, packedLight, overlayType, a);
 	}
 
-	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> list, int i, int j) {
+	private static void renderQuadList(PoseStack poseStack, VertexConsumer vertexConsumer, List<BakedQuad> list, int i, int j, float a) {
 		PoseStack.Pose pose = poseStack.last();
-		Iterator var9 = list.iterator();
 
-		while(var9.hasNext()) {
-			BakedQuad bakedQuad = (BakedQuad)var9.next();
-			int k = -1;
+		for (BakedQuad bakedQuad : list) {
+			int rgb = -1;
 
-			float f = (float)(k >> 16 & 255) / 255.0F;
-			float g = (float)(k >> 8 & 255) / 255.0F;
-			float h = (float)(k & 255) / 255.0F;
-			vertexConsumer.putBulkData(pose, bakedQuad, f, g, h, i, j);
+			float r = (float)(rgb >> 16 & 255) / 255.0F;
+			float g = (float)(rgb >> 8 & 255) / 255.0F;
+			float b = (float)(rgb & 255) / 255.0F;
+			addQuadVertices(vertexConsumer, pose, bakedQuad, r, g, b, a, i, j);
+		}
+	}
+
+	private static void addQuadVertices(VertexConsumer consumer,
+										PoseStack.Pose pose,
+										BakedQuad bakedQuad,
+										float red, float grn, float blu, float alpha,
+										int packedLight, int overlay) {
+		int[] vertexData = bakedQuad.getVertices();
+		Vec3i vec3i = bakedQuad.getDirection().getNormal();
+		Vector3f vector3f = new Vector3f((float)vec3i.getX(), (float)vec3i.getY(), (float)vec3i.getZ());
+		Matrix4f matrix4f = pose.pose();
+		vector3f.transform(pose.normal());
+		int vertices = vertexData.length / 8;
+
+		try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+			ByteBuffer byteBuffer = memoryStack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());
+			IntBuffer intBuffer = byteBuffer.asIntBuffer();
+
+			for(int l = 0; l < vertices; ++l) {
+				intBuffer.clear();
+				intBuffer.put(vertexData, l * 8, 8);
+				float m = byteBuffer.getFloat(0);
+				float n = byteBuffer.getFloat(4);
+				float o = byteBuffer.getFloat(8);
+
+                float q = byteBuffer.getFloat(16);
+				float r = byteBuffer.getFloat(20);
+				Vector4f vector4f = new Vector4f(m, n, o, 1.0F);
+				vector4f.transform(matrix4f);
+				consumer.vertex(vector4f.x(), vector4f.y(), vector4f.z(), red, grn, blu, alpha, q, r, overlay, packedLight, vector3f.x(), vector3f.y(), vector3f.z());
+			}
 		}
 	}
 
