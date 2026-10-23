@@ -38,6 +38,7 @@ import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.ElytraItem;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import net.minecraft.world.item.Items;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
@@ -191,10 +192,13 @@ public final class NametagRenderer {
 		if (!upsideDown) {
 			float hatTopY = 0;
 
+			HumanoidAccessoriesLayer.ArmourEquipper equipper = new HumanoidAccessoriesLayer.EntityEquipper(entity);
+			boolean elytra = equipper.getItemBySlot(EquipmentSlot.CHEST).getItem() == Items.ELYTRA;
+
 			if (doNametagShift) {
 				for (Accessory accessory : hats) {
 					if (accessory.getAttachment() == AttachmentEnum.HEAD) {
-						if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, new HumanoidAccessoriesLayer.EntityEquipper(entity), cloak)) {
+						if (HumanoidAccessoriesLayer.canRenderAccessory(accessory, equipper, cloak, elytra)) {
 							if (!accessory.getFlags().contains(Accessory.Flag.HIDE_WITH_HELMET) || !wearingHelmet) {
 								// 8.0 - 4 == 4.0 is the default visual offset (see Accessory#attachmentTransform)
 								// -8 as this code was written for hats, but the base of the head is offset 0 now

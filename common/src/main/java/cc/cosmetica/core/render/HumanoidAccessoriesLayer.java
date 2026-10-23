@@ -50,7 +50,11 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 	@Override
 	public void render(PoseStack poseStack, MultiBufferSource multiBufferSource, int light, E entity,
 					   float f, float g, float pitch, float j, float k, float l) {
-		if (entity.isInvisible())return;//don't show cosmetics when invisible
+		boolean isInvisibleToPlayer = Minecraft.getInstance().player == null ?
+				entity.isInvisible() :
+				entity.isInvisibleTo(Minecraft.getInstance().player);
+
+		if (isInvisibleToPlayer) return;//don't show cosmetics when invisible
 
 		Minecraft.getInstance().getProfiler().push("accessories");
 
@@ -73,7 +77,10 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 
 	private void renderAccessory(Accessory accessory, PoseStack stack, MultiBufferSource multiBufferSource, int light, boolean cloak, E entity) {
 		// Check if accessory can be rendered
-		if (!canRenderAccessory(accessory, new EntityEquipper(entity), cloak)) {
+		EntityEquipper equipper = new EntityEquipper(entity);
+		boolean elytra = equipper.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem;
+
+		if (!canRenderAccessory(accessory, equipper, cloak, elytra)) {
 			return;
 		}
 
@@ -137,12 +144,12 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 			accessory.getModel().renderOnPart(
 					part, stack, multiBufferSource, light,
 					(float) offset.x + additionalXOffset, (float) offset.y, (float) offset.z,
-					accessory.isMirrored()
+					accessory.isMirrored(), entity.isInvisible()
 			);
 		}
 	}
 
-	public static boolean canRenderAccessory(Accessory accessory, ArmourEquipper equipper, boolean cloak) {
+	public static boolean canRenderAccessory(Accessory accessory, ArmourEquipper equipper, boolean cloak, boolean hasElytra) {
 		Collection<Accessory.Flag> flags = accessory.getFlags();
 
 		if (flags.contains(Accessory.Flag.HIDE_WITH_HELMET)) {
@@ -152,7 +159,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 		}
 
 		if (equipper.hasItemInSlot(EquipmentSlot.CHEST)) {
-			if (equipper.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ElytraItem) {
+			if (hasElytra) {
 				if (flags.contains(Accessory.Flag.HIDE_WITH_ELYTRA)) {
 					return false;
 				}
@@ -162,7 +169,7 @@ public class HumanoidAccessoriesLayer<E extends LivingEntity, M extends Humanoid
 				}
 			}
 		}
-		if (cloak) {
+		if (cloak && !hasElytra) {
 			if (flags.contains(Accessory.Flag.HIDE_WITH_CLOAK)) {
 				return false;
 			}
