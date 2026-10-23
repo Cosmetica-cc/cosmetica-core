@@ -30,6 +30,9 @@ import java.util.Optional;
 
 @Mixin(WingsLayer.class)
 public class WingsLayerMixin {
+    /**
+     * Required for non-players.
+     */
     @Inject(at = @At("HEAD"), method = "getPlayerElytraTexture", cancellable = true)
     private static void addCosmeticEquipperElytras(
             final HumanoidRenderState renderState,
