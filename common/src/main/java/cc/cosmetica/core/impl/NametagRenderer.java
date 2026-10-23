@@ -39,6 +39,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import net.minecraft.world.item.Items;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
