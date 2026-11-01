@@ -16,14 +16,15 @@ Cosmetica Core can be included from the Cosmetica Maven. Check the maven website
 | 1.19.2    | 2.1.13-1.19.2  | forge, fabric       |
 | 1.19.4    | 2.1.13-1.19.4  | forge, fabric       |
 | 1.20.1    | 2.1.13-1.20.1  | forge, fabric       |
-| 1.21.1    | 2.1.13-1.21.1  | forge, fabric, neoforge |
-| 1.21.4    | 2.1.14-1.21.4  | forge, fabric, neoforge |
-| 1.21.8    | 2.1.13-1.21.8  | forge, fabric, neoforge |
+| 1.21.1    | 2.1.13-1.21.1*  | forge, fabric, neoforge |
+| 1.21.4    | 2.1.14-1.21.4*  | forge, fabric, neoforge |
+| 1.21.8    | 2.1.13-1.21.8*  | forge, fabric, neoforge |
 | 1.21.11   | 2.1.13-1.21.11 | forge, fabric, neoforge |
 | 26.1      | 2.1.13-26.1    | fabric, neoforge |
 | 26.2      | 2.1.13-26.2    | fabric, neoforge |
 | 26.3      | 2.1.13-26.3    | fabric, neoforge |
 
+*2.1.15-... on neoforge
 
 Adding Cosmetica Maven to repositories:
 ```groovy
