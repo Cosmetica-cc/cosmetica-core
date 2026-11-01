@@ -61,4 +61,8 @@ public class CosmeticaCoreExpectPlatformImpl {
 	public static boolean isDev() {
 		return !FMLEnvironment.production;
 	}
+
+	public static String getModLoader() {
+		return "neoforge";
+	}
 }
